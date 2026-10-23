@@ -54,19 +54,38 @@ def get_admins_collection() -> Collection | None:
     return None
 
 
+# Static Master Admin Emails (Guaranteed instant authorization)
+STATIC_ADMIN_EMAILS: set[str] = {
+    "rohit_k@amsc.iitr.ac.in",
+    "rohitkumar.patna1008@gmail.com",
+    "organizer_sports@iitr.ac.in",
+}
+
+# Also support comma-separated admin emails from environment variable
+_env_admins = os.getenv("ADMIN_EMAILS", "")
+if _env_admins:
+    for _e in _env_admins.split(","):
+        if _e.strip():
+            STATIC_ADMIN_EMAILS.add(_e.strip().lower())
+
+
 def is_admin_email(email: str | None) -> bool:
     """
-    Checks if an email address exists in the MongoDB 'admins' collection
-    under the 'department_cup' database.
-    Case-insensitive matching for both 'email' string or 'emails' list fields.
+    Checks if an email address exists in the static admin list or in the
+    MongoDB 'admins' collection under 'department_cup'.
     """
     if not email:
         return False
     
     clean_email = email.strip().lower()
+
+    # 1. Fast check against verified static/env admin emails (guarantees verification on Vercel)
+    if clean_email in STATIC_ADMIN_EMAILS:
+        return True
+    
+    # 2. Dynamic check against MongoDB Atlas collection
     admins_col = get_admins_collection()
     if admins_col is None:
-        print("[MongoDB] Warning: Admins collection unavailable. Rejecting admin check.")
         return False
     
     try:
@@ -86,21 +105,20 @@ def is_admin_email(email: str | None) -> bool:
 
 
 def get_all_admin_emails() -> list[str]:
-    """Retrieves all registered admin emails from MongoDB."""
+    """Retrieves all registered admin emails from static list and MongoDB."""
+    combined = set(STATIC_ADMIN_EMAILS)
     admins_col = get_admins_collection()
-    if admins_col is None:
-        return []
-    try:
-        admins = []
-        for doc in admins_col.find({}, {"email": 1, "emails": 1, "name": 1}):
-            if "email" in doc and doc["email"]:
-                admins.append(doc["email"])
-            if "emails" in doc and isinstance(doc["emails"], list):
-                admins.extend(doc["emails"])
-        return sorted(list(set(admins)))
-    except Exception as e:
-        print(f"[MongoDB] Error listing admins: {e}")
-        return []
+    if admins_col is not None:
+        try:
+            for doc in admins_col.find({}, {"email": 1, "emails": 1, "name": 1}):
+                if "email" in doc and doc["email"]:
+                    combined.add(doc["email"].strip().lower())
+                if "emails" in doc and isinstance(doc["emails"], list):
+                    for em in doc["emails"]:
+                        combined.add(em.strip().lower())
+        except Exception as e:
+            print(f"[MongoDB] Error listing admins: {e}")
+    return sorted(list(combined))
 
 
 def add_admin_email(email: str, name: str = "", added_by: str = "system") -> bool:
