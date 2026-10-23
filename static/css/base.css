@@ -302,6 +302,11 @@ a {
   transform: translateY(-1px);
 }
 
+/* Ensure only ONE sign-in button is displayed: hide fallback if GIS iframe is present */
+.google-auth-container:has(.g_id_signin iframe) .btn-google-fallback {
+  display: none !important;
+}
+
 .user-profile-pill {
   display: flex;
   align-items: center;

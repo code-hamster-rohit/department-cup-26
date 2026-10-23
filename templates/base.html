@@ -81,23 +81,28 @@
             </div>
           {% else %}
             <div class="google-auth-container">
-              <!-- Official Google Identity Services Container -->
-              <div id="g_id_onload"
-                   data-client_id="{{ google_client_id }}"
-                   data-callback="handleGoogleCredentialResponse"
-                   data-auto_prompt="false">
-              </div>
-              <div class="g_id_signin"
-                   data-type="standard"
-                   data-shape="pill"
-                   data-theme="outline"
-                   data-text="signin_with"
-                   data-size="medium"
-                   data-logo_alignment="left">
-              </div>
-              <!-- Direct OAuth Fallback -->
-              <a href="/auth/google/login?dest={{ active_nav or 'audience' }}" class="btn-google-fallback" id="btn-google-fallback" title="Sign in with Google">
-                <i class="fa-brands fa-google"></i> <span>Sign In</span>
+              {% if google_client_id %}
+                <!-- Official Google Identity Services Container -->
+                <div id="g_id_onload"
+                     data-client_id="{{ google_client_id }}"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="pill"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="medium"
+                     data-logo_alignment="left">
+                </div>
+              {% endif %}
+              <!-- Direct OAuth Fallback (only shown if GIS fails or client ID is omitted) -->
+              <a href="/auth/google/login?dest={{ active_nav or 'audience' }}" 
+                 class="btn-google-fallback {% if google_client_id %}d-none{% endif %}" 
+                 id="btn-google-fallback" 
+                 title="Sign in with Google">
+                <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
               </a>
             </div>
           {% endif %}

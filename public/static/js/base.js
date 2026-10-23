@@ -358,4 +358,21 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.reload();
     });
   }
+
+  // Single Sign-In Button Enforcement:
+  // If GIS fails to render an iframe within 1.5s, reveal fallback button so user is never stranded
+  const fallbackBtn = document.getElementById('btn-google-fallback');
+  const gSigninDiv = document.querySelector('.g_id_signin');
+  if (fallbackBtn && gSigninDiv) {
+    setTimeout(() => {
+      const hasIframe = gSigninDiv.querySelector('iframe');
+      if (!hasIframe) {
+        fallbackBtn.classList.remove('d-none');
+        fallbackBtn.style.display = 'inline-flex';
+      } else {
+        fallbackBtn.classList.add('d-none');
+        fallbackBtn.style.display = 'none';
+      }
+    }, 1500);
+  }
 });
