@@ -75,6 +75,9 @@
                 <span class="user-name">{{ current_user.name }}</span>
                 {% if is_admin %}
                   <span class="badge-admin"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
+                  <button type="button" class="btn-switch-view" id="btn-open-view-choice" title="Choose View (Audience Arena or Admin Center)">
+                    <i class="fa-solid fa-arrows-split-up-and-left"></i> <span>Choose View</span>
+                  </button>
                 {% else %}
                   <span class="badge-audience">AUDIENCE</span>
                 {% endif %}

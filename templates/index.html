@@ -151,9 +151,11 @@
       <a href="/rules" class="btn btn-secondary">
         <i class="fa-solid fa-book"></i> Read Official Rulebook
       </a>
-      <a href="/admin" class="btn btn-primary">
+      {% if is_admin %}
+      <a href="/admin" class="btn btn-primary" id="btn-admin-start-match">
         <i class="fa-solid fa-plus-circle"></i> Administrator: Start a Match
       </a>
+      {% endif %}
     </div>
   </div>
 

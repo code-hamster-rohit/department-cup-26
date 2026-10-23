@@ -359,6 +359,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Open View Choice modal for verified admins
+  const openViewChoiceBtn = document.getElementById('btn-open-view-choice');
+  if (openViewChoiceBtn) {
+    openViewChoiceBtn.addEventListener('click', () => {
+      const modal = document.getElementById('admin-destination-modal');
+      if (modal) modal.classList.add('open');
+    });
+  }
+
   // Single Sign-In Button Enforcement:
   // If GIS fails to render an iframe within 1.5s, reveal fallback button so user is never stranded
   const fallbackBtn = document.getElementById('btn-google-fallback');
