@@ -98,6 +98,44 @@ class EndMatchRequest(BaseModel):
     player_of_the_match: str = ""
 
 
+@api_router.get("/debug/db")
+async def debug_db():
+    from database.mongo import MONGO_URI, DATABASE_NAME, get_db, get_mongo_client
+    import traceback
+    
+    uri_set = bool(MONGO_URI)
+    uri_preview = (MONGO_URI[:12] + "..." + MONGO_URI[-10:]) if len(MONGO_URI) > 25 else ("Set" if uri_set else "NOT SET")
+    
+    status = {
+        "mongo_uri_set": uri_set,
+        "mongo_uri_preview": uri_preview,
+        "database_name": DATABASE_NAME,
+        "connected": False,
+        "error": None,
+        "matches_count": 0,
+        "matches_ids": []
+    }
+    
+    try:
+        db = get_db()
+        if db is not None:
+            client = get_mongo_client()
+            if client:
+                client.admin.command("ping")
+                status["connected"] = True
+                status["matches_count"] = db["matches"].count_documents({})
+                status["matches_ids"] = [d.get("id") for d in db["matches"].find({}, {"id": 1}).limit(10)]
+            else:
+                status["error"] = "get_mongo_client() returned None"
+        else:
+            status["error"] = "get_db() returned None (MONGO_URI may be empty or connection failed)"
+    except Exception as e:
+        status["error"] = f"{type(e).__name__}: {str(e)}"
+        status["traceback"] = traceback.format_exc()
+        
+    return status
+
+
 @api_router.get("/sports")
 async def get_sports():
     return {"sports": get_all_sports()}
