@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Department Cup 2026 · Live Scoreboard{% endblock %}</title>
+  <meta name="description" content="Official Live Scoreboard & Commentary for Inter-Department Sports Meet (Department Cup 2026), IIT Roorkee Saharanpur Campus.">
+  
+  <!-- Modern Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for crisp sports icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Google Identity Services (GIS) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Core Design System CSS -->
+  <link rel="stylesheet" href="/static/css/base.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="theme-dark" data-google-client-id="{{ google_client_id or '' }}">
+  <!-- Top Global Header / Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="/" class="brand-logo" id="nav-brand-logo">
+        <div class="logo-emblem">🏆</div>
+        <div class="brand-text">
+          <span class="brand-title">DEPARTMENT CUP <span class="year-badge">2026</span></span>
+          <span class="brand-subtitle">IIT Roorkee · Saharanpur Campus · Inter-Dept Sports Meet</span>
+        </div>
+      </a>
+
+      <div class="header-center-info">
+        <div class="live-status-pill" id="global-live-indicator">
+          <span class="pulse-dot"></span>
+          <span class="status-text">LIVE NETWORK</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <nav class="app-nav">
+          <a href="/" class="nav-item {% if active_nav == 'audience' %}active{% endif %}" id="nav-link-audience">
+            <i class="fa-solid fa-satellite-dish"></i>
+            <span>Audience Arena</span>
+          </a>
+          <a href="/rules" class="nav-item {% if active_nav == 'rules' %}active{% endif %}" id="nav-link-rules">
+            <i class="fa-solid fa-book-bookmark"></i>
+            <span>Rulebook</span>
+          </a>
+          <a href="/admin" class="nav-item admin-btn {% if active_nav == 'admin' %}active{% endif %}" id="nav-link-admin">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Admin Center</span>
+          </a>
+        </nav>
+
+        <!-- Auth Section / Google Sign-in -->
+        <div class="auth-nav-section" id="auth-nav-section">
+          {% if current_user %}
+            <div class="user-profile-pill" id="user-profile-pill">
+              {% if current_user.picture %}
+                <img src="{{ current_user.picture }}" alt="{{ current_user.name }}" class="user-avatar" referrerpolicy="no-referrer">
+              {% else %}
+                <div class="user-avatar-initials">{{ current_user.name[:1] | upper }}</div>
+              {% endif %}
+              <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                <span class="user-name">{{ current_user.name }}</span>
+                {% if is_admin %}
+                  <span class="badge-admin"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
+                {% else %}
+                  <span class="badge-audience">AUDIENCE</span>
+                {% endif %}
+              </div>
+              <a href="/auth/logout" class="btn-logout" title="Sign Out">
+                <i class="fa-solid fa-right-from-bracket"></i>
+              </a>
+            </div>
+          {% else %}
+            <div class="google-auth-container">
+              <!-- Official Google Identity Services Container -->
+              <div id="g_id_onload"
+                   data-client_id="{{ google_client_id }}"
+                   data-callback="handleGoogleCredentialResponse"
+                   data-auto_prompt="false">
+              </div>
+              <div class="g_id_signin"
+                   data-type="standard"
+                   data-shape="pill"
+                   data-theme="filled_blue"
+                   data-text="signin_with"
+                   data-size="medium"
+                   data-logo_alignment="left">
+              </div>
+              <!-- Direct OAuth Fallback -->
+              <a href="/auth/google/login?dest={{ active_nav or 'audience' }}" class="btn-google-fallback" id="btn-google-fallback" title="Sign in with Google">
+                <i class="fa-brands fa-google"></i> Sign In
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Floating Fading Reactions Container (Hotstar / Instagram Live style cheering) -->
+  <div id="fading-reactions-container" class="fading-reactions-container" aria-hidden="true"></div>
+
+  <!-- MODAL: ADMIN DESTINATION CHOICE (Triggered when verified admin signs in) -->
+  <div class="modal-overlay {% if show_dest_modal %}open{% endif %}" id="admin-destination-modal">
+    <div class="modal-content admin-destination-content">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div class="dest-badge">
+          <i class="fa-solid fa-shield-check" style="color: #10b981;"></i>
+          <span>VERIFIED TOURNAMENT ADMINISTRATOR</span>
+        </div>
+        <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: #fff; margin-top: 0.75rem;">
+          Welcome, <span id="dest-user-name">{{ current_user.name if current_user else 'Admin' }}</span>!
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+          Your email <strong style="color: #93c5fd;" id="dest-user-email">{{ current_user.email if current_user else '' }}</strong> is confirmed in MongoDB <code>department_cup.admins</code>.
+        </p>
+        <p style="color: #e2e8f0; font-size: 1rem; font-weight: 600; margin-top: 1rem;">
+          Where would you like to proceed?
+        </p>
+      </div>
+
+      <div class="admin-dest-grid">
+        <a href="/admin" class="dest-card control-card" id="btn-dest-admin">
+          <div class="dest-icon"><i class="fa-solid fa-sliders"></i></div>
+          <div class="dest-info">
+            <h3>Match Making & Control Room</h3>
+            <p>Initiate fixtures, announce official lineups, conduct toss, and stream live ball-by-ball scores.</p>
+          </div>
+          <div class="dest-arrow"><span>Open Control Center</span> <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="/" class="dest-card audience-card" id="btn-dest-audience">
+          <div class="dest-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+          <div class="dest-info">
+            <h3>Audience Arena View</h3>
+            <p>Watch live scorecards, real-time commentary stream, bowler statistics, and timeline pills.</p>
+          </div>
+          <div class="dest-arrow"><span>Open Arena View</span> <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button class="btn btn-secondary btn-sm" id="btn-dismiss-dest-modal">
+          Dismiss (Stay on Current Page)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main View Content -->
+  <main class="app-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-dept-badges">
+        <span class="dept-tag amsc"><span class="dot"></span> AMSC (Applied Math)</span>
+        <span class="dept-tag ppe"><span class="dot"></span> PPE (Polymer & Process)</span>
+        <span class="dept-tag ppt"><span class="dot"></span> PPT (Pulp & Paper)</span>
+      </div>
+      <div class="footer-copy">
+        <span>Official Real-time Live Scoreboard & Management System · Sports Council IITR SRE</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Base JS with WebSocket client helper & Auth handlers -->
+  <script src="/static/js/base.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

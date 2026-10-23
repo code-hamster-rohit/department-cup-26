@@ -1,0 +1,938 @@
+/* ==========================================================================
+   DEPARTMENT CUP 2026 - MASTER DESIGN SYSTEM
+   Theme: Modern Sports Broadcast Dark Mode (Cricbuzz / ESPN inspired)
+   ========================================================================== */
+
+:root {
+  /* Color Palette */
+  --bg-primary: #070a12;
+  --bg-secondary: #0d121f;
+  --bg-card: rgba(18, 25, 41, 0.75);
+  --bg-card-hover: rgba(26, 36, 58, 0.85);
+  --bg-elevated: #162036;
+  --bg-glass: rgba(13, 18, 31, 0.65);
+  
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(59, 130, 246, 0.35);
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  /* Vibrant Accents */
+  --accent-live: #ef4444;       /* Pulsing red for LIVE */
+  --accent-cricket: #10b981;    /* Emerald green */
+  --accent-cyan: #06b6d4;       /* Neon cyan */
+  --accent-gold: #f59e0b;       /* Electric amber */
+  --accent-blue: #3b82f6;       /* Royal blue */
+  --accent-purple: #8b5cf6;
+
+  /* Department Colors */
+  --dept-amsc: #3b82f6;
+  --dept-ppe: #10b981;
+  --dept-ppt: #f59e0b;
+
+  /* Fonts */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Shadows & Glass */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.1);
+  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.4);
+  --shadow-glow-blue: 0 0 25px rgba(59, 130, 246, 0.25);
+  --glass-blur: blur(16px);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(245, 158, 11, 0.06) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   HEADER / NAVBAR
+   ========================================================================== */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.85rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.logo-emblem {
+  font-size: 1.75rem;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.25));
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+}
+
+.brand-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-badge {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.header-center-info {
+  display: flex;
+  align-items: center;
+}
+
+.live-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.04em;
+}
+
+.live-status-pill.offline {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse-live 1.8s infinite;
+}
+
+.live-status-pill.offline .pulse-dot {
+  background-color: #94a3b8;
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes pulse-live {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.active {
+  color: #fff;
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.nav-item.admin-btn {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.25));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.nav-item.admin-btn:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(139, 92, 246, 0.4));
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+/* ==========================================================================
+   MAIN CONTENT CONTAINER
+   ========================================================================== */
+
+.app-content {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ==========================================================================
+   BUTTONS & CONTROLS
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  outline: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 1.05rem;
+  border-radius: var(--radius-lg);
+}
+
+/* ==========================================================================
+   BADGES & PILLS
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.badge-live {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+  animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: rgba(239, 68, 68, 0.3); }
+  50% { border-color: rgba(239, 68, 68, 0.8); }
+  100% { border-color: rgba(239, 68, 68, 0.3); }
+}
+
+.badge-upcoming {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+.badge-squads {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.badge-completed {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: var(--text-muted);
+}
+
+.badge-freehit {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+  animation: bounce-badge 1s infinite alternate;
+}
+
+@keyframes bounce-badge {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+/* ==========================================================================
+   BALL NOTATION PILLS (Cricbuzz style)
+   ========================================================================== */
+
+.ball-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  margin-right: 0.35rem;
+  transition: transform 0.2s ease;
+}
+
+.ball-pill.four {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.ball-pill.six {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #10b981;
+  color: #6ee7b7;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.ball-pill.wicket {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.ball-pill.wide, .ball-pill.noball {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #fcd34d;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.app-footer {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-dept-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.dept-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+}
+
+.dept-tag .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dept-tag.amsc .dot { background-color: var(--dept-amsc); box-shadow: 0 0 6px var(--dept-amsc); }
+.dept-tag.ppe .dot { background-color: var(--dept-ppe); box-shadow: 0 0 6px var(--dept-ppe); }
+.dept-tag.ppt .dot { background-color: var(--dept-ppt); box-shadow: 0 0 6px var(--dept-ppt); }
+
+.footer-copy {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 380px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .app-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .app-content {
+    padding: 1rem;
+  }
+  .admin-dest-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   GOOGLE AUTH & USER PROFILE BAR
+   ============================================================================= */
+.auth-nav-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.google-auth-container {
+  display: flex;
+  align-items: center;
+}
+
+.btn-google-fallback {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: #1f2937;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-google-fallback:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.user-profile-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-medium);
+  padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #3b82f6;
+}
+
+.user-avatar-initials {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.user-name {
+  color: #fff;
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-admin {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badge-audience {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+.btn-logout {
+  color: var(--text-dim);
+  padding: 0.3rem 0.45rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.btn-logout:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* =============================================================================
+   ADMIN DESTINATION CHOICE MODAL
+   ============================================================================= */
+.admin-destination-content {
+  max-width: 660px !important;
+  background: linear-gradient(180deg, #161e31 0%, #0d121f 100%) !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 45px rgba(59, 130, 246, 0.2) !important;
+  padding: 2.25rem !important;
+}
+
+.dest-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  letter-spacing: 0.06em;
+}
+
+.admin-dest-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.dest-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dest-card.control-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.15));
+  border: 1.5px solid rgba(59, 130, 246, 0.4);
+}
+
+.dest-card.control-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.3);
+}
+
+.dest-card.audience-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.12));
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+}
+
+.dest-card.audience-card:hover {
+  transform: translateY(-4px);
+  border-color: #10b981;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.3);
+}
+
+.dest-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.85rem;
+}
+
+.dest-card.control-card .dest-icon {
+  color: #60a5fa;
+}
+
+.dest-card.audience-card .dest-icon {
+  color: #34d399;
+}
+
+.dest-info h3 {
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.dest-info p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.dest-arrow {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dest-card.control-card .dest-arrow { color: #93c5fd; }
+.dest-card.audience-card .dest-arrow { color: #6ee7b7; }
+
+/* =============================================================================
+   CREX / CRICBUZZ STYLE FLOATING EVENT BANNER
+   ============================================================================= */
+.crex-alert-banner {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0) scale(1);
+  z-index: 99999;
+  background: rgba(13, 18, 31, 0.96);
+  border: 2px solid #3b82f6;
+  border-radius: 9999px;
+  padding: 0.65rem 1.6rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(59, 130, 246, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: crex-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.crex-alert-banner.boundary {
+  border-color: #38bdf8;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.6);
+}
+
+.crex-alert-banner.wicket {
+  border-color: #ef4444;
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.6);
+}
+
+.crex-alert-banner.free_hit {
+  border-color: #f59e0b;
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.6);
+}
+
+.crex-alert-banner.goal {
+  border-color: #10b981;
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.6);
+}
+
+.crex-alert-banner.out {
+  transform: translateX(-50%) translateY(-20px) scale(0.9);
+  opacity: 0;
+  transition: all 0.35s ease-in;
+}
+
+.crex-alert-badge {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.crex-alert-banner.boundary .crex-alert-badge {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+}
+
+.crex-alert-banner.wicket .crex-alert-badge {
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+}
+
+.crex-alert-banner.free_hit .crex-alert-badge {
+  background: linear-gradient(135deg, #d97706, #fbbf24);
+  color: #000;
+}
+
+.crex-alert-banner.goal .crex-alert-badge {
+  background: linear-gradient(135deg, #047857, #10b981);
+}
+
+.crex-alert-text {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+@keyframes crex-pop {
+  0% { transform: translateX(-50%) translateY(-30px) scale(0.6); opacity: 0; }
+  100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+}
+
+/* Utilities */
+.d-none {
+  display: none !important;
+}
+
+/* =============================================================================
+   FADING REACTIONS OVERLAY & FLOATING ANIMATION (Hotstar / Instagram Live style)
+   ============================================================================= */
+.fading-reactions-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99998;
+  overflow: hidden;
+  display: block;
+}
+
+.floating-reaction {
+  position: absolute;
+  bottom: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+  animation: float-and-fade 3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* Large Emoji Floating Reactions */
+.floating-reaction.is-emoji {
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.3));
+}
+
+/* Glowing Glassmorphism Text Chants */
+.floating-reaction.is-text {
+  background: linear-gradient(135deg, rgba(22, 30, 49, 0.92), rgba(15, 23, 42, 0.96));
+  border: 1.5px solid rgba(59, 130, 246, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 0.55rem 1.25rem;
+  border-radius: 9999px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(59, 130, 246, 0.35);
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  max-width: 85vw;
+  white-space: nowrap;
+}
+
+.floating-reaction.is-text .reaction-sender {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  margin-right: 0.4rem;
+}
+
+.floating-reaction.is-text .reaction-content {
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes float-and-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.6) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1.15) rotate(var(--rot-mid, -3deg));
+  }
+  25% {
+    transform: translateY(-110px) scale(1) rotate(var(--rot-end, 2deg)) translateX(var(--drift-1, 15px));
+  }
+  65% {
+    opacity: 0.95;
+    transform: translateY(-280px) scale(0.98) rotate(var(--rot-mid, -2deg)) translateX(var(--drift-2, -15px));
+  }
+  85% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-450px) scale(0.85) rotate(var(--rot-end, 4deg)) translateX(var(--drift-3, 25px));
+  }
+}

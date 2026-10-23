@@ -1,0 +1,1139 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if active_match %}
+    {{ active_match.team_a.abbr }} vs {{ active_match.team_b.abbr }} · {{ active_match.sport_name }} Live · Department Cup 2026
+  {% else %}
+    Audience Arena · Department Cup 2026
+  {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="/static/css/index.css">
+{% endblock %}
+
+{% block content %}
+<div class="audience-root" id="audience-root">
+
+  <!-- Matches Selector Bar (when multiple matches exist) -->
+  {% if all_matches and all_matches|length > 0 %}
+  <div class="matches-bar" id="matches-bar">
+    {% for m in all_matches %}
+    <a href="/?match={{ m.id }}" class="match-chip {% if active_match and active_match.id == m.id %}active{% endif %}" id="chip-{{ m.id }}">
+      <span>{{ m.sport_icon }}</span>
+      <span><strong>{{ m.team_a.abbr }}</strong> vs <strong>{{ m.team_b.abbr }}</strong></span>
+      {% if m.status == 'live' %}
+        <span class="pulse-dot-sm"></span>
+        <span class="badge badge-live" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">LIVE</span>
+      {% elif m.status == 'squads_announced' %}
+        <span class="badge badge-squads" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">SQUADS</span>
+      {% elif m.status == 'upcoming' %}
+        <span class="badge badge-upcoming" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">UPCOMING</span>
+      {% else %}
+        <span class="badge badge-completed" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">FINAL</span>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- SCENARIO 1: BLANK CANVAS (When no match is started or selected) -->
+  {% if not active_match %}
+  <div id="blank-canvas-section" class="blank-canvas">
+    <div class="radar-sonar">
+      <div class="sonar-circle"></div>
+      <div class="sonar-circle"></div>
+      <div class="sonar-icon">
+        <i class="fa-solid fa-tower-broadcast"></i>
+      </div>
+    </div>
+
+    <h1 class="canvas-title">Department Cup 2026 Arena</h1>
+    <p class="canvas-subtitle">
+      Zero-latency live sports broadcast for IIT Roorkee Saharanpur Campus.
+      Matches will automatically stream here the moment the match administrator initiates play.
+    </p>
+
+    <div class="canvas-departments">
+      <div class="dept-hero-card amsc">
+        <div class="dept-code">AMSC</div>
+        <div class="dept-full">Applied Mathematics & Scientific Computing</div>
+      </div>
+      <div class="dept-hero-card ppe">
+        <div class="dept-code">PPE</div>
+        <div class="dept-full">Polymer & Process Engineering</div>
+      </div>
+      <div class="dept-hero-card ppt">
+        <div class="dept-code">PPT</div>
+        <div class="dept-full">Pulp & Paper Technology</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 3rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="/rules" class="btn btn-secondary">
+        <i class="fa-solid fa-book"></i> Read Official Rulebook
+      </a>
+      <a href="/admin" class="btn btn-primary">
+        <i class="fa-solid fa-plus-circle"></i> Administrator: Start a Match
+      </a>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- SCENARIO 2: ACTIVE MATCH CRICBUZZ-STYLE VIEW -->
+  <div id="active-match-section" class="match-arena">
+    <!-- Hero Clash Card -->
+    <section class="match-hero-card" id="match-hero">
+      <div class="match-meta-top">
+        <div class="sport-badge-container">
+          <div class="sport-icon-box">{{ active_match.sport_icon }}</div>
+          <div class="sport-title-group">
+            <h2 class="sport-name">{{ active_match.sport_name }} · {{ active_match.stage }}</h2>
+            <div class="match-venue"><i class="fa-solid fa-location-dot"></i> {{ active_match.venue }}</div>
+          </div>
+        </div>
+
+        <div class="match-status-badge-box">
+          {% if active_match.status == 'live' %}
+            <span class="badge badge-live" id="hero-badge"><span class="pulse-dot"></span> LIVE IN-PROGRESS</span>
+          {% elif active_match.status == 'squads_announced' %}
+            <span class="badge badge-squads" id="hero-badge"><i class="fa-solid fa-users"></i> SQUADS ANNOUNCED</span>
+          {% elif active_match.status == 'upcoming' %}
+            <span class="badge badge-upcoming" id="hero-badge"><i class="fa-regular fa-clock"></i> UPCOMING MATCH</span>
+          {% else %}
+            <span class="badge badge-completed" id="hero-badge"><i class="fa-solid fa-trophy"></i> COMPLETED</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Teams Clash Row -->
+      <div class="teams-clash">
+        <!-- Team A -->
+        <div class="team-box left">
+          <div class="team-identity">
+            <div class="team-flag-box {{ active_match.team_a.code }}">{{ active_match.team_a.abbr }}</div>
+            <div class="team-name">{{ active_match.team_a.name }}</div>
+          </div>
+          <div class="team-score-display" id="team-a-score-box">
+            {% if active_match.sport_type == 'cricket' %}
+              {% if active_match.status in ['upcoming', 'squads_announced'] %}
+                Upcoming
+              {% elif active_match.score.innings_1.team == 'team_a' %}
+                {{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }}
+                <span class="team-overs-display">({{ active_match.score.innings_1.overs }} ov)</span>
+              {% elif active_match.score.innings == 2 and active_match.score.innings_2.team == 'team_a' %}
+                {{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }}
+                <span class="team-overs-display">({{ active_match.score.innings_2.overs }} ov)</span>
+              {% else %}
+                Yet to Bat
+              {% endif %}
+            {% elif active_match.sport_type == 'football' %}
+              {{ active_match.score.team_a_score }}
+            {% elif active_match.sport_type == 'penalty_shootout' %}
+              {{ active_match.score.team_a_score }} Goals
+            {% elif active_match.sport_type == 'volleyball' %}
+              {{ active_match.score.sets_team_a }} Sets
+            {% elif active_match.sport_type in ['badminton', 'table_tennis', 'carrom'] %}
+              {{ active_match.score.events_won_a }} Events
+            {% elif active_match.sport_type == 'tug_of_war' %}
+              {{ active_match.score.pulls_team_a }} Pulls
+            {% elif active_match.sport_type == 'athletics_distance' %}
+              Leaderboard
+            {% elif active_match.sport_type == 'basketball_shootout' %}
+              {{ active_match.score.score_team_a }} Pts
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="clash-divider">
+          <div class="vs-badge">VS</div>
+        </div>
+
+        <!-- Team B -->
+        <div class="team-box right">
+          <div class="team-identity">
+            <div class="team-name">{{ active_match.team_b.name }}</div>
+            <div class="team-flag-box {{ active_match.team_b.code }}">{{ active_match.team_b.abbr }}</div>
+          </div>
+          <div class="team-score-display" id="team-b-score-box">
+            {% if active_match.sport_type == 'cricket' %}
+              {% if active_match.status in ['upcoming', 'squads_announced'] %}
+                Upcoming
+              {% elif active_match.score.innings_1.team == 'team_b' %}
+                {{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }}
+                <span class="team-overs-display">({{ active_match.score.innings_1.overs }} ov)</span>
+              {% elif active_match.score.innings == 2 and active_match.score.innings_2.team == 'team_b' %}
+                {{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }}
+                <span class="team-overs-display">({{ active_match.score.innings_2.overs }} ov)</span>
+              {% else %}
+                Yet to Bat
+              {% endif %}
+            {% elif active_match.sport_type == 'football' %}
+              {{ active_match.score.team_b_score }}
+            {% elif active_match.sport_type == 'penalty_shootout' %}
+              {{ active_match.score.team_b_score }} Goals
+            {% elif active_match.sport_type == 'volleyball' %}
+              {{ active_match.score.sets_team_b }} Sets
+            {% elif active_match.sport_type in ['badminton', 'table_tennis', 'carrom'] %}
+              {{ active_match.score.events_won_b }} Events
+            {% elif active_match.sport_type == 'tug_of_war' %}
+              {{ active_match.score.pulls_team_b }} Pulls
+            {% elif active_match.sport_type == 'athletics_distance' %}
+              Leaderboard
+            {% elif active_match.sport_type == 'basketball_shootout' %}
+              {{ active_match.score.score_team_b }} Pts
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Toss & Status Strip -->
+      <div class="match-status-strip">
+        <div class="match-status-text" id="status-strip-text">
+          <i class="fa-solid fa-circle-dot"></i>
+          <span>
+            {% if active_match.result %}
+              <strong>{{ active_match.result }}</strong>
+            {% elif active_match.status == 'live' %}
+              {% if active_match.sport_type == 'cricket' %}
+                {% if active_match.score.is_free_hit %}
+                  <span class="badge badge-freehit">🎯 FREE HIT IN PLAY</span>
+                {% elif active_match.score.is_powerplay %}
+                  <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">⚡ POWERPLAY (Max 2 fielders outside)</span>
+                {% else %}
+                  Live: {{ active_match.score.max_overs }} Overs Match (Max 2 ov/bowler)
+                {% endif %}
+              {% else %}
+                Live In Progress
+              {% endif %}
+            {% elif active_match.toss.conducted %}
+              {{ active_match.toss.summary }}
+            {% else %}
+              Awaiting Toss & Squads
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="crr-rrr-group" id="crr-rrr-box">
+          {% if active_match.sport_type == 'cricket' and active_match.status == 'live' %}
+            {% set inn = active_match.score.innings_1 if active_match.score.innings == 1 else active_match.score.innings_2 %}
+            <span>CRR: <strong>{{ inn.crr or '0.00' }}</strong></span>
+            {% if active_match.score.innings == 2 and inn.target %}
+              {% set rem_runs = inn.target - inn.runs %}
+              {% set rem_balls = (active_match.score.max_overs * 6) - inn.legal_balls %}
+              <span>Target: <strong>{{ inn.target }}</strong> (Need {{ rem_runs }} in {{ rem_balls }} balls)</span>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Crowd Cheers & Fading Reactions Dock -->
+    <div class="reactions-dock-card" id="crowd-reactions-dock" data-match-id="{{ active_match.id }}">
+      <div class="dock-header">
+        <div class="dock-title">
+          <i class="fa-solid fa-fire-flame-curved" style="color: #f97316;"></i>
+          <span>Live Crowd Cheers & Chants</span>
+          <span class="dock-badge">Realtime</span>
+        </div>
+        <div class="dock-hint">Tap an emoji or shout a chant to float live across all spectator screens!</div>
+      </div>
+
+      <!-- Quick Reaction Emojis & Sport/Department Chants Row -->
+      <div class="dock-actions-row">
+        <!-- Emoji Buttons -->
+        <div class="reaction-emojis-group">
+          <button type="button" class="btn-reaction-emoji" data-content="🔥" title="Fire">🔥</button>
+          <button type="button" class="btn-reaction-emoji" data-content="👏" title="Applause">👏</button>
+          <button type="button" class="btn-reaction-emoji" data-content="🚀" title="Rocket">🚀</button>
+          <button type="button" class="btn-reaction-emoji" data-content="❤️" title="Love">❤️</button>
+          <button type="button" class="btn-reaction-emoji" data-content="💯" title="100">💯</button>
+          <button type="button" class="btn-reaction-emoji" data-content="🥳" title="Party">🥳</button>
+          {% if active_match.sport_type == 'cricket' %}
+            <button type="button" class="btn-reaction-emoji" data-content="🏏" title="Cricket">🏏</button>
+          {% elif active_match.sport_type in ['football', 'penalty_shootout'] %}
+            <button type="button" class="btn-reaction-emoji" data-content="⚽" title="Football">⚽</button>
+          {% elif active_match.sport_type == 'volleyball' %}
+            <button type="button" class="btn-reaction-emoji" data-content="🏐" title="Volleyball">🏐</button>
+          {% elif active_match.sport_type == 'badminton' %}
+            <button type="button" class="btn-reaction-emoji" data-content="🏸" title="Badminton">🏸</button>
+          {% elif active_match.sport_type == 'table_tennis' %}
+            <button type="button" class="btn-reaction-emoji" data-content="🏓" title="Table Tennis">🏓</button>
+          {% else %}
+            <button type="button" class="btn-reaction-emoji" data-content="⚡" title="Lightning">⚡</button>
+          {% endif %}
+        </div>
+
+        <!-- Quick Department & Sport Chants -->
+        <div class="reaction-chants-group">
+          <button type="button" class="btn-reaction-chant chant-team" data-content="{{ active_match.team_a.abbr }} Let's Go! 📣">
+            {{ active_match.team_a.abbr }}! 📣
+          </button>
+          <button type="button" class="btn-reaction-chant chant-team" data-content="{{ active_match.team_b.abbr }} Let's Go! 📣">
+            {{ active_match.team_b.abbr }}! 📣
+          </button>
+          {% if active_match.sport_type == 'cricket' %}
+            <button type="button" class="btn-reaction-chant" data-content="HOWZAT?! ☝️">HOWZAT?! ☝️</button>
+            <button type="button" class="btn-reaction-chant" data-content="SIXERRR! 💥">SIXERRR! 💥</button>
+            <button type="button" class="btn-reaction-chant" data-content="FOURRR! 🚀">FOURRR! 🚀</button>
+          {% elif active_match.sport_type in ['football', 'penalty_shootout'] %}
+            <button type="button" class="btn-reaction-chant" data-content="GOAAAL! ⚽🔥">GOAAAL! ⚽🔥</button>
+            <button type="button" class="btn-reaction-chant" data-content="WHAT A SAVE! 🧤">WHAT A SAVE! 🧤</button>
+          {% elif active_match.sport_type == 'tug_of_war' %}
+            <button type="button" class="btn-reaction-chant" data-content="HEAVE! PULL! 💥">HEAVE! PULL! 💥</button>
+          {% else %}
+            <button type="button" class="btn-reaction-chant" data-content="WHAT A PLAY! 🔥">WHAT A PLAY! 🔥</button>
+            <button type="button" class="btn-reaction-chant" data-content="DEFENCE! 🛡️">DEFENCE! 🛡️</button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Custom Cheer Text Form -->
+      <form class="dock-custom-form" id="custom-reaction-form" onsubmit="return false;">
+        <div class="input-with-send">
+          <input type="text" 
+                 id="custom-reaction-input" 
+                 class="custom-reaction-input" 
+                 placeholder="Type your cheer or chant... (e.g. {{ active_match.team_a.abbr }} on fire! 🔥)" 
+                 maxlength="60" 
+                 autocomplete="off" />
+          <button type="submit" id="btn-send-reaction" class="btn-send-reaction" title="Send Live Cheer">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Shout</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cricbuzz Navigation Tabs -->
+    <div class="cricbuzz-nav-tabs">
+      <button class="tab-btn active" data-tab="tab-live" id="tab-btn-live">
+        <i class="fa-solid fa-satellite-dish"></i> Live Score
+      </button>
+      <button class="tab-btn" data-tab="tab-scorecard" id="tab-btn-scorecard">
+        <i class="fa-solid fa-chart-simple"></i> Scorecard
+      </button>
+      <button class="tab-btn" data-tab="tab-squads" id="tab-btn-squads">
+        <i class="fa-solid fa-users"></i> Squads & Lineups
+      </button>
+      <button class="tab-btn" data-tab="tab-commentary" id="tab-btn-commentary">
+        <i class="fa-solid fa-microphone-lines"></i> Commentary
+      </button>
+      <button class="tab-btn" data-tab="tab-rules" id="tab-btn-rules">
+        <i class="fa-solid fa-shield-halved"></i> Match Rules
+      </button>
+    </div>
+
+    <!-- TAB 1: LIVE SCORE OVERVIEW -->
+    <div class="tab-pane active" id="tab-live">
+      <div class="live-grid">
+        <!-- Left: Match Batting/Bowling or Score Cards -->
+        <div class="panel-card">
+          {% if active_match.sport_type == 'cricket' %}
+            {% set inn = active_match.score.innings_1 if active_match.score.innings == 1 else active_match.score.innings_2 %}
+
+            <div class="panel-header">
+              <span class="panel-title"><i class="fa-solid fa-baseball-bat-ball"></i> Batting (Innings {{ active_match.score.innings }})</span>
+              <span class="badge" style="background: rgba(255,255,255,0.06);">{{ active_match.score.max_overs }} Overs Limit</span>
+            </div>
+
+            <!-- Current Batsmen Table -->
+            <table class="cric-table" id="batsmen-table">
+              <thead>
+                <tr>
+                  <th>Batter</th>
+                  <th class="text-right">R</th>
+                  <th class="text-right">B</th>
+                  <th class="text-right">4s</th>
+                  <th class="text-right">6s</th>
+                  <th class="text-right">SR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if inn.striker and inn.batsmen.get(inn.striker) %}
+                  {% set s = inn.batsmen.get(inn.striker) %}
+                  <tr class="striker-active">
+                    <td>{{ inn.striker }} *</td>
+                    <td class="text-right"><strong>{{ s.runs }}</strong></td>
+                    <td class="text-right">{{ s.balls }}</td>
+                    <td class="text-right">{{ s.fours }}</td>
+                    <td class="text-right">{{ s.sixes }}</td>
+                    <td class="text-right">{{ s.sr or '0.0' }}</td>
+                  </tr>
+                {% endif %}
+                {% if inn.non_striker and inn.batsmen.get(inn.non_striker) %}
+                  {% set ns = inn.batsmen.get(inn.non_striker) %}
+                  <tr>
+                    <td>{{ inn.non_striker }}</td>
+                    <td class="text-right"><strong>{{ ns.runs }}</strong></td>
+                    <td class="text-right">{{ ns.balls }}</td>
+                    <td class="text-right">{{ ns.fours }}</td>
+                    <td class="text-right">{{ ns.sixes }}</td>
+                    <td class="text-right">{{ ns.sr or '0.0' }}</td>
+                  </tr>
+                {% endif %}
+                {% if not inn.striker and not inn.non_striker %}
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                      Batsmen will appear once administrator commences innings.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+
+            <!-- Current Bowler Table -->
+            <div class="panel-header" style="margin-top: 1rem;">
+              <span class="panel-title"><i class="fa-solid fa-baseball"></i> Current Bowler</span>
+              <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">Rule: Max 2 Overs / Bowler</span>
+            </div>
+
+            <table class="cric-table" id="bowler-table">
+              <thead>
+                <tr>
+                  <th>Bowler</th>
+                  <th class="text-right">O</th>
+                  <th class="text-right">M</th>
+                  <th class="text-right">R</th>
+                  <th class="text-right">W</th>
+                  <th class="text-right">ECON</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if inn.bowler and inn.bowlers.get(inn.bowler) %}
+                  {% set b = inn.bowlers.get(inn.bowler) %}
+                  <tr>
+                    <td><strong>{{ inn.bowler }}</strong></td>
+                    <td class="text-right">{{ b.overs }} / 2.0</td>
+                    <td class="text-right">{{ b.maidens }}</td>
+                    <td class="text-right">{{ b.runs }}</td>
+                    <td class="text-right"><strong>{{ b.wickets }}</strong></td>
+                    <td class="text-right">{{ b.econ or '0.0' }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1rem;">
+                      Awaiting bowler selection.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+
+            <!-- Recent Balls Timeline -->
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 1rem;">
+              <div class="timeline-label">Recent Deliveries:</div>
+              <div class="timeline-strip" id="balls-timeline">
+                {% if inn.timeline and inn.timeline|length > 0 %}
+                  {% for ball in inn.timeline[-18:] %}
+                    <span class="ball-pill {% if ball == '4' %}four{% elif ball == '6' %}six{% elif ball == 'W' %}wicket{% elif 'Wd' in ball %}wide{% elif 'NB' in ball %}noball{% endif %}">{{ ball }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span style="color: var(--text-dim); font-size: 0.85rem;">No deliveries bowled yet.</span>
+                {% endif %}
+              </div>
+            </div>
+
+          {% elif active_match.sport_type == 'football' %}
+            <div class="panel-header">
+              <span class="panel-title"><i class="fa-solid fa-futbol"></i> Match Progress (7-a-side)</span>
+              <span class="badge badge-live">Half {{ active_match.score.half }}</span>
+            </div>
+
+            <!-- Score Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+              <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center;">
+                <div style="font-weight: 700; color: #93c5fd; font-size: 1.1rem;">{{ active_match.team_a.name }}</div>
+                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: #fff;" id="fb-score-a">{{ active_match.score.team_a_score }}</div>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center;">
+                <div style="font-weight: 700; color: #6ee7b7; font-size: 1.1rem;">{{ active_match.team_b.name }}</div>
+                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: #fff;" id="fb-score-b">{{ active_match.score.team_b_score }}</div>
+              </div>
+            </div>
+
+            <!-- Match Events Log (Goals & Cards) -->
+            <div class="panel-header" style="margin-top: 1.5rem;">
+              <span class="panel-title"><i class="fa-solid fa-timeline"></i> Match Events</span>
+            </div>
+            <div id="fb-events-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto;">
+              {% if active_match.score.events and active_match.score.events|length > 0 %}
+                {% for ev in active_match.score.events|reverse %}
+                  <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                    <div>
+                      {% if ev.type == 'goal' %}
+                        <span style="color: #34d399; font-weight: 700;">⚽ GOAL!</span>
+                      {% elif 'yellow' in ev.type %}
+                        <span style="color: #fbbf24; font-weight: 700;">🟨 YELLOW CARD</span>
+                      {% else %}
+                        <span style="color: #ef4444; font-weight: 700;">🟥 RED CARD</span>
+                      {% endif %}
+                      <strong style="color: #fff; margin-left: 0.4rem;">{{ ev.player }}</strong>
+                      <span style="color: var(--text-dim); margin-left: 0.3rem;">({{ active_match.team_a.abbr if ev.team == 'team_a' else (active_match.team_b.abbr if ev.team == 'team_b' else ev.team) }})</span>
+                    </div>
+                    <span style="color: #93c5fd; font-weight: 600;">{{ ev.minute }}</span>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div style="color: var(--text-dim); font-size: 0.85rem; padding: 1rem; text-align: center;">No goals or disciplinary cards recorded yet.</div>
+              {% endif %}
+            </div>
+
+            <!-- Rule Reminder Banner -->
+            <div style="background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; font-size: 0.8rem; color: #fde68a;">
+              <i class="fa-solid fa-scale-balanced" style="margin-right: 0.4rem;"></i>
+              <strong>Department Conduct Regulation:</strong> Any player receiving a yellow or red card must submit a written apology before they can participate in subsequent rounds.
+            </div>
+
+          {% elif active_match.sport_type == 'penalty_shootout' %}
+            <div class="panel-header">
+              <span class="panel-title"><i class="fa-solid fa-futbol"></i> Girls Penalty Shootout (5 Kicks / Player)</span>
+              {% if active_match.score.sudden_death %}
+                <span class="badge" style="background: #ef4444; color: #fff;">⚡ SUDDEN DEATH</span>
+              {% else %}
+                <span class="badge badge-live">Best of 5 Kicks</span>
+              {% endif %}
+            </div>
+
+            <!-- Team A Kicks Matrix -->
+            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <strong style="color: #93c5fd; font-size: 1.05rem;">{{ active_match.team_a.name }}</strong>
+                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: #fff;">{{ active_match.score.team_a_score }} Goals</span>
+              </div>
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                {% for k in active_match.score.team_a_kicks %}
+                  <div style="text-align: center;">
+                    <span class="ball-pill {% if k.result == 'goal' %}six{% elif k.result == 'saved' %}wide{% else %}wicket{% endif %}" style="width: 38px; height: 38px; font-size: 1rem;">
+                      {% if k.result == 'goal' %}⚽{% elif k.result == 'saved' %}🧤{% else %}❌{% endif %}
+                    </span>
+                    <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 0.2rem; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ k.player }}</div>
+                  </div>
+                {% endfor %}
+                {% set rem_kicks_a = (5 - active_match.score.team_a_kicks|length) if active_match.score.team_a_kicks else 5 %}
+                {% if rem_kicks_a > 0 %}
+                  {% for i in range(rem_kicks_a) %}
+                    <div style="text-align: center;">
+                      <span class="ball-pill" style="width: 38px; height: 38px; opacity: 0.35; font-size: 0.8rem;">⚪</span>
+                      <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 0.2rem;">Kick {{ (active_match.score.team_a_kicks|length if active_match.score.team_a_kicks else 0) + loop.index }}</div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Team B Kicks Matrix -->
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <strong style="color: #6ee7b7; font-size: 1.05rem;">{{ active_match.team_b.name }}</strong>
+                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: #fff;">{{ active_match.score.team_b_score }} Goals</span>
+              </div>
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                {% for k in active_match.score.team_b_kicks %}
+                  <div style="text-align: center;">
+                    <span class="ball-pill {% if k.result == 'goal' %}six{% elif k.result == 'saved' %}wide{% else %}wicket{% endif %}" style="width: 38px; height: 38px; font-size: 1rem;">
+                      {% if k.result == 'goal' %}⚽{% elif k.result == 'saved' %}🧤{% else %}❌{% endif %}
+                    </span>
+                    <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 0.2rem; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ k.player }}</div>
+                  </div>
+                {% endfor %}
+                {% set rem_kicks_b = (5 - active_match.score.team_b_kicks|length) if active_match.score.team_b_kicks else 5 %}
+                {% if rem_kicks_b > 0 %}
+                  {% for i in range(rem_kicks_b) %}
+                    <div style="text-align: center;">
+                      <span class="ball-pill" style="width: 38px; height: 38px; opacity: 0.35; font-size: 0.8rem;">⚪</span>
+                      <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 0.2rem;">Kick {{ (active_match.score.team_b_kicks|length if active_match.score.team_b_kicks else 0) + loop.index }}</div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+
+          {% elif active_match.sport_type == 'volleyball' %}
+            <div class="panel-header">
+              <span class="panel-title">Volleyball Match Sets (Best of 3)</span>
+              <span class="badge badge-live">Set {{ active_match.score.current_set }}</span>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+              {% for s in active_match.score.set_scores %}
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-medium); border-radius: 12px; padding: 1rem 1.5rem; flex: 1; min-width: 140px; text-align: center;">
+                  <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Set {{ s.set }}</div>
+                  <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 0.25rem;">
+                    {{ s.team_a }} - {{ s.team_b }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+          {% elif active_match.sport_type in ['badminton', 'table_tennis', 'carrom'] %}
+            <div class="panel-header">
+              <span class="panel-title">Team Match Events Tracker</span>
+              <span class="badge badge-upcoming">First to {{ active_match.score.events_to_win }} Wins</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+              {% for ev in active_match.score.events %}
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+                  <div>
+                    <strong style="color: #fff;">{{ ev.name }}</strong>
+                    <div style="font-size: 0.75rem; color: var(--text-dim);">Sets won: {{ ev.sets_a }} - {{ ev.sets_b }}</div>
+                  </div>
+                  <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #38bdf8;">
+                    {{ ev.current_points_a }} - {{ ev.current_points_b }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+          {% elif active_match.sport_type == 'tug_of_war' %}
+            <div class="panel-header">
+              <span class="panel-title">Tug of War Pulls (Best of 3)</span>
+              <span class="badge badge-live">Pull {{ active_match.score.current_pull }}</span>
+            </div>
+            <div style="padding: 1rem; text-align: center;">
+              <div style="font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem;">Pulls Standing:</div>
+              <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">
+                {{ active_match.team_a.abbr }} {{ active_match.score.pulls_team_a }} : {{ active_match.score.pulls_team_b }} {{ active_match.team_b.abbr }}
+              </div>
+            </div>
+
+          {% elif active_match.sport_type == 'athletics_distance' %}
+            <div class="panel-header">
+              <span class="panel-title">Live Athletics Leaderboard</span>
+              <span class="badge badge-live">Best Distance</span>
+            </div>
+            <table class="cric-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Athlete</th>
+                  <th>Dept</th>
+                  <th class="text-right">Trial</th>
+                  <th class="text-right">Attempts</th>
+                  <th class="text-right">Best</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ath in active_match.score.athletes %}
+                  <tr>
+                    <td><strong>#{{ ath.rank or loop.index }}</strong></td>
+                    <td>{{ ath.name }}</td>
+                    <td>{{ ath.department }}</td>
+                    <td class="text-right">{{ ath.trial or '-' }}</td>
+                    <td class="text-right">{{ ath.attempts|join(', ') or '-' }}</td>
+                    <td class="text-right" style="color: #34d399; font-weight: 800;">{{ ath.best }}m</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="6" style="text-align:center; padding: 1.5rem; color: var(--text-dim);">Awaiting attempts from athletes.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+          {% elif active_match.sport_type == 'basketball_shootout' %}
+            <div class="panel-header">
+              <span class="panel-title">Basketball Shootout Cumulative Points</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center; margin-top: 1rem;">
+              <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 1.5rem; border-radius: 12px;">
+                <div style="font-weight: 700; color: #93c5fd;">{{ active_match.team_a.abbr }}</div>
+                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">{{ active_match.score.score_team_a }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Remaining Shots: {{ active_match.score.remaining_shots_a }}</div>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.5rem; border-radius: 12px;">
+                <div style="font-weight: 700; color: #6ee7b7;">{{ active_match.team_b.abbr }}</div>
+                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">{{ active_match.score.score_team_b }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Remaining Shots: {{ active_match.score.remaining_shots_b }}</div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Right: Real-time Live Commentary Stream -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fa-solid fa-microphone"></i> Live Commentary</span>
+            <span class="pulse-dot"></span>
+          </div>
+
+          <div class="commentary-feed" id="live-commentary-feed">
+            {% for comm in active_match.commentary|reverse %}
+              <div class="commentary-item {{ comm.type }}">
+                <div class="comm-ball">{{ comm.ball }}</div>
+                <div class="comm-text-group">
+                  {% if comm.badge %}
+                    <span class="comm-badge" style="background: rgba(255,255,255,0.08); color: #38bdf8;">{{ comm.badge }}</span>
+                  {% endif %}
+                  <div class="comm-text">{{ comm.text }}</div>
+                  <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">{{ comm.time }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SCORECARD -->
+    <div class="tab-pane" id="tab-scorecard">
+      <div class="panel-card" style="margin-top: 1.5rem;">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-table-list"></i> Full Match Scorecard</span>
+        </div>
+        {% if active_match.sport_type == 'cricket' %}
+          <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Innings 1 -->
+            <div>
+              <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">
+                Innings 1 · {% if active_match.score.innings_1.team == 'team_a' %}{{ active_match.team_a.name }}{% else %}{{ active_match.team_b.name }}{% endif %} ({{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }} in {{ active_match.score.innings_1.overs }} ov)
+              </h3>
+              <table class="cric-table">
+                <thead>
+                  <tr>
+                    <th>Batter</th>
+                    <th>Dismissal</th>
+                    <th class="text-right">R</th>
+                    <th class="text-right">B</th>
+                    <th class="text-right">4s</th>
+                    <th class="text-right">6s</th>
+                    <th class="text-right">SR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for bname, bstat in active_match.score.innings_1.batsmen.items() %}
+                    <tr>
+                      <td><strong>{{ bname }}</strong></td>
+                      <td style="color: var(--text-dim); font-size: 0.8rem;">{{ bstat.status }}</td>
+                      <td class="text-right"><strong>{{ bstat.runs }}</strong></td>
+                      <td class="text-right">{{ bstat.balls }}</td>
+                      <td class="text-right">{{ bstat.fours }}</td>
+                      <td class="text-right">{{ bstat.sixes }}</td>
+                      <td class="text-right">{{ bstat.sr or '0.0' }}</td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No batting data yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <!-- Extras & Total -->
+              {% set ex1 = active_match.score.innings_1.extras %}
+              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
+                <span><strong>Extras:</strong> (w {{ ex1.wides }}, nb {{ ex1.no_balls }}, b {{ ex1.byes }}, lb {{ ex1.leg_byes }}, pen {{ ex1.penalty }})</span>
+                <strong>{{ ex1.wides + ex1.no_balls + ex1.byes + ex1.leg_byes + ex1.penalty }}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid rgba(56, 189, 248, 0.25);">
+                <span><strong>TOTAL</strong> ({{ active_match.score.innings_1.overs }} Ov, RR: {{ active_match.score.innings_1.crr }})</span>
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff;">{{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }}</span>
+              </div>
+
+              <!-- Bowling Analysis Table -->
+              <div style="margin-top: 1rem;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.4rem;">Bowling Analysis</div>
+                <table class="cric-table">
+                  <thead>
+                    <tr>
+                      <th>Bowler</th>
+                      <th class="text-right">O</th>
+                      <th class="text-right">M</th>
+                      <th class="text-right">R</th>
+                      <th class="text-right">W</th>
+                      <th class="text-right">ECON</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for bwnam, bwstat in active_match.score.innings_1.bowlers.items() %}
+                      <tr>
+                        <td><strong>{{ bwnam }}</strong></td>
+                        <td class="text-right">{{ bwstat.overs }}</td>
+                        <td class="text-right">{{ bwstat.maidens }}</td>
+                        <td class="text-right">{{ bwstat.runs }}</td>
+                        <td class="text-right"><strong>{{ bwstat.wickets }}</strong></td>
+                        <td class="text-right">{{ bwstat.econ or '0.0' }}</td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">No bowling data recorded.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Innings 2 (if started) -->
+            {% if active_match.score.innings == 2 or active_match.score.innings_2.runs > 0 %}
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+              <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">
+                Innings 2 · {% if active_match.score.innings_2.team == 'team_a' %}{{ active_match.team_a.name }}{% else %}{{ active_match.team_b.name }}{% endif %} ({{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }} in {{ active_match.score.innings_2.overs }} ov)
+              </h3>
+              <table class="cric-table">
+                <thead>
+                  <tr>
+                    <th>Batter</th>
+                    <th>Dismissal</th>
+                    <th class="text-right">R</th>
+                    <th class="text-right">B</th>
+                    <th class="text-right">4s</th>
+                    <th class="text-right">6s</th>
+                    <th class="text-right">SR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for bname, bstat in active_match.score.innings_2.batsmen.items() %}
+                    <tr>
+                      <td><strong>{{ bname }}</strong></td>
+                      <td style="color: var(--text-dim); font-size: 0.8rem;">{{ bstat.status }}</td>
+                      <td class="text-right"><strong>{{ bstat.runs }}</strong></td>
+                      <td class="text-right">{{ bstat.balls }}</td>
+                      <td class="text-right">{{ bstat.fours }}</td>
+                      <td class="text-right">{{ bstat.sixes }}</td>
+                      <td class="text-right">{{ bstat.sr or '0.0' }}</td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No batting data yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <!-- Extras & Total -->
+              {% set ex2 = active_match.score.innings_2.extras %}
+              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
+                <span><strong>Extras:</strong> (w {{ ex2.wides }}, nb {{ ex2.no_balls }}, b {{ ex2.byes }}, lb {{ ex2.leg_byes }}, pen {{ ex2.penalty }})</span>
+                <strong>{{ ex2.wides + ex2.no_balls + ex2.byes + ex2.leg_byes + ex2.penalty }}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid rgba(56, 189, 248, 0.25);">
+                <span><strong>TOTAL</strong> ({{ active_match.score.innings_2.overs }} Ov, RR: {{ active_match.score.innings_2.crr }})</span>
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff;">{{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }}</span>
+              </div>
+
+              <!-- Bowling Analysis Table -->
+              <div style="margin-top: 1rem;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.4rem;">Bowling Analysis</div>
+                <table class="cric-table">
+                  <thead>
+                    <tr>
+                      <th>Bowler</th>
+                      <th class="text-right">O</th>
+                      <th class="text-right">M</th>
+                      <th class="text-right">R</th>
+                      <th class="text-right">W</th>
+                      <th class="text-right">ECON</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for bwnam, bwstat in active_match.score.innings_2.bowlers.items() %}
+                      <tr>
+                        <td><strong>{{ bwnam }}</strong></td>
+                        <td class="text-right">{{ bwstat.overs }}</td>
+                        <td class="text-right">{{ bwstat.maidens }}</td>
+                        <td class="text-right">{{ bwstat.runs }}</td>
+                        <td class="text-right"><strong>{{ bwstat.wickets }}</strong></td>
+                        <td class="text-right">{{ bwstat.econ or '0.0' }}</td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">No bowling data recorded.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        {% elif active_match.sport_type == 'football' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">
+              Football Match Scorecard · {{ active_match.team_a.name }} {{ active_match.score.team_a_score }} : {{ active_match.score.team_b_score }} {{ active_match.team_b.name }}
+            </h3>
+            <div style="margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-dim);">Status: Half {{ active_match.score.half }}</div>
+            <table class="cric-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Player</th>
+                  <th>Department</th>
+                  <th class="text-right">Minute</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ev in active_match.score.events %}
+                  <tr>
+                    <td>
+                      {% if ev.type == 'goal' %}<span style="color: #34d399; font-weight: 700;">⚽ GOAL</span>
+                      {% elif 'yellow' in ev.type %}<span style="color: #fbbf24; font-weight: 700;">🟨 YELLOW CARD</span>
+                      {% else %}<span style="color: #ef4444; font-weight: 700;">🟥 RED CARD</span>{% endif %}
+                    </td>
+                    <td><strong>{{ ev.player }}</strong></td>
+                    <td>{{ active_match.team_a.name if ev.team == 'team_a' else active_match.team_b.name }}</td>
+                    <td class="text-right" style="color: #93c5fd; font-weight: 600;">{{ ev.minute }}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No match goals or disciplinary events recorded.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif active_match.sport_type == 'penalty_shootout' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Shootout Matrix Scorecard</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <div>
+                <h4 style="color: #93c5fd; margin-bottom: 0.5rem;">{{ active_match.team_a.name }} ({{ active_match.score.team_a_score }} Goals)</h4>
+                <table class="cric-table">
+                  <thead><tr><th>#</th><th>Shooter</th><th>Result</th></tr></thead>
+                  <tbody>
+                    {% for k in active_match.score.team_a_kicks %}
+                      <tr>
+                        <td>Kick {{ loop.index }}</td>
+                        <td><strong>{{ k.player }}</strong></td>
+                        <td>{% if k.result == 'goal' %}<span style="color: #34d399; font-weight: 700;">⚽ Goal</span>{% elif k.result == 'saved' %}<span style="color: #f59e0b; font-weight: 700;">🧤 Saved</span>{% else %}<span style="color: #ef4444; font-weight: 700;">❌ Missed</span>{% endif %}</td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="3" style="text-align:center; color: var(--text-dim);">No kicks taken yet.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <h4 style="color: #6ee7b7; margin-bottom: 0.5rem;">{{ active_match.team_b.name }} ({{ active_match.score.team_b_score }} Goals)</h4>
+                <table class="cric-table">
+                  <thead><tr><th>#</th><th>Shooter</th><th>Result</th></tr></thead>
+                  <tbody>
+                    {% for k in active_match.score.team_b_kicks %}
+                      <tr>
+                        <td>Kick {{ loop.index }}</td>
+                        <td><strong>{{ k.player }}</strong></td>
+                        <td>{% if k.result == 'goal' %}<span style="color: #34d399; font-weight: 700;">⚽ Goal</span>{% elif k.result == 'saved' %}<span style="color: #f59e0b; font-weight: 700;">🧤 Saved</span>{% else %}<span style="color: #ef4444; font-weight: 700;">❌ Missed</span>{% endif %}</td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="3" style="text-align:center; color: var(--text-dim);">No kicks taken yet.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% elif active_match.sport_type == 'volleyball' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Volleyball Sets Summary</h3>
+            <table class="cric-table">
+              <thead><tr><th>Set</th><th class="text-right">{{ active_match.team_a.abbr }}</th><th class="text-right">{{ active_match.team_b.abbr }}</th><th>Winner</th></tr></thead>
+              <tbody>
+                {% for s in active_match.score.set_scores %}
+                  <tr>
+                    <td><strong>Set {{ s.set }}</strong></td>
+                    <td class="text-right">{{ s.team_a }}</td>
+                    <td class="text-right">{{ s.team_b }}</td>
+                    <td>{% if s.team_a >= 25 and s.team_a - s.team_b >= 2 %}{{ active_match.team_a.abbr }}{% elif s.team_b >= 25 and s.team_b - s.team_a >= 2 %}{{ active_match.team_b.abbr }}{% else %}In Progress{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif active_match.sport_type in ['badminton', 'table_tennis', 'carrom'] %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Events & Rubbers Breakdown</h3>
+            <table class="cric-table">
+              <thead><tr><th>Match</th><th>Sets Won ({{ active_match.team_a.abbr }} - {{ active_match.team_b.abbr }})</th><th class="text-right">Live Score</th></tr></thead>
+              <tbody>
+                {% for ev in active_match.score.events %}
+                  <tr>
+                    <td><strong>{{ ev.name }}</strong></td>
+                    <td>{{ ev.sets_a }} - {{ ev.sets_b }}</td>
+                    <td class="text-right" style="color: #38bdf8; font-weight: 800;">{{ ev.current_points_a }} - {{ ev.current_points_b }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif active_match.sport_type == 'tug_of_war' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Tug of War Pulls Scorecard</h3>
+            <div style="font-size: 1.1rem; color: #fff; margin-bottom: 0.75rem;">Current Pulls: <strong>{{ active_match.team_a.abbr }} {{ active_match.score.pulls_team_a }} : {{ active_match.score.pulls_team_b }} {{ active_match.team_b.abbr }}</strong></div>
+          </div>
+        {% elif active_match.sport_type == 'athletics_distance' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Athletics Performance Leaderboard</h3>
+            <table class="cric-table">
+              <thead><tr><th>Rank</th><th>Athlete</th><th>Dept</th><th class="text-right">Attempts</th><th class="text-right">Best</th></tr></thead>
+              <tbody>
+                {% for ath in active_match.score.athletes %}
+                  <tr>
+                    <td><strong>#{{ ath.rank or loop.index }}</strong></td>
+                    <td>{{ ath.name }}</td>
+                    <td>{{ ath.department }}</td>
+                    <td class="text-right">{{ ath.attempts|join(', ') or '-' }}</td>
+                    <td class="text-right" style="color: #34d399; font-weight: 800;">{{ ath.best }}m</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" style="text-align: center; color: var(--text-dim);">No athlete attempts registered yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif active_match.sport_type == 'basketball_shootout' %}
+          <div>
+            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Basketball Shootout Scorecard</h3>
+            <table class="cric-table">
+              <thead><tr><th>Department</th><th class="text-right">Score</th><th class="text-right">Remaining Shots</th></tr></thead>
+              <tbody>
+                <tr><td><strong>{{ active_match.team_a.name }}</strong></td><td class="text-right" style="font-weight: 800; font-size: 1.1rem; color: #93c5fd;">{{ active_match.score.score_team_a }}</td><td class="text-right">{{ active_match.score.remaining_shots_a }}</td></tr>
+                <tr><td><strong>{{ active_match.team_b.name }}</strong></td><td class="text-right" style="font-weight: 800; font-size: 1.1rem; color: #6ee7b7;">{{ active_match.score.score_team_b }}</td><td class="text-right">{{ active_match.score.remaining_shots_b }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="color: var(--text-muted); padding: 1.5rem; text-align: center;">
+            Detailed events scorecard for {{ active_match.sport_name }} is active in the live tab.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TAB 3: SQUADS & LINEUPS (Cricbuzz-style) -->
+    <div class="tab-pane" id="tab-squads">
+      <div class="squads-container">
+        <!-- Team A Squad -->
+        <div class="squad-column">
+          <div class="squad-dept-header">
+            <div>
+              <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_a.name }}</h3>
+              <span style="font-size: 0.78rem; color: var(--text-dim);">Playing Squad ({{ (active_match.squads.team_a.playing|length) if (active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing) else 0 }})</span>
+            </div>
+            <div class="team-flag-box {{ active_match.team_a.code }}">{{ active_match.team_a.abbr }}</div>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin-bottom: 0.65rem;">
+              Playing Lineup
+            </div>
+            {% if active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing %}
+              {% for p in active_match.squads.team_a.playing %}
+                <div class="player-row">
+                  <div class="player-main-info">
+                    <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
+                    <span style="color: #fff; font-weight: 600;">{{ p.name }}</span>
+                    {% if p.is_captain or p.role == 'Captain' %}
+                      <span class="captain-tag">CAPTAIN</span>
+                    {% endif %}
+                  </div>
+                  <span class="student-id">{{ p.student_id or p.role }}</span>
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          {% if active_match.squads and active_match.squads.team_a and active_match.squads.team_a.substitutes and active_match.squads.team_a.substitutes|length > 0 %}
+          <div>
+            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.65rem;">
+              Bench / Substitutes (Fielding Only)
+            </div>
+            {% for s in active_match.squads.team_a.substitutes %}
+              <div class="player-row" style="opacity: 0.8;">
+                <div class="player-main-info">
+                  <i class="fa-solid fa-chair" style="color: var(--text-dim);"></i>
+                  <span>{{ s.name }}</span>
+                </div>
+                <span class="student-id">{{ s.student_id or s.role }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Team B Squad -->
+        <div class="squad-column">
+          <div class="squad-dept-header">
+            <div>
+              <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_b.name }}</h3>
+              <span style="font-size: 0.78rem; color: var(--text-dim);">Playing Squad ({{ (active_match.squads.team_b.playing|length) if (active_match.squads and active_match.squads.team_b and active_match.squads.team_b.playing) else 0 }})</span>
+            </div>
+            <div class="team-flag-box {{ active_match.team_b.code }}">{{ active_match.team_b.abbr }}</div>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin-bottom: 0.65rem;">
+              Playing Lineup
+            </div>
+            {% if active_match.squads and active_match.squads.team_b and active_match.squads.team_b.playing %}
+              {% for p in active_match.squads.team_b.playing %}
+                <div class="player-row">
+                  <div class="player-main-info">
+                    <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
+                    <span style="color: #fff; font-weight: 600;">{{ p.name }}</span>
+                    {% if p.is_captain or p.role == 'Captain' %}
+                      <span class="captain-tag">CAPTAIN</span>
+                    {% endif %}
+                  </div>
+                  <span class="student-id">{{ p.student_id or p.role }}</span>
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          {% if active_match.squads and active_match.squads.team_b and active_match.squads.team_b.substitutes and active_match.squads.team_b.substitutes|length > 0 %}
+          <div>
+            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.65rem;">
+              Bench / Substitutes (Fielding Only)
+            </div>
+            {% for s in active_match.squads.team_b.substitutes %}
+              <div class="player-row" style="opacity: 0.8;">
+                <div class="player-main-info">
+                  <i class="fa-solid fa-chair" style="color: var(--text-dim);"></i>
+                  <span>{{ s.name }}</span>
+                </div>
+                <span class="student-id">{{ s.student_id or s.role }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: COMMENTARY -->
+    <div class="tab-pane" id="tab-commentary">
+      <div class="panel-card" style="margin-top: 1.5rem;">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-timeline"></i> Ball-by-Ball Detailed Match Log</span>
+        </div>
+        <div class="commentary-feed" style="max-height: 600px;">
+          {% for comm in active_match.commentary|reverse %}
+            <div class="commentary-item {{ comm.type }}">
+              <div class="comm-ball">{{ comm.ball }}</div>
+              <div class="comm-text-group">
+                {% if comm.badge %}
+                  <span class="comm-badge" style="background: rgba(255,255,255,0.08); color: #38bdf8;">{{ comm.badge }}</span>
+                {% endif %}
+                <div class="comm-text">{{ comm.text }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">{{ comm.time }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: MATCH RULES (From attached Rulebook) -->
+    <div class="tab-pane" id="tab-rules">
+      <div class="panel-card" style="margin-top: 1.5rem;">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-scale-balanced"></i> Specific Regulations for {{ active_match.sport_name }}</span>
+          <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">Official Meet Rules</span>
+        </div>
+        <div class="rules-grid">
+          {% for reg in active_match.rulebook_highlights %}
+            <div class="rule-highlight-card">
+              <div class="rule-badge">{{ reg.badge }}</div>
+              <div class="rule-title">{{ reg.title }}</div>
+              <div class="rule-desc">{{ reg.desc }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="/static/js/index.js"></script>
+{% endblock %}

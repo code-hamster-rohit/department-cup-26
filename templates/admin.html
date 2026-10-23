@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Center · Department Cup 2026{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="admin-root">
+
+  {% if not is_admin %}
+    <!-- ACCESS RESTRICTED SCREEN FOR NON-ADMINS -->
+    <div style="max-width: 680px; margin: 3rem auto; background: var(--bg-card); border: 1.5px solid var(--border-medium); border-radius: var(--radius-xl); padding: 3rem 2rem; text-align: center; box-shadow: var(--shadow-lg);">
+      <div style="width: 72px; height: 72px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #ef4444; font-size: 2rem;">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      
+      <h2 style="font-family: var(--font-heading); color: #fff; font-size: 1.65rem; margin-bottom: 0.75rem;">
+        Administrator Access Restricted
+      </h2>
+
+      {% if current_user %}
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
+          You are signed in as <strong style="color: #93c5fd;">{{ current_user.email }}</strong>.
+          <br>This email address is <span style="color: #ef4444; font-weight: 700;">not registered</span> in the MongoDB <code>department_cup.admins</code> collection.
+        </p>
+
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-dim); text-align: left;">
+          <div style="color: #60a5fa; font-weight: 700; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-circle-info"></i> How to gain match creation privileges:
+          </div>
+          <div>1. Ensure your email is added to MongoDB Atlas under database <code>department_cup</code> and collection <code>admins</code>.</div>
+          <div>2. Or execute from terminal: <code style="background: rgba(0,0,0,0.5); padding: 0.2rem 0.5rem; border-radius: 4px; color: #34d399; font-weight: 600;">python manage_admins.py add {{ current_user.email }}</code></div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+          <a href="/" class="btn btn-primary">
+            <i class="fa-solid fa-satellite-dish"></i> Open Audience Arena
+          </a>
+          <a href="/auth/logout" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out / Switch Account
+          </a>
+        </div>
+      {% else %}
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem;">
+          Only tournament administrators whose Google emails are registered in MongoDB under <code>department_cup.admins</code> are allowed to initiate fixtures and update live scores.
+        </p>
+
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+          <a href="/auth/google/login?dest=admin" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; gap: 0.6rem;">
+            <i class="fa-brands fa-google"></i> Sign in with Google (Admin)
+          </a>
+          <a href="/" class="btn btn-secondary btn-lg">
+            <i class="fa-solid fa-tv"></i> Go to Audience Arena
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- VERIFIED ADMINISTRATOR DASHBOARD -->
+    
+    <!-- Verified Admin Strip -->
+    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.12)); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fa-solid fa-shield-check" style="color: #10b981; font-size: 1.35rem;"></i>
+        <div>
+          <span style="font-weight: 700; color: #fff; font-size: 0.92rem;">Verified Tournament Admin: {{ current_user.name }}</span>
+          <span style="font-size: 0.82rem; color: #93c5fd; margin-left: 0.5rem;">({{ current_user.email }})</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <button class="btn btn-secondary btn-sm" id="btn-open-admins-modal">
+          <i class="fa-solid fa-user-shield"></i> Admin Directory
+        </button>
+        <a href="/" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-tv"></i> Audience View
+        </a>
+      </div>
+    </div>
+
+    <!-- Header & Actions -->
+    <div class="admin-dashboard-header">
+      <div class="admin-title-group">
+        <h1>Tournament Match Control Center</h1>
+        <p>Initiate matches, announce official lineups & toss, and stream live scores to audience view.</p>
+      </div>
+
+      <div>
+        <button class="btn btn-primary btn-lg" id="btn-open-create-match">
+          <i class="fa-solid fa-plus-circle"></i> Start New Match
+        </button>
+      </div>
+    </div>
+
+    <!-- Matches Grid -->
+    <section>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="font-family: var(--font-heading); font-size: 1.35rem; color: #fff;">Scheduled & Active Matches ({{ matches|length }})</h2>
+        <span style="font-size: 0.85rem; color: var(--text-dim);">MongoDB Atlas synchronized</span>
+      </div>
+
+      {% if matches and matches|length > 0 %}
+      <div class="matches-admin-grid">
+        {% for m in matches %}
+        <div class="admin-match-card" id="match-card-{{ m.id }}">
+          <div>
+            <div class="admin-card-top">
+              <span class="sport-tag">{{ m.sport_icon }} {{ m.sport_name }}</span>
+              {% if m.status == 'live' %}
+                <span class="badge badge-live"><span class="pulse-dot"></span> LIVE</span>
+              {% elif m.status == 'squads_announced' %}
+                <span class="badge badge-squads">SQUADS SET</span>
+              {% elif m.status == 'upcoming' %}
+                <span class="badge badge-upcoming">UPCOMING</span>
+              {% else %}
+                <span class="badge badge-completed">FINAL</span>
+              {% endif %}
+            </div>
+
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.5rem;">
+              {{ m.venue }} · {{ m.stage }}
+            </div>
+
+            <div class="admin-teams-row">
+              <span class="team-item">{{ m.team_a.abbr }}</span>
+              <span class="vs-tag">VS</span>
+              <span class="team-item">{{ m.team_b.abbr }}</span>
+            </div>
+
+            <!-- Score Summary snippet -->
+            <div style="margin-top: 0.75rem; font-size: 0.85rem; color: #fff; font-weight: 600;">
+              {% if m.sport_type == 'cricket' %}
+                {% if m.score.innings == 1 %}
+                  {% set inn = m.score.innings_1 %}
+                {% else %}
+                  {% set inn = m.score.innings_2 %}
+                {% endif %}
+                {% if inn.team == 'team_a' %}
+                  {{ m.team_a.abbr }}: {{ inn.runs }}/{{ inn.wickets }} ({{ inn.overs }} ov)
+                {% else %}
+                  {{ m.team_b.abbr }}: {{ inn.runs }}/{{ inn.wickets }} ({{ inn.overs }} ov)
+                {% endif %}
+              {% elif m.sport_type == 'football' %}
+                {{ m.score.team_a_score }} : {{ m.score.team_b_score }} (Half {{ m.score.half }})
+              {% elif m.sport_type == 'penalty_shootout' %}
+                PK: {{ m.score.team_a_score }} - {{ m.score.team_b_score }}
+              {% elif m.sport_type == 'volleyball' %}
+                Sets: {{ m.score.sets_team_a }} - {{ m.score.sets_team_b }}
+              {% endif %}
+            </div>
+
+            <div style="margin-top: 0.4rem; font-size: 0.78rem;">
+              <span style="color: #f59e0b;">
+                {% if m.toss and m.toss.conducted %}
+                  <i class="fa-solid fa-coins"></i> {{ m.toss.summary }}
+                {% else %}
+                  <i class="fa-solid fa-clock"></i> Toss Pending
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          <div class="admin-card-actions">
+            <a href="/admin/match/{{ m.id }}" class="btn btn-primary btn-sm" style="flex: 1;">
+              <i class="fa-solid fa-sliders"></i> Open Control Room
+            </a>
+            <a href="/?match={{ m.id }}" target="_blank" class="btn btn-secondary btn-sm" title="View in Audience Arena">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+            <button class="btn btn-secondary btn-sm btn-delete-match" data-id="{{ m.id }}" style="color: #ef4444;" title="Delete Match">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="background: var(--bg-card); border: 1px dashed var(--border-medium); border-radius: var(--radius-xl); padding: 4rem 2rem; text-align: center;">
+        <i class="fa-solid fa-trophy" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem;"></i>
+        <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.4rem;">No Matches Initiated Yet</h3>
+        <p style="color: var(--text-muted); max-width: 500px; margin: 0.5rem auto 1.5rem;">
+          Click below to initiate your first match. It will immediately appear on the audience's screen!
+        </p>
+        <button class="btn btn-primary" id="btn-empty-start">
+          <i class="fa-solid fa-plus-circle"></i> Start First Match
+        </button>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- MODAL: CREATE NEW MATCH -->
+    <div class="modal-overlay" id="create-match-modal">
+      <div class="modal-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+          <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: #fff;">
+            <i class="fa-solid fa-calendar-plus" style="color: #3b82f6;"></i> Initiate Tournament Match
+          </h3>
+          <button id="btn-close-modal" style="background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="create-match-form">
+          <!-- Sport Selection -->
+          <div class="form-group">
+            <label class="form-label">Sport Event (From Official Rulebook)</label>
+            <select class="form-control" id="form-sport" required>
+              {% for s in sports %}
+                <option value="{{ s.id }}">
+                  {{ s.icon }} {{ s.name }} ({{ s.category }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Teams Selection -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Department Team 1</label>
+              <select class="form-control" id="form-team-a" required>
+                <option value="amsc" selected>AMSC (Applied Math)</option>
+                <option value="ppe">PPE (Polymer & Process)</option>
+                <option value="ppt">PPT (Pulp & Paper)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Department Team 2</label>
+              <select class="form-control" id="form-team-b" required>
+                <option value="ppe" selected>PPE (Polymer & Process)</option>
+                <option value="amsc">AMSC (Applied Math)</option>
+                <option value="ppt">PPT (Pulp & Paper)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Venue & Stage -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Venue</label>
+              <input type="text" class="form-control" id="form-venue" value="Main Sports Ground, IITR SRE" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Match Stage</label>
+              <select class="form-control" id="form-stage">
+                <option value="League Match">League Match</option>
+                <option value="Semi-Final">Semi-Final</option>
+                <option value="Grand Final">Grand Final</option>
+                <option value="Friendly Match">Friendly Match</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="overs-group">
+            <label class="form-label">Innings Overs (Default follows Rulebook: 10 overs / Box Cricket: 6)</label>
+            <input type="number" class="form-control" id="form-overs" min="1" max="50" placeholder="Rulebook default">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-match">
+              <i class="fa-solid fa-play"></i> Create & Open Control Room
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: ADMIN DIRECTORY (MongoDB admins list & add organizer) -->
+    <div class="modal-overlay" id="admins-directory-modal">
+      <div class="modal-content" style="max-width: 560px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+          <h3 style="font-family: var(--font-heading); color: #fff; font-size: 1.25rem;">
+            <i class="fa-solid fa-user-shield" style="color: #10b981;"></i> Tournament Admin Directory
+          </h3>
+          <button id="btn-close-admins-modal" style="background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+          These emails are stored in MongoDB <code>department_cup.admins</code> and granted full fixture creation & scoring rights.
+        </p>
+
+        <div id="admins-list-container" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1.25rem;">
+          <div style="color: var(--text-dim); font-size: 0.85rem;">Loading admins from MongoDB...</div>
+        </div>
+
+        <form id="form-add-admin" style="border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+          <label class="form-label" style="font-size: 0.82rem;">Add New Organizer Email to MongoDB</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="email" class="form-control" id="new-admin-email" placeholder="organizer@gmail.com" required style="font-size: 0.85rem;">
+            <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+              <i class="fa-solid fa-user-plus"></i> Add Admin
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="/static/js/admin.js"></script>
+{% endblock %}

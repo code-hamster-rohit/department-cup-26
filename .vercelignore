@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+.env
+data/
+tests/
+.git/
+.gitignore
+manage_admins.py
+*.pyc
