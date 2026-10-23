@@ -5,6 +5,7 @@ IIT Roorkee, Saharanpur Campus
 """
 
 import os
+import urllib.parse
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -43,25 +44,28 @@ async def lifespan(app: FastAPI):
 class VercelPathNormalizerMiddleware:
     """
     Normalizes request paths when deployed as a serverless function on Vercel.
-    When Vercel rewrites routes to api/index.py, it passes the original client path
-    in the `x-matched-path` header while setting `scope['path']` to `/api/index.py`.
-    This middleware restores `scope['path']` to the true user path before routing.
+    When Vercel rewrites routes to api/index.py?__path__=/$1, this middleware extracts
+    __path__ and sets scope['path'] to the true requested client URL (e.g. /admin, /static/css/base.css).
+    It also cleans up the query string so routers and endpoints receive clean query parameters.
     """
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
         if scope["type"] in ("http", "websocket"):
-            headers = dict(scope.get("headers", []))
-            matched = (
-                headers.get(b"x-matched-path")
-                or headers.get(b"x-original-url")
-                or headers.get(b"x-forwarded-uri")
-            )
-            if matched:
-                path = matched.decode("utf-8").split("?")[0]
-                scope["path"] = path
-                scope["raw_path"] = path.encode("utf-8")
+            query_string = scope.get("query_string", b"").decode("latin1")
+            params = urllib.parse.parse_qs(query_string)
+
+            if "__path__" in params and params["__path__"]:
+                req_path = params["__path__"][0]
+                if not req_path.startswith("/"):
+                    req_path = "/" + req_path
+                scope["path"] = req_path
+                scope["raw_path"] = req_path.encode("utf-8")
+
+                del params["__path__"]
+                new_qs = urllib.parse.urlencode(params, doseq=True)
+                scope["query_string"] = new_qs.encode("latin1")
             else:
                 raw_path = scope.get("path", "")
                 if raw_path in ("/api/index.py", "/api/index", "/api", "/api/"):
@@ -128,8 +132,6 @@ def get_session_user_context(request: Request) -> tuple[dict | None, bool]:
 # -----------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
-@app.get("/api/index.py", response_class=HTMLResponse)
-@app.get("/api/index", response_class=HTMLResponse)
 async def audience_view(request: Request, match: str | None = None):
     # Handle incoming OAuth code redirect if present
     if request.query_params.get("code"):
