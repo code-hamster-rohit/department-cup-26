@@ -166,6 +166,21 @@ async def get_match_detail(match_id: str):
 @api_router.post("/match/create")
 async def api_create_match(payload: CreateMatchRequest, request: Request):
     verify_admin_access(request)
+    
+    # Verify MongoDB connectivity before creating match in serverless environment
+    from database.mongo import get_db, MONGO_URI
+    if not MONGO_URI or "<cluster>" in MONGO_URI or "<username>" in MONGO_URI or "<password>" in MONGO_URI:
+        raise HTTPException(
+            status_code=500,
+            detail="MONGO_URI in Vercel contains placeholder text ('<cluster>'). Please update MONGO_URI in Vercel Project Settings with your actual MongoDB connection string."
+        )
+    db = get_db()
+    if db is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Database connection to MongoDB Atlas failed. Please check MONGO_URI in Vercel Environment Variables and verify that MongoDB Atlas Network Access allows 0.0.0.0/0."
+        )
+
     try:
         match = await create_match(
             sport_id=payload.sport_id,
