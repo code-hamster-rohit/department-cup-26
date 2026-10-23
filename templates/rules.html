@@ -9,7 +9,7 @@
 {% block content %}
 <div style="max-width: 1200px; margin: 0 auto;">
   <div style="margin-bottom: 2rem; text-align: center;">
-    <h1 style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: #fff; letter-spacing: -0.02em;">
+    <h1 style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">
       Official Rules & Regulations
     </h1>
     <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 700px; margin: 0.5rem auto 0;">
@@ -18,15 +18,15 @@
     </p>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 2rem;">
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
     {% for sport in sports %}
-    <div class="panel-card" id="rule-{{ sport.id }}" style="border-top: 4px solid var(--border-accent);">
+    <div class="panel-card" id="rule-{{ sport.id }}" style="border-top: 4px solid var(--accent-blue);">
       <div class="panel-header">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
           <span style="font-size: 1.75rem;">{{ sport.icon }}</span>
           <div>
-            <h2 style="font-family: var(--font-heading); font-size: 1.4rem; color: #fff;">{{ sport.name }}</h2>
-            <span style="font-size: 0.8rem; color: var(--text-dim);">Category: {{ sport.category }} · {{ sport.squad.notation or '' }}</span>
+            <h2 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main);">{{ sport.name }}</h2>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">Category: {{ sport.category }} · {{ sport.squad.notation or '' }}</span>
           </div>
         </div>
 
@@ -34,7 +34,7 @@
       </div>
 
       <!-- Specific Highlights -->
-      <div style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin-bottom: 0.75rem;">
+      <div style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 0.75rem;">
         Key Tournament Regulations
       </div>
       <div class="rules-grid" style="margin-top: 0; margin-bottom: 1.5rem;">
@@ -49,9 +49,9 @@
 
       <!-- General Rules List -->
       {% if sport.squad.rules %}
-      <div style="background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 1rem; border: 1px solid var(--border-subtle);">
-        <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Squad & Participation Guidelines:</div>
-        <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+      <div style="background: #f8fafc; border-radius: var(--radius-md); padding: 1rem; border: 1px solid var(--border-subtle);">
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Squad & Participation Guidelines:</div>
+        <ul style="padding-left: 1.25rem; font-size: 0.88rem; color: var(--text-body); line-height: 1.6;">
           {% for r in sport.squad.rules %}
             <li>{{ r }}</li>
           {% endfor %}

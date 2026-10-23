@@ -442,13 +442,13 @@
 
             <!-- Score Cards -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
-              <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center;">
-                <div style="font-weight: 700; color: #93c5fd; font-size: 1.1rem;">{{ active_match.team_a.name }}</div>
-                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: #fff;" id="fb-score-a">{{ active_match.score.team_a_score }}</div>
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1.25rem; text-align: center;">
+                <div style="font-weight: 700; color: #1d4ed8; font-size: 1.1rem;">{{ active_match.team_a.name }}</div>
+                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: var(--text-main);" id="fb-score-a">{{ active_match.score.team_a_score }}</div>
               </div>
-              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center;">
-                <div style="font-weight: 700; color: #6ee7b7; font-size: 1.1rem;">{{ active_match.team_b.name }}</div>
-                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: #fff;" id="fb-score-b">{{ active_match.score.team_b_score }}</div>
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 1.25rem; text-align: center;">
+                <div style="font-weight: 700; color: #047857; font-size: 1.1rem;">{{ active_match.team_b.name }}</div>
+                <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: var(--text-main);" id="fb-score-b">{{ active_match.score.team_b_score }}</div>
               </div>
             </div>
 
@@ -459,19 +459,19 @@
             <div id="fb-events-container" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto;">
               {% if active_match.score.events and active_match.score.events|length > 0 %}
                 {% for ev in active_match.score.events|reverse %}
-                  <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                  <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.6rem 0.85rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
                     <div>
                       {% if ev.type == 'goal' %}
-                        <span style="color: #34d399; font-weight: 700;">⚽ GOAL!</span>
+                        <span style="color: #059669; font-weight: 700;">⚽ GOAL!</span>
                       {% elif 'yellow' in ev.type %}
-                        <span style="color: #fbbf24; font-weight: 700;">🟨 YELLOW CARD</span>
+                        <span style="color: #d97706; font-weight: 700;">🟨 YELLOW CARD</span>
                       {% else %}
-                        <span style="color: #ef4444; font-weight: 700;">🟥 RED CARD</span>
+                        <span style="color: #dc2626; font-weight: 700;">🟥 RED CARD</span>
                       {% endif %}
-                      <strong style="color: #fff; margin-left: 0.4rem;">{{ ev.player }}</strong>
-                      <span style="color: var(--text-dim); margin-left: 0.3rem;">({{ active_match.team_a.abbr if ev.team == 'team_a' else (active_match.team_b.abbr if ev.team == 'team_b' else ev.team) }})</span>
+                      <strong style="color: var(--text-main); margin-left: 0.4rem;">{{ ev.player }}</strong>
+                      <span style="color: var(--text-muted); margin-left: 0.3rem;">({{ active_match.team_a.abbr if ev.team == 'team_a' else (active_match.team_b.abbr if ev.team == 'team_b' else ev.team) }})</span>
                     </div>
-                    <span style="color: #93c5fd; font-weight: 600;">{{ ev.minute }}</span>
+                    <span style="color: var(--accent-blue); font-weight: 600;">{{ ev.minute }}</span>
                   </div>
                 {% endfor %}
               {% else %}
@@ -496,10 +496,10 @@
             </div>
 
             <!-- Team A Kicks Matrix -->
-            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                <strong style="color: #93c5fd; font-size: 1.05rem;">{{ active_match.team_a.name }}</strong>
-                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: #fff;">{{ active_match.score.team_a_score }} Goals</span>
+                <strong style="color: #1d4ed8; font-size: 1.05rem;">{{ active_match.team_a.name }}</strong>
+                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: var(--text-main);">{{ active_match.score.team_a_score }} Goals</span>
               </div>
               <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                 {% for k in active_match.score.team_a_kicks %}
@@ -523,10 +523,10 @@
             </div>
 
             <!-- Team B Kicks Matrix -->
-            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
+            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 1.25rem; margin-top: 1rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                <strong style="color: #6ee7b7; font-size: 1.05rem;">{{ active_match.team_b.name }}</strong>
-                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: #fff;">{{ active_match.score.team_b_score }} Goals</span>
+                <strong style="color: #047857; font-size: 1.05rem;">{{ active_match.team_b.name }}</strong>
+                <span style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 900; color: var(--text-main);">{{ active_match.score.team_b_score }} Goals</span>
               </div>
               <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
                 {% for k in active_match.score.team_b_kicks %}
@@ -556,9 +556,9 @@
             </div>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
               {% for s in active_match.score.set_scores %}
-                <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-medium); border-radius: 12px; padding: 1rem 1.5rem; flex: 1; min-width: 140px; text-align: center;">
-                  <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Set {{ s.set }}</div>
-                  <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 0.25rem;">
+                <div style="background: #f8fafc; border: 1px solid var(--border-medium); border-radius: 12px; padding: 1rem 1.5rem; flex: 1; min-width: 140px; text-align: center;">
+                  <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Set {{ s.set }}</div>
+                  <div style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">
                     {{ s.team_a }} - {{ s.team_b }}
                   </div>
                 </div>
@@ -572,12 +572,12 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
               {% for ev in active_match.score.events %}
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
                   <div>
-                    <strong style="color: #fff;">{{ ev.name }}</strong>
-                    <div style="font-size: 0.75rem; color: var(--text-dim);">Sets won: {{ ev.sets_a }} - {{ ev.sets_b }}</div>
+                    <strong style="color: var(--text-main);">{{ ev.name }}</strong>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">Sets won: {{ ev.sets_a }} - {{ ev.sets_b }}</div>
                   </div>
-                  <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #38bdf8;">
+                  <div style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--accent-blue);">
                     {{ ev.current_points_a }} - {{ ev.current_points_b }}
                   </div>
                 </div>
@@ -590,8 +590,8 @@
               <span class="badge badge-live">Pull {{ active_match.score.current_pull }}</span>
             </div>
             <div style="padding: 1rem; text-align: center;">
-              <div style="font-size: 1.1rem; color: #fff; margin-bottom: 0.5rem;">Pulls Standing:</div>
-              <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">
+              <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Pulls Standing:</div>
+              <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: var(--text-main);">
                 {{ active_match.team_a.abbr }} {{ active_match.score.pulls_team_a }} : {{ active_match.score.pulls_team_b }} {{ active_match.team_b.abbr }}
               </div>
             </div>
@@ -633,15 +633,15 @@
               <span class="panel-title">Basketball Shootout Cumulative Points</span>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center; margin-top: 1rem;">
-              <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 1.5rem; border-radius: 12px;">
-                <div style="font-weight: 700; color: #93c5fd;">{{ active_match.team_a.abbr }}</div>
-                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">{{ active_match.score.score_team_a }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-dim);">Remaining Shots: {{ active_match.score.remaining_shots_a }}</div>
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1.5rem; border-radius: 12px;">
+                <div style="font-weight: 700; color: #1d4ed8;">{{ active_match.team_a.abbr }}</div>
+                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: var(--text-main);">{{ active_match.score.score_team_a }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Remaining Shots: {{ active_match.score.remaining_shots_a }}</div>
               </div>
-              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.5rem; border-radius: 12px;">
-                <div style="font-weight: 700; color: #6ee7b7;">{{ active_match.team_b.abbr }}</div>
-                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: #fff;">{{ active_match.score.score_team_b }}</div>
-                <div style="font-size: 0.75rem; color: var(--text-dim);">Remaining Shots: {{ active_match.score.remaining_shots_b }}</div>
+              <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1.5rem; border-radius: 12px;">
+                <div style="font-weight: 700; color: #047857;">{{ active_match.team_b.abbr }}</div>
+                <div style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 900; color: var(--text-main);">{{ active_match.score.score_team_b }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Remaining Shots: {{ active_match.score.remaining_shots_b }}</div>
               </div>
             </div>
           {% endif %}
@@ -716,13 +716,13 @@
 
               <!-- Extras & Total -->
               {% set ex1 = active_match.score.innings_1.extras %}
-              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
+              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
                 <span><strong>Extras:</strong> (w {{ ex1.wides }}, nb {{ ex1.no_balls }}, b {{ ex1.byes }}, lb {{ ex1.leg_byes }}, pen {{ ex1.penalty }})</span>
                 <strong>{{ ex1.wides + ex1.no_balls + ex1.byes + ex1.leg_byes + ex1.penalty }}</strong>
               </div>
-              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid rgba(56, 189, 248, 0.25);">
+              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: #eff6ff; border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid #bfdbfe;">
                 <span><strong>TOTAL</strong> ({{ active_match.score.innings_1.overs }} Ov, RR: {{ active_match.score.innings_1.crr }})</span>
-                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff;">{{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }}</span>
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ active_match.score.innings_1.runs }}/{{ active_match.score.innings_1.wickets }}</span>
               </div>
 
               <!-- Bowling Analysis Table -->
@@ -794,13 +794,13 @@
 
               <!-- Extras & Total -->
               {% set ex2 = active_match.score.innings_2.extras %}
-              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
+              <div style="display: flex; justify-content: space-between; padding: 0.65rem 0.85rem; background: #f8fafc; border-radius: 6px; font-size: 0.85rem; margin-top: 0.5rem; border: 1px solid var(--border-subtle);">
                 <span><strong>Extras:</strong> (w {{ ex2.wides }}, nb {{ ex2.no_balls }}, b {{ ex2.byes }}, lb {{ ex2.leg_byes }}, pen {{ ex2.penalty }})</span>
                 <strong>{{ ex2.wides + ex2.no_balls + ex2.byes + ex2.leg_byes + ex2.penalty }}</strong>
               </div>
-              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid rgba(56, 189, 248, 0.25);">
+              <div style="display: flex; justify-content: space-between; padding: 0.75rem 0.85rem; background: #eff6ff; border-radius: 6px; font-size: 0.95rem; margin-top: 0.4rem; border: 1px solid #bfdbfe;">
                 <span><strong>TOTAL</strong> ({{ active_match.score.innings_2.overs }} Ov, RR: {{ active_match.score.innings_2.crr }})</span>
-                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #fff;">{{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }}</span>
+                <span style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--text-main);">{{ active_match.score.innings_2.runs }}/{{ active_match.score.innings_2.wickets }}</span>
               </div>
 
               <!-- Bowling Analysis Table -->
@@ -944,8 +944,8 @@
           </div>
         {% elif active_match.sport_type == 'tug_of_war' %}
           <div>
-            <h3 style="color: #38bdf8; margin-bottom: 0.75rem; font-size: 1.1rem;">Tug of War Pulls Scorecard</h3>
-            <div style="font-size: 1.1rem; color: #fff; margin-bottom: 0.75rem;">Current Pulls: <strong>{{ active_match.team_a.abbr }} {{ active_match.score.pulls_team_a }} : {{ active_match.score.pulls_team_b }} {{ active_match.team_b.abbr }}</strong></div>
+            <h3 style="color: var(--accent-blue); margin-bottom: 0.75rem; font-size: 1.1rem;">Tug of War Pulls Scorecard</h3>
+            <div style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.75rem;">Current Pulls: <strong>{{ active_match.team_a.abbr }} {{ active_match.score.pulls_team_a }} : {{ active_match.score.pulls_team_b }} {{ active_match.team_b.abbr }}</strong></div>
           </div>
         {% elif active_match.sport_type == 'athletics_distance' %}
           <div>
@@ -993,22 +993,22 @@
         <div class="squad-column">
           <div class="squad-dept-header">
             <div>
-              <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_a.name }}</h3>
-              <span style="font-size: 0.78rem; color: var(--text-dim);">Playing Squad ({{ (active_match.squads.team_a.playing|length) if (active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing) else 0 }})</span>
+              <h3 style="color: var(--text-main); font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_a.name }}</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Playing Squad ({{ (active_match.squads.team_a.playing|length) if (active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing) else 0 }})</span>
             </div>
             <div class="team-flag-box {{ active_match.team_a.code }}">{{ active_match.team_a.abbr }}</div>
           </div>
 
           <div style="margin-bottom: 1.5rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin-bottom: 0.65rem;">
+            <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 0.65rem;">
               Playing Lineup
             </div>
             {% if active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing %}
               {% for p in active_match.squads.team_a.playing %}
                 <div class="player-row">
                   <div class="player-main-info">
-                    <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
-                    <span style="color: #fff; font-weight: 600;">{{ p.name }}</span>
+                    <i class="fa-solid fa-user-check" style="color: #059669;"></i>
+                    <span style="color: var(--text-main); font-weight: 600;">{{ p.name }}</span>
                     {% if p.is_captain or p.role == 'Captain' %}
                       <span class="captain-tag">CAPTAIN</span>
                     {% endif %}
@@ -1018,45 +1018,28 @@
               {% endfor %}
             {% endif %}
           </div>
-
-          {% if active_match.squads and active_match.squads.team_a and active_match.squads.team_a.substitutes and active_match.squads.team_a.substitutes|length > 0 %}
-          <div>
-            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.65rem;">
-              Bench / Substitutes (Fielding Only)
-            </div>
-            {% for s in active_match.squads.team_a.substitutes %}
-              <div class="player-row" style="opacity: 0.8;">
-                <div class="player-main-info">
-                  <i class="fa-solid fa-chair" style="color: var(--text-dim);"></i>
-                  <span>{{ s.name }}</span>
-                </div>
-                <span class="student-id">{{ s.student_id or s.role }}</span>
-              </div>
-            {% endfor %}
-          </div>
-          {% endif %}
         </div>
 
         <!-- Team B Squad -->
         <div class="squad-column">
           <div class="squad-dept-header">
             <div>
-              <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_b.name }}</h3>
-              <span style="font-size: 0.78rem; color: var(--text-dim);">Playing Squad ({{ (active_match.squads.team_b.playing|length) if (active_match.squads and active_match.squads.team_b and active_match.squads.team_b.playing) else 0 }})</span>
+              <h3 style="color: var(--text-main); font-family: var(--font-heading); font-size: 1.25rem;">{{ active_match.team_b.name }}</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Playing Squad ({{ (active_match.squads.team_b.playing|length) if (active_match.squads and active_match.squads.team_b and active_match.squads.team_b.playing) else 0 }})</span>
             </div>
             <div class="team-flag-box {{ active_match.team_b.code }}">{{ active_match.team_b.abbr }}</div>
           </div>
 
           <div style="margin-bottom: 1.5rem;">
-            <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin-bottom: 0.65rem;">
+            <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 0.65rem;">
               Playing Lineup
             </div>
             {% if active_match.squads and active_match.squads.team_b and active_match.squads.team_b.playing %}
               {% for p in active_match.squads.team_b.playing %}
                 <div class="player-row">
                   <div class="player-main-info">
-                    <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
-                    <span style="color: #fff; font-weight: 600;">{{ p.name }}</span>
+                    <i class="fa-solid fa-user-check" style="color: #059669;"></i>
+                    <span style="color: var(--text-main); font-weight: 600;">{{ p.name }}</span>
                     {% if p.is_captain or p.role == 'Captain' %}
                       <span class="captain-tag">CAPTAIN</span>
                     {% endif %}
@@ -1066,6 +1049,7 @@
               {% endfor %}
             {% endif %}
           </div>
+        </div>
 
           {% if active_match.squads and active_match.squads.team_b and active_match.squads.team_b.substitutes and active_match.squads.team_b.substitutes|length > 0 %}
           <div>

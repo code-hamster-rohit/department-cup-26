@@ -16,22 +16,22 @@
         <i class="fa-solid fa-shield-halved"></i>
       </div>
       
-      <h2 style="font-family: var(--font-heading); color: #fff; font-size: 1.65rem; margin-bottom: 0.75rem;">
+      <h2 style="font-family: var(--font-heading); color: var(--text-main); font-size: 1.65rem; margin-bottom: 0.75rem;">
         Administrator Access Restricted
       </h2>
 
       {% if current_user %}
         <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
-          You are signed in as <strong style="color: #93c5fd;">{{ current_user.email }}</strong>.
+          You are signed in as <strong style="color: #2563eb;">{{ current_user.email }}</strong>.
           <br>This email address is <span style="color: #ef4444; font-weight: 700;">not registered</span> in the MongoDB <code>department_cup.admins</code> collection.
         </p>
 
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-dim); text-align: left;">
-          <div style="color: #60a5fa; font-weight: 700; margin-bottom: 0.4rem;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-muted); text-align: left;">
+          <div style="color: #2563eb; font-weight: 700; margin-bottom: 0.4rem;">
             <i class="fa-solid fa-circle-info"></i> How to gain match creation privileges:
           </div>
           <div>1. Ensure your email is added to MongoDB Atlas under database <code>department_cup</code> and collection <code>admins</code>.</div>
-          <div>2. Or execute from terminal: <code style="background: rgba(0,0,0,0.5); padding: 0.2rem 0.5rem; border-radius: 4px; color: #34d399; font-weight: 600;">python manage_admins.py add {{ current_user.email }}</code></div>
+          <div>2. Or execute from terminal: <code style="background: #0f172a; padding: 0.2rem 0.5rem; border-radius: 4px; color: #10b981; font-weight: 600;">python manage_admins.py add {{ current_user.email }}</code></div>
         </div>
 
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
@@ -66,8 +66,8 @@
       <div style="display: flex; align-items: center; gap: 0.75rem;">
         <i class="fa-solid fa-shield-check" style="color: #10b981; font-size: 1.35rem;"></i>
         <div>
-          <span style="font-weight: 700; color: #fff; font-size: 0.92rem;">Verified Tournament Admin: {{ current_user.name }}</span>
-          <span style="font-size: 0.82rem; color: #93c5fd; margin-left: 0.5rem;">({{ current_user.email }})</span>
+          <span style="font-weight: 700; color: var(--text-main); font-size: 0.92rem;">Verified Tournament Admin: {{ current_user.name }}</span>
+          <span style="font-size: 0.82rem; color: #2563eb; margin-left: 0.5rem;">({{ current_user.email }})</span>
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -97,7 +97,7 @@
     <!-- Matches Grid -->
     <section>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-family: var(--font-heading); font-size: 1.35rem; color: #fff;">Scheduled & Active Matches ({{ matches|length }})</h2>
+        <h2 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main);">Scheduled & Active Matches ({{ matches|length }})</h2>
         <span style="font-size: 0.85rem; color: var(--text-dim);">MongoDB Atlas synchronized</span>
       </div>
 
@@ -130,7 +130,7 @@
             </div>
 
             <!-- Score Summary snippet -->
-            <div style="margin-top: 0.75rem; font-size: 0.85rem; color: #fff; font-weight: 600;">
+            <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-main); font-weight: 600;">
               {% if m.sport_type == 'cricket' %}
                 {% if m.score.innings == 1 %}
                   {% set inn = m.score.innings_1 %}
@@ -179,7 +179,7 @@
       {% else %}
       <div style="background: var(--bg-card); border: 1px dashed var(--border-medium); border-radius: var(--radius-xl); padding: 4rem 2rem; text-align: center;">
         <i class="fa-solid fa-trophy" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 1rem;"></i>
-        <h3 style="color: #fff; font-family: var(--font-heading); font-size: 1.4rem;">No Matches Initiated Yet</h3>
+        <h3 style="color: var(--text-main); font-family: var(--font-heading); font-size: 1.4rem;">No Matches Initiated Yet</h3>
         <p style="color: var(--text-muted); max-width: 500px; margin: 0.5rem auto 1.5rem;">
           Click below to initiate your first match. It will immediately appear on the audience's screen!
         </p>
@@ -194,7 +194,7 @@
     <div class="modal-overlay" id="create-match-modal">
       <div class="modal-content">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-          <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: #fff;">
+          <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main);">
             <i class="fa-solid fa-calendar-plus" style="color: #3b82f6;"></i> Initiate Tournament Match
           </h3>
           <button id="btn-close-modal" style="background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;">
@@ -273,7 +273,7 @@
     <div class="modal-overlay" id="admins-directory-modal">
       <div class="modal-content" style="max-width: 560px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
-          <h3 style="font-family: var(--font-heading); color: #fff; font-size: 1.25rem;">
+          <h3 style="font-family: var(--font-heading); color: var(--text-main); font-size: 1.25rem;">
             <i class="fa-solid fa-user-shield" style="color: #10b981;"></i> Tournament Admin Directory
           </h3>
           <button id="btn-close-admins-modal" style="background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;">
@@ -285,7 +285,7 @@
           These emails are stored in MongoDB <code>department_cup.admins</code> and granted full fixture creation & scoring rights.
         </p>
 
-        <div id="admins-list-container" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1.25rem;">
+        <div id="admins-list-container" style="max-height: 200px; overflow-y: auto; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1.25rem;">
           <div style="color: var(--text-dim); font-size: 0.85rem;">Loading admins from MongoDB...</div>
         </div>
 

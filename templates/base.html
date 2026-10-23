@@ -21,27 +21,29 @@
   <link rel="stylesheet" href="/static/css/base.css">
   {% block extra_css %}{% endblock %}
 </head>
-<body class="theme-dark" data-google-client-id="{{ google_client_id or '' }}">
+<body class="theme-light" data-google-client-id="{{ google_client_id or '' }}">
   <!-- Top Global Header / Navigation -->
   <header class="app-header">
     <div class="header-container">
-      <a href="/" class="brand-logo" id="nav-brand-logo">
-        <div class="logo-emblem">🏆</div>
-        <div class="brand-text">
-          <span class="brand-title">DEPARTMENT CUP <span class="year-badge">2026</span></span>
-          <span class="brand-subtitle">IIT Roorkee · Saharanpur Campus · Inter-Dept Sports Meet</span>
-        </div>
-      </a>
+      <div class="header-left">
+        <a href="/" class="brand-logo" id="nav-brand-logo">
+          <div class="logo-emblem">🏆</div>
+          <div class="brand-text">
+            <span class="brand-title">DEPARTMENT CUP <span class="year-badge">2026</span></span>
+            <span class="brand-subtitle">IIT Roorkee · Saharanpur Campus · Inter-Dept Sports Meet</span>
+          </div>
+        </a>
 
-      <div class="header-center-info">
-        <div class="live-status-pill" id="global-live-indicator">
-          <span class="pulse-dot"></span>
-          <span class="status-text">LIVE NETWORK</span>
+        <div class="header-live-wrap">
+          <div class="live-status-pill" id="global-live-indicator">
+            <span class="pulse-dot"></span>
+            <span class="status-text">LIVE NETWORK</span>
+          </div>
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-        <nav class="app-nav">
+      <div class="header-right">
+        <nav class="app-nav" id="app-nav-bar">
           <a href="/" class="nav-item {% if active_nav == 'audience' %}active{% endif %}" id="nav-link-audience">
             <i class="fa-solid fa-satellite-dish"></i>
             <span>Audience Arena</span>
@@ -65,7 +67,7 @@
               {% else %}
                 <div class="user-avatar-initials">{{ current_user.name[:1] | upper }}</div>
               {% endif %}
-              <div style="display: flex; flex-direction: column; line-height: 1.2;">
+              <div class="user-profile-meta">
                 <span class="user-name">{{ current_user.name }}</span>
                 {% if is_admin %}
                   <span class="badge-admin"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
@@ -88,14 +90,14 @@
               <div class="g_id_signin"
                    data-type="standard"
                    data-shape="pill"
-                   data-theme="filled_blue"
+                   data-theme="outline"
                    data-text="signin_with"
                    data-size="medium"
                    data-logo_alignment="left">
               </div>
               <!-- Direct OAuth Fallback -->
               <a href="/auth/google/login?dest={{ active_nav or 'audience' }}" class="btn-google-fallback" id="btn-google-fallback" title="Sign in with Google">
-                <i class="fa-brands fa-google"></i> Sign In
+                <i class="fa-brands fa-google"></i> <span>Sign In</span>
               </a>
             </div>
           {% endif %}
@@ -113,18 +115,18 @@
   <!-- MODAL: ADMIN DESTINATION CHOICE (Triggered when verified admin signs in) -->
   <div class="modal-overlay {% if show_dest_modal %}open{% endif %}" id="admin-destination-modal">
     <div class="modal-content admin-destination-content">
-      <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div class="modal-header-section">
         <div class="dest-badge">
-          <i class="fa-solid fa-shield-check" style="color: #10b981;"></i>
+          <i class="fa-solid fa-shield-check"></i>
           <span>VERIFIED TOURNAMENT ADMINISTRATOR</span>
         </div>
-        <h2 style="font-family: var(--font-heading); font-size: 1.6rem; color: #fff; margin-top: 0.75rem;">
+        <h2 class="dest-title">
           Welcome, <span id="dest-user-name">{{ current_user.name if current_user else 'Admin' }}</span>!
         </h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
-          Your email <strong style="color: #93c5fd;" id="dest-user-email">{{ current_user.email if current_user else '' }}</strong> is confirmed in MongoDB <code>department_cup.admins</code>.
+        <p class="dest-subtitle">
+          Your email <strong id="dest-user-email">{{ current_user.email if current_user else '' }}</strong> is confirmed in MongoDB <code>department_cup.admins</code>.
         </p>
-        <p style="color: #e2e8f0; font-size: 1rem; font-weight: 600; margin-top: 1rem;">
+        <p class="dest-prompt">
           Where would you like to proceed?
         </p>
       </div>
@@ -149,7 +151,7 @@
         </a>
       </div>
 
-      <div style="text-align: center; margin-top: 1.5rem;">
+      <div class="modal-footer-section">
         <button class="btn btn-secondary btn-sm" id="btn-dismiss-dest-modal">
           Dismiss (Stay on Current Page)
         </button>
