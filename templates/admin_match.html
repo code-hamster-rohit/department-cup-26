@@ -104,40 +104,34 @@
       </div>
     </div>
 
-    <!-- Squads View / Confirmation -->
+    <!-- Final Squad Entry & Toss Confirmation -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
       <!-- Team A Lineup -->
-      <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem;">
-        <h4 style="color: #2563eb; font-family: var(--font-heading); margin-bottom: 0.5rem;">
-          {{ match.team_a.name }} Roster ({{ (match.squads.team_a.playing|length) if (match.squads and match.squads.team_a and match.squads.team_a.playing) else 0 }} Playing)
-        </h4>
-        <div style="max-height: 250px; overflow-y: auto;">
-          {% if match.squads and match.squads.team_a and match.squads.team_a.playing %}
-            {% for p in match.squads.team_a.playing %}
-              <div style="display: flex; justify-content: space-between; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-bottom: 1px solid var(--border-subtle);">
-                <span>{{ p.name }} {% if p.is_captain or p.role == 'Captain' %}<strong>(C)</strong>{% endif %}</span>
-                <span style="color: var(--text-dim);">{{ p.student_id or p.role }}</span>
-              </div>
-            {% endfor %}
-          {% endif %}
+      <div style="background: var(--bg-secondary); border: 1.5px solid #bfdbfe; border-radius: var(--radius-md); padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+          <h4 style="color: #2563eb; font-family: var(--font-heading); margin: 0; font-size: 1rem;">
+            <i class="fa-solid fa-users"></i> {{ match.team_a.name }} ({{ match.team_a.abbr }}) Squad
+          </h4>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">1 player/line · Mark (C) for Captain</span>
         </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Type or edit the final playing squad before commencing the match:
+        </p>
+        <textarea id="squad-team-a-input" class="form-control" rows="8" style="font-family: monospace; font-size: 0.9rem; line-height: 1.5; resize: vertical;" placeholder="Player 1 (C)&#10;Player 2&#10;Player 3">{% if match.squads and match.squads.team_a and match.squads.team_a.playing %}{% for p in match.squads.team_a.playing %}{{ p.name }}{% if p.is_captain or p.role == 'Captain' %} (C){% endif %}&#10;{% endfor %}{% endif %}</textarea>
       </div>
 
       <!-- Team B Lineup -->
-      <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem;">
-        <h4 style="color: #059669; font-family: var(--font-heading); margin-bottom: 0.5rem;">
-          {{ match.team_b.name }} Roster ({{ (match.squads.team_b.playing|length) if (match.squads and match.squads.team_b and match.squads.team_b.playing) else 0 }} Playing)
-        </h4>
-        <div style="max-height: 250px; overflow-y: auto;">
-          {% if match.squads and match.squads.team_b and match.squads.team_b.playing %}
-            {% for p in match.squads.team_b.playing %}
-              <div style="display: flex; justify-content: space-between; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-bottom: 1px solid var(--border-subtle);">
-                <span>{{ p.name }} {% if p.is_captain or p.role == 'Captain' %}<strong>(C)</strong>{% endif %}</span>
-                <span style="color: var(--text-dim);">{{ p.student_id or p.role }}</span>
-              </div>
-            {% endfor %}
-          {% endif %}
+      <div style="background: var(--bg-secondary); border: 1.5px solid #a7f3d0; border-radius: var(--radius-md); padding: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+          <h4 style="color: #059669; font-family: var(--font-heading); margin: 0; font-size: 1rem;">
+            <i class="fa-solid fa-users"></i> {{ match.team_b.name }} ({{ match.team_b.abbr }}) Squad
+          </h4>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">1 player/line · Mark (C) for Captain</span>
         </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Type or edit the final playing squad before commencing the match:
+        </p>
+        <textarea id="squad-team-b-input" class="form-control" rows="8" style="font-family: monospace; font-size: 0.9rem; line-height: 1.5; resize: vertical;" placeholder="Player 1 (C)&#10;Player 2&#10;Player 3">{% if match.squads and match.squads.team_b and match.squads.team_b.playing %}{% for p in match.squads.team_b.playing %}{{ p.name }}{% if p.is_captain or p.role == 'Captain' %} (C){% endif %}&#10;{% endfor %}{% endif %}</textarea>
       </div>
     </div>
 
@@ -452,29 +446,8 @@
         </div>
       </div>
 
-      <!-- Right: Live Feed & Specific Regulations -->
+      <!-- Right: Sport Regulation Reference Card -->
       <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <!-- Live Commentary Feed -->
-        <div class="scorer-box" style="padding: 1.25rem;">
-          <div class="panel-header" style="margin-bottom: 0.75rem;">
-            <span class="panel-title" style="font-size: 0.95rem;"><i class="fa-solid fa-microphone"></i> Broadcast Feed</span>
-            <span class="pulse-dot"></span>
-          </div>
-          <div class="commentary-feed" id="admin-commentary-feed" style="max-height: 380px;">
-            {% for comm in match.commentary|reverse %}
-              <div class="commentary-item {{ comm.type }}" style="padding: 0.6rem;">
-                <div class="comm-ball" style="font-size: 0.85rem;">{{ comm.ball }}</div>
-                <div class="comm-text-group">
-                  {% if comm.badge %}
-                    <span class="comm-badge" style="background: rgba(255,255,255,0.08); font-size: 0.62rem;">{{ comm.badge }}</span>
-                  {% endif %}
-                  <div class="comm-text" style="font-size: 0.82rem;">{{ comm.text }}</div>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-
         <!-- Sport Rulebook Reference Card -->
         <div class="scorer-box" style="padding: 1.25rem;">
           <div class="panel-header" style="margin-bottom: 0.75rem;">

@@ -104,10 +104,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAnnounceSquads = document.getElementById('btn-announce-squads');
   const btnStartMatchLive = document.getElementById('btn-start-match-live');
 
+  function extractSquadFromTextarea(textareaId) {
+    const el = document.getElementById(textareaId);
+    if (!el) return null;
+    const text = el.value.trim();
+    if (!text) return { playing: [], substitutes: [] };
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const playing = lines.map(line => {
+      const isCaptain = /\(c\)/i.test(line);
+      const cleanName = line.replace(/\(c\)/i, '').trim();
+      return {
+        name: cleanName,
+        role: isCaptain ? 'Captain' : 'Player',
+        is_captain: isCaptain,
+        student_id: ''
+      };
+    });
+    return { playing, substitutes: [] };
+  }
+
   if (btnAnnounceSquads) {
     btnAnnounceSquads.addEventListener('click', async () => {
       const tossWinner = document.getElementById('toss-winner-select').value;
       const tossDecision = document.getElementById('toss-decision-select').value;
+      const squadA = extractSquadFromTextarea('squad-team-a-input') || {};
+      const squadB = extractSquadFromTextarea('squad-team-b-input') || {};
 
       try {
         btnAnnounceSquads.disabled = true;
@@ -115,15 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            squad_a: {}, // already in state
-            squad_b: {},
+            squad_a: squadA,
+            squad_b: squadB,
             toss_winner: tossWinner,
             toss_decision: tossDecision
           })
         });
         const data = await res.json();
         if (data.success) {
-          window.App.showToast('Squads & Toss announced! Visible on audience view.', 'success');
+          window.App.showToast('Squads & Toss confirmed! Visible on audience view.', 'success');
           setTimeout(() => window.location.reload(), 500);
         } else {
           alert('Failed announcing squads: ' + (data.detail || ''));
@@ -141,11 +162,33 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirm('Commence match and start live streaming to audience view?')) return;
       try {
         btnStartMatchLive.disabled = true;
+        // Auto-save entered squads and toss before commencing
+        const tossWinner = document.getElementById('toss-winner-select')?.value;
+        const tossDecision = document.getElementById('toss-decision-select')?.value;
+        const squadA = extractSquadFromTextarea('squad-team-a-input') || {};
+        const squadB = extractSquadFromTextarea('squad-team-b-input') || {};
+
+        if (tossWinner && tossDecision) {
+          await fetch(`/api/match/${matchId}/squads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              squad_a: squadA,
+              squad_b: squadB,
+              toss_winner: tossWinner,
+              toss_decision: tossDecision
+            })
+          });
+        }
+
         const res = await fetch(`/api/match/${matchId}/start`, { method: 'POST' });
         const data = await res.json();
         if (data.success) {
           window.App.showToast('Match is now LIVE! Scorer unlocked.', 'live');
           setTimeout(() => window.location.reload(), 500);
+        } else {
+          alert('Error starting match: ' + (data.detail || ''));
+          btnStartMatchLive.disabled = false;
         }
       } catch (err) {
         alert('Error starting match: ' + err.message);

@@ -406,30 +406,9 @@
       </form>
     </div>
 
-    <!-- Cricbuzz Navigation Tabs -->
-    <div class="cricbuzz-nav-tabs">
-      <button class="tab-btn active" data-tab="tab-live" id="tab-btn-live">
-        <i class="fa-solid fa-satellite-dish"></i> Live Score
-      </button>
-      <button class="tab-btn" data-tab="tab-scorecard" id="tab-btn-scorecard">
-        <i class="fa-solid fa-chart-simple"></i> Scorecard
-      </button>
-      <button class="tab-btn" data-tab="tab-squads" id="tab-btn-squads">
-        <i class="fa-solid fa-users"></i> Squads & Lineups
-      </button>
-      <button class="tab-btn" data-tab="tab-commentary" id="tab-btn-commentary">
-        <i class="fa-solid fa-microphone-lines"></i> Commentary
-      </button>
-      <button class="tab-btn" data-tab="tab-rules" id="tab-btn-rules">
-        <i class="fa-solid fa-shield-halved"></i> Match Rules
-      </button>
-    </div>
-
-    <!-- TAB 1: LIVE SCORE OVERVIEW -->
-    <div class="tab-pane active" id="tab-live">
-      <div class="live-grid">
-        <!-- Left: Match Batting/Bowling or Score Cards -->
-        <div class="panel-card">
+    <!-- SECTION 1: LIVE ACTION OVERVIEW -->
+    <div id="live-action-section" style="margin-top: 1.5rem;">
+      <div class="panel-card">
           {% if active_match.sport_type == 'cricket' %}
             {% set inn = active_match.score.innings_1 if active_match.score.innings == 1 else active_match.score.innings_2 %}
 
@@ -747,34 +726,11 @@
             </div>
           {% endif %}
         </div>
-
-        <!-- Right: Real-time Live Commentary Stream -->
-        <div class="panel-card">
-          <div class="panel-header">
-            <span class="panel-title"><i class="fa-solid fa-microphone"></i> Live Commentary</span>
-            <span class="pulse-dot"></span>
-          </div>
-
-          <div class="commentary-feed" id="live-commentary-feed">
-            {% for comm in active_match.commentary|reverse %}
-              <div class="commentary-item {{ comm.type }}">
-                <div class="comm-ball">{{ comm.ball }}</div>
-                <div class="comm-text-group">
-                  {% if comm.badge %}
-                    <span class="comm-badge" style="background: rgba(255,255,255,0.08); color: #38bdf8;">{{ comm.badge }}</span>
-                  {% endif %}
-                  <div class="comm-text">{{ comm.text }}</div>
-                  <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">{{ comm.time }}</div>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- TAB 2: SCORECARD -->
-    <div class="tab-pane" id="tab-scorecard">
+    <!-- SECTION 2: FULL DETAILED SCORECARD -->
+    <div id="tab-scorecard">
       <div class="panel-card" style="margin-top: 1.5rem;">
         <div class="panel-header">
           <span class="panel-title"><i class="fa-solid fa-table-list"></i> Full Match Scorecard</span>
@@ -1087,9 +1043,13 @@
       </div>
     </div>
 
-    <!-- TAB 3: SQUADS & LINEUPS (Cricbuzz-style) -->
-    <div class="tab-pane" id="tab-squads">
-      <div class="squads-container">
+    <!-- SECTION 3: PLAYING SQUADS & ROSTERS -->
+    <div id="tab-squads" style="margin-top: 1.5rem;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-users"></i> Official Playing Squads</span>
+        </div>
+        <div class="squads-container">
         <!-- Team A Squad -->
         <div class="squad-column">
           <div class="squad-dept-header">
@@ -1171,48 +1131,8 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- TAB 4: COMMENTARY -->
-    <div class="tab-pane" id="tab-commentary">
-      <div class="panel-card" style="margin-top: 1.5rem;">
-        <div class="panel-header">
-          <span class="panel-title"><i class="fa-solid fa-timeline"></i> Ball-by-Ball Detailed Match Log</span>
-        </div>
-        <div class="commentary-feed" style="max-height: 600px;">
-          {% for comm in active_match.commentary|reverse %}
-            <div class="commentary-item {{ comm.type }}">
-              <div class="comm-ball">{{ comm.ball }}</div>
-              <div class="comm-text-group">
-                {% if comm.badge %}
-                  <span class="comm-badge" style="background: rgba(255,255,255,0.08); color: #38bdf8;">{{ comm.badge }}</span>
-                {% endif %}
-                <div class="comm-text">{{ comm.text }}</div>
-                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">{{ comm.time }}</div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 5: MATCH RULES (From attached Rulebook) -->
-    <div class="tab-pane" id="tab-rules">
-      <div class="panel-card" style="margin-top: 1.5rem;">
-        <div class="panel-header">
-          <span class="panel-title"><i class="fa-solid fa-scale-balanced"></i> Specific Regulations for {{ active_match.sport_name }}</span>
-          <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">Official Meet Rules</span>
-        </div>
-        <div class="rules-grid">
-          {% for reg in active_match.rulebook_highlights %}
-            <div class="rule-highlight-card">
-              <div class="rule-badge">{{ reg.badge }}</div>
-              <div class="rule-title">{{ reg.title }}</div>
-              <div class="rule-desc">{{ reg.desc }}</div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
   </div>
   {% endif %}
 

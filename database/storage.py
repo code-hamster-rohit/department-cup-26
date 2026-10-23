@@ -125,6 +125,14 @@ def list_matches(limit: int = 50) -> list[dict[str, Any]]:
 
 
 def get_active_matches() -> list[dict[str, Any]]:
+    if not _matches_cache:
+        try:
+            from database.mongo import load_matches_from_mongo
+            mongo_matches = load_matches_from_mongo()
+            if mongo_matches:
+                _matches_cache.update(mongo_matches)
+        except Exception:
+            pass
     return [m for m in _matches_cache.values() if m.get("status") in ["upcoming", "squads_announced", "live"]]
 
 
@@ -347,12 +355,14 @@ async def update_squads_and_toss(
     toss_decision: str | None = None
 ) -> dict[str, Any]:
     async with _lock:
-        match = _matches_cache.get(match_id)
+        match = get_match(match_id)
         if not match:
             raise ValueError(f"Match {match_id} not found")
 
-        match["squads"]["team_a"] = squad_a
-        match["squads"]["team_b"] = squad_b
+        if squad_a and (squad_a.get("playing") or isinstance(squad_a, dict)):
+            match["squads"]["team_a"] = squad_a
+        if squad_b and (squad_b.get("playing") or isinstance(squad_b, dict)):
+            match["squads"]["team_b"] = squad_b
         match["squads"]["squads_confirmed"] = True
 
         if toss_winner and toss_decision:
@@ -392,7 +402,7 @@ async def update_squads_and_toss(
 
 async def start_match(match_id: str) -> dict[str, Any]:
     async with _lock:
-        match = _matches_cache.get(match_id)
+        match = get_match(match_id)
         if not match:
             raise ValueError(f"Match {match_id} not found")
 
@@ -436,7 +446,7 @@ async def update_score_action(match_id: str, action: dict[str, Any]) -> dict[str
     Executes a sport-specific score update action.
     """
     async with _lock:
-        match = _matches_cache.get(match_id)
+        match = get_match(match_id)
         if not match:
             raise ValueError(f"Match {match_id} not found")
 
@@ -1001,7 +1011,7 @@ def _handle_basketball_action(match: dict[str, Any], action: dict[str, Any]):
 
 async def undo_last_action(match_id: str) -> dict[str, Any]:
     async with _lock:
-        match = _matches_cache.get(match_id)
+        match = get_match(match_id)
         if not match:
             raise ValueError(f"Match {match_id} not found")
         if not match.get("history"):
@@ -1019,7 +1029,7 @@ async def undo_last_action(match_id: str) -> dict[str, Any]:
 
 async def end_match(match_id: str, winner: str, result_summary: str, motm: str = "") -> dict[str, Any]:
     async with _lock:
-        match = _matches_cache.get(match_id)
+        match = get_match(match_id)
         if not match:
             raise ValueError(f"Match {match_id} not found")
 

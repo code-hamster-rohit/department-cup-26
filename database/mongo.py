@@ -173,6 +173,7 @@ def sync_match_to_mongo(match: dict[str, Any]):
     try:
         # Create a copy and clean any non-serializable fields if needed
         match_copy = dict(match)
+        match_copy.pop("_id", None)
         db["matches"].replace_one({"id": match["id"]}, match_copy, upsert=True)
     except Exception as e:
         print(f"[MongoDB] Error syncing match {match.get('id')}: {e}")
