@@ -70,12 +70,13 @@ def is_admin_email(email: str | None) -> bool:
         return False
     
     try:
-        rgx = re.compile(f"^{re.escape(clean_email)}$", re.IGNORECASE)
-        # Check both single email field and list of emails
+        # Match case-insensitively with flexible whitespace trimming
+        rgx = re.compile(rf"^\s*{re.escape(clean_email)}\s*$", re.IGNORECASE)
         found = admins_col.find_one({
             "$or": [
                 {"email": rgx},
-                {"emails": rgx}
+                {"emails": rgx},
+                {"email": clean_email}
             ]
         })
         return found is not None

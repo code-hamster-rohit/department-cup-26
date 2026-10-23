@@ -72,14 +72,19 @@
                 <div class="user-avatar-initials">{{ current_user.name[:1] | upper }}</div>
               {% endif %}
               <div class="user-profile-meta">
-                <span class="user-name">{{ current_user.name }}</span>
+                <div style="display: flex; align-items: baseline; gap: 0.35rem;">
+                  <span class="user-name">{{ current_user.name }}</span>
+                  <span class="user-email" style="font-size: 0.72rem; color: var(--text-dim);" title="Signed in Google Account: {{ current_user.email }}">({{ current_user.email }})</span>
+                </div>
                 {% if is_admin %}
-                  <span class="badge-admin"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
-                  <button type="button" class="btn-switch-view" id="btn-open-view-choice" title="Choose View (Audience Arena or Admin Center)">
-                    <i class="fa-solid fa-arrows-split-up-and-left"></i> <span>Choose View</span>
-                  </button>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; margin-top: 0.15rem;">
+                    <span class="badge-admin"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
+                    <button type="button" class="btn-switch-view" id="btn-open-view-choice" title="Choose View (Audience Arena or Admin Center)">
+                      <i class="fa-solid fa-arrows-split-up-and-left"></i> <span>Choose View</span>
+                    </button>
+                  </div>
                 {% else %}
-                  <span class="badge-audience">AUDIENCE</span>
+                  <span class="badge-audience" title="Account not in MongoDB admins collection">AUDIENCE</span>
                 {% endif %}
               </div>
               <a href="/auth/logout" class="btn-logout" title="Sign Out">

@@ -355,6 +355,15 @@ a {
   white-space: nowrap;
 }
 
+.user-email {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .badge-admin {
   color: #2563eb;
   font-size: 0.68rem;
