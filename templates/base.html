@@ -44,18 +44,22 @@
 
       <div class="header-right">
         <nav class="app-nav" id="app-nav-bar">
-          <a href="/" class="nav-item {% if active_nav == 'audience' %}active{% endif %}" id="nav-link-audience">
-            <i class="fa-solid fa-satellite-dish"></i>
-            <span>Audience Arena</span>
-          </a>
-          <a href="/rules" class="nav-item {% if active_nav == 'rules' %}active{% endif %}" id="nav-link-rules">
-            <i class="fa-solid fa-book-bookmark"></i>
-            <span>Rulebook</span>
-          </a>
-          <a href="/admin" class="nav-item admin-btn {% if active_nav == 'admin' %}active{% endif %}" id="nav-link-admin">
-            <i class="fa-solid fa-sliders"></i>
-            <span>Admin Center</span>
-          </a>
+          {% if current_user %}
+            <a href="/" class="nav-item {% if active_nav == 'audience' %}active{% endif %}" id="nav-link-audience">
+              <i class="fa-solid fa-satellite-dish"></i>
+              <span>Audience Arena</span>
+            </a>
+            <a href="/rules" class="nav-item {% if active_nav == 'rules' %}active{% endif %}" id="nav-link-rules">
+              <i class="fa-solid fa-book-bookmark"></i>
+              <span>Rulebook</span>
+            </a>
+            {% if is_admin %}
+              <a href="/admin" class="nav-item admin-btn {% if active_nav == 'admin' %}active{% endif %}" id="nav-link-admin">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Admin Center</span>
+              </a>
+            {% endif %}
+          {% endif %}
         </nav>
 
         <!-- Auth Section / Google Sign-in -->

@@ -15,6 +15,84 @@
 {% block content %}
 <div class="audience-root" id="audience-root">
 
+  {% if not current_user %}
+    <!-- =========================================================================
+         SIGN-IN FIRST GATEWAY SCREEN
+         Prompt visitor to sign in first with Google.
+         Based on whether they are admin or not, show either audience view only or both views.
+         ========================================================================= -->
+    <div class="signin-gate-container" id="signin-gate-container">
+      <div class="signin-gate-card">
+        <div class="signin-gate-badge">
+          <i class="fa-solid fa-lock"></i> Authentication Required · Department Cup 2026
+        </div>
+
+        <div class="signin-emblem">🏆</div>
+
+        <h1 class="signin-title">Welcome to Department Cup 2026</h1>
+        <p class="signin-subtitle">
+          Inter-Department Sports Meet (AMSC · PPE · PPT) · IIT Roorkee, Saharanpur Campus.<br>
+          Please sign in with your Google account to access live match scores and tournament fixtures.
+        </p>
+
+        <div class="signin-action-box">
+          <div class="signin-action-label">Sign in with your Google Account to proceed:</div>
+          <div class="google-auth-container" style="justify-content: center;">
+            {% if google_client_id %}
+              <div id="g_id_onload"
+                   data-client_id="{{ google_client_id }}"
+                   data-callback="handleGoogleCredentialResponse"
+                   data-auto_prompt="false">
+              </div>
+              <div class="g_id_signin"
+                   data-type="standard"
+                   data-shape="pill"
+                   data-theme="outline"
+                   data-text="signin_with"
+                   data-size="large"
+                   data-logo_alignment="left">
+              </div>
+            {% endif %}
+            <a href="/auth/google/login?dest=audience" 
+               class="btn btn-primary btn-lg {% if google_client_id %}d-none{% endif %}" 
+               id="btn-gate-google-signin" 
+               style="gap: 0.6rem; display: inline-flex; align-items: center;">
+              <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="signin-roles-grid">
+          <div class="role-preview-card">
+            <span class="role-badge audience">Audience View</span>
+            <div class="role-card-title">
+              <i class="fa-solid fa-satellite-dish" style="color: #2563eb;"></i> Live Audience Arena
+            </div>
+            <p class="role-card-desc">
+              Watch real-time live scorecards across 17 sports, ball-by-ball commentary, bowler/batter statistics, and cheer with live fading reactions.
+            </p>
+            <div class="role-access-tag">
+              <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Standard access for all signed-in users
+            </div>
+          </div>
+
+          <div class="role-preview-card">
+            <span class="role-badge admin">Dual View Access</span>
+            <div class="role-card-title">
+              <i class="fa-solid fa-sliders" style="color: #7c3aed;"></i> Admin Control Center & Arena
+            </div>
+            <p class="role-card-desc">
+              Create tournament fixtures, confirm department rosters, record toss, score live with fast touch keypads, and announce official results.
+            </p>
+            <div class="role-access-tag">
+              <i class="fa-solid fa-shield-halved" style="color: #7c3aed;"></i> Granted to verified MongoDB admins
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+
   <!-- Matches Selector Bar (when multiple matches exist) -->
   {% if all_matches and all_matches|length > 0 %}
   <div class="matches-bar" id="matches-bar">
@@ -1113,6 +1191,8 @@
       </div>
     </div>
   </div>
+  {% endif %}
+
   {% endif %}
 
 </div>

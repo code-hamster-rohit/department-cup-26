@@ -188,6 +188,10 @@ async def admin_dashboard(request: Request):
         return RedirectResponse(url="/admin", status_code=303)
 
     user, is_admin = get_session_user_context(request)
+    if not user or not is_admin:
+        # Require sign-in and admin privileges; non-admins only see audience view
+        return RedirectResponse(url="/", status_code=303)
+
     show_dest_modal = bool(request.session.pop("just_signed_in", False) and is_admin)
 
     matches = list_matches()
@@ -211,6 +215,8 @@ async def admin_dashboard(request: Request):
 @app.get("/admin/match/{match_id}", response_class=HTMLResponse)
 async def admin_control_room(request: Request, match_id: str):
     user, is_admin = get_session_user_context(request)
+    if not user or not is_admin:
+        return RedirectResponse(url="/", status_code=303)
 
     m = get_match(match_id)
     if not m:
@@ -239,6 +245,9 @@ async def admin_control_room(request: Request, match_id: str):
 @app.get("/rules", response_class=HTMLResponse)
 async def rulebook_view(request: Request):
     user, is_admin = get_session_user_context(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
     sports = get_all_sports()
     return templates.TemplateResponse(
         request=request,
