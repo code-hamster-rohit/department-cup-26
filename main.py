@@ -40,6 +40,44 @@ async def lifespan(app: FastAPI):
     yield
 
 
+class VercelPathNormalizerMiddleware:
+    """
+    Normalizes request paths when deployed as a serverless function on Vercel.
+    When Vercel rewrites routes to api/index.py, it passes the original client path
+    in the `x-matched-path` header while setting `scope['path']` to `/api/index.py`.
+    This middleware restores `scope['path']` to the true user path before routing.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope.get("headers", []))
+            matched = (
+                headers.get(b"x-matched-path")
+                or headers.get(b"x-original-url")
+                or headers.get(b"x-forwarded-uri")
+            )
+            if matched:
+                path = matched.decode("utf-8").split("?")[0]
+                scope["path"] = path
+                scope["raw_path"] = path.encode("utf-8")
+            else:
+                raw_path = scope.get("path", "")
+                if raw_path in ("/api/index.py", "/api/index", "/api", "/api/"):
+                    scope["path"] = "/"
+                    scope["raw_path"] = b"/"
+                elif raw_path.startswith("/api/index.py/"):
+                    p = raw_path[len("/api/index.py"):]
+                    scope["path"] = p
+                    scope["raw_path"] = p.encode("utf-8")
+                elif raw_path.startswith("/api/index/"):
+                    p = raw_path[len("/api/index"):]
+                    scope["path"] = p
+                    scope["raw_path"] = p.encode("utf-8")
+        await self.app(scope, receive, send)
+
+
 app = FastAPI(
     title="Department Cup 2026 · Live Scoreboard",
     description="Real-Time Sports Scoreboard & Administration System with zero-latency WebSockets",
@@ -54,6 +92,9 @@ app.add_middleware(
     max_age=86400 * 7,  # 7 days
     same_site="lax"
 )
+
+# Outermost middleware: normalizes Vercel rewrites and x-matched-path
+app.add_middleware(VercelPathNormalizerMiddleware)
 
 # Mount static assets
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -87,6 +128,8 @@ def get_session_user_context(request: Request) -> tuple[dict | None, bool]:
 # -----------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
 async def audience_view(request: Request, match: str | None = None):
     # Handle incoming OAuth code redirect if present
     if request.query_params.get("code"):
