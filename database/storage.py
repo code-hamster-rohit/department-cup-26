@@ -14,6 +14,8 @@ from typing import Any
 from database.rules import RULES_DATA, get_sport_rule
 from database.teams_data import DEPARTMENTS, get_default_squad
 
+VALID_DEPARTMENTS = {"amsc", "ppe", "ppt"}
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 MATCHES_FILE = os.path.join(DATA_DIR, "matches.json")
 
@@ -84,6 +86,12 @@ def init_storage():
                 _matches_cache[m_id] = m_doc
     except Exception as e:
         print(f"[Storage] Initial Mongo sync skipped: {e}")
+    # Strictly filter out any matches not exclusively between AMSC, PPE, PPT
+    _matches_cache = {
+        m_id: m for m_id, m in _matches_cache.items()
+        if m.get("team_a", {}).get("code", "").lower() in VALID_DEPARTMENTS
+        and m.get("team_b", {}).get("code", "").lower() in VALID_DEPARTMENTS
+    }
     print(f"Storage initialized with {len(_matches_cache)} matches.")
 
 
@@ -161,8 +169,20 @@ async def create_match(
             raise ValueError(f"Unknown sport ID: {sport_id}")
 
         match_id = f"m_{uuid.uuid4().hex[:8]}"
-        team_a_info = DEPARTMENTS.get(team_a_code.lower(), {"abbr": team_a_code.upper(), "name": team_a_code.upper(), "color": "#3b82f6"})
-        team_b_info = DEPARTMENTS.get(team_b_code.lower(), {"abbr": team_b_code.upper(), "name": team_b_code.upper(), "color": "#10b981"})
+
+        team_a_key = (team_a_code or "").lower().strip()
+        team_b_key = (team_b_code or "").lower().strip()
+
+        if team_a_key not in VALID_DEPARTMENTS or team_b_key not in VALID_DEPARTMENTS:
+            raise ValueError(
+                f"Invalid department. Department Cup only has 3 departments: AMSC, PPE, and PPT. "
+                f"Received '{team_a_code}' vs '{team_b_code}'."
+            )
+        if team_a_key == team_b_key:
+            raise ValueError("A department cannot play against itself. Please select two different departments.")
+
+        team_a_info = DEPARTMENTS[team_a_key]
+        team_b_info = DEPARTMENTS[team_b_key]
 
         # Gender category normalization (Boys, Girls, Mixed, Open)
         norm_cat = (category or "").strip()

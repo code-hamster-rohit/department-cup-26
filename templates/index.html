@@ -270,7 +270,7 @@
             {% elif active_match.sport_type == 'tug_of_war' %}
               {{ active_match.score.pulls_team_a }} Pulls
             {% elif active_match.sport_type == 'athletics_distance' %}
-              Leaderboard
+              {{ active_match.score.best_a or 'Attempts' }}{% if active_match.score.best_a %} m{% endif %}
             {% elif active_match.sport_type == 'basketball_shootout' %}
               {{ active_match.score.score_team_a }} Pts
             {% endif %}
@@ -311,7 +311,7 @@
             {% elif active_match.sport_type == 'tug_of_war' %}
               {{ active_match.score.pulls_team_b }} Pulls
             {% elif active_match.sport_type == 'athletics_distance' %}
-              Leaderboard
+              {{ active_match.score.best_b or 'Attempts' }}{% if active_match.score.best_b %} m{% endif %}
             {% elif active_match.sport_type == 'basketball_shootout' %}
               {{ active_match.score.score_team_b }} Pts
             {% endif %}
@@ -821,8 +821,8 @@
 
           {% elif active_match.sport_type == 'athletics_distance' %}
             <div class="panel-header">
-              <span class="panel-title">Live Athletics Leaderboard</span>
-              <span class="badge badge-live">Best Distance</span>
+              <span class="panel-title">Athletics Attempts & Standings</span>
+              <span class="badge badge-live">Best Mark</span>
             </div>
             <table class="cric-table">
               <thead>

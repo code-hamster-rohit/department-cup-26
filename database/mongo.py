@@ -272,7 +272,9 @@ def delete_match_from_mongo(match_id: str, sport_id: str | None = None):
 def load_matches_from_mongo() -> dict[str, dict[str, Any]]:
     """
     Loads all matches across the 12 primary sport collections in MongoDB department_cup.
+    Only loads matches between the 3 valid departments: AMSC, PPE, and PPT.
     """
+    valid_departments = {"amsc", "ppe", "ppt"}
     db = get_db()
     if db is None:
         return {}
@@ -282,14 +284,31 @@ def load_matches_from_mongo() -> dict[str, dict[str, Any]]:
             for doc in db[col_name].find():
                 doc.pop("_id", None)
                 if "id" in doc:
-                    matches[doc["id"]] = doc
+                    ta = doc.get("team_a", {}).get("code", "").lower()
+                    tb = doc.get("team_b", {}).get("code", "").lower()
+                    if ta in valid_departments and tb in valid_departments:
+                        matches[doc["id"]] = doc
+                    else:
+                        # Prune invalid legacy record from DB
+                        try:
+                            db[col_name].delete_one({"id": doc["id"]})
+                        except Exception:
+                            pass
         # Also check unified 'matches' collection for any legacy records
         existing_cols = db.list_collection_names()
         if "matches" in existing_cols:
             for doc in db["matches"].find():
                 doc.pop("_id", None)
                 if "id" in doc and doc["id"] not in matches:
-                    matches[doc["id"]] = doc
+                    ta = doc.get("team_a", {}).get("code", "").lower()
+                    tb = doc.get("team_b", {}).get("code", "").lower()
+                    if ta in valid_departments and tb in valid_departments:
+                        matches[doc["id"]] = doc
+                    else:
+                        try:
+                            db["matches"].delete_one({"id": doc["id"]})
+                        except Exception:
+                            pass
         return matches
     except Exception as e:
         print(f"[MongoDB] Error loading matches across sport collections: {e}")

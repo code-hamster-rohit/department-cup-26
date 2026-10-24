@@ -175,7 +175,7 @@
               {% elif match.sport_type == 'tug_of_war' %}
                 {{ match.score.pulls_team_a }} - {{ match.score.pulls_team_b }} Pulls
               {% elif match.sport_type == 'athletics_distance' %}
-                Leaderboard Active
+                Best: {{ match.score.best_a or '0' }}m ({{ match.team_a.abbr }}) vs {{ match.score.best_b or '0' }}m ({{ match.team_b.abbr }})
               {% elif match.sport_type == 'basketball_shootout' %}
                 {{ match.score.score_team_a }} - {{ match.score.score_team_b }} Pts
               {% else %}
@@ -416,7 +416,7 @@
           <div class="keypad-section-title">Tournament Rubbers & Multi-Day Schedule</div>
           <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;" id="admin-sub-events-list">
             {% for ev in match.score.events %}
-              <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; {% if loop.index0 == match.score.current_event_idx and ev.status == 'live' %}border: 2px solid #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15);{% endif %}">
+              <div class="admin-rubber-item {% if loop.index0 == match.score.current_event_idx and ev.status == 'live' %}is-live-active{% endif %}">
                 <div>
                   <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
                     <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Rubber {{ loop.index }}</span>

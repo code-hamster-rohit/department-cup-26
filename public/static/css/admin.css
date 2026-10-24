@@ -282,3 +282,22 @@
     justify-content: center;
   }
 }
+
+/* Multi-Day Rubbers Matrix */
+.admin-rubber-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.admin-rubber-item.is-live-active {
+  border: 2px solid #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
