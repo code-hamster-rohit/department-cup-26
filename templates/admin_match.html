@@ -43,9 +43,18 @@
       <a href="/?match={{ match.id }}" target="_blank" class="btn btn-secondary btn-sm" id="btn-view-audience">
         <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Audience View
       </a>
-      <button type="button" class="btn btn-danger btn-sm btn-trigger-conclude" id="btn-top-conclude" title="End match, declare winner and end stream">
-        <i class="fa-solid fa-trophy"></i> Declare Winner & End
-      </button>
+      {% if match.status != 'completed' %}
+        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-control-room" data-id="{{ match.id }}" data-status="{{ match.status }}" title="Delete unconcluded match permanently from screen and database">
+          <i class="fa-solid fa-trash-can"></i> Delete Match
+        </button>
+        <button type="button" class="btn btn-danger btn-sm btn-trigger-conclude" id="btn-top-conclude" title="End match, declare winner and end stream">
+          <i class="fa-solid fa-trophy"></i> Declare Winner & End
+        </button>
+      {% else %}
+        <button type="button" class="btn btn-outline-secondary btn-sm btn-delete-control-room" data-id="{{ match.id }}" data-status="{{ match.status }}" title="Clear concluded match from screen (keep in database)">
+          <i class="fa-solid fa-eye-slash"></i> Clear From Screen
+        </button>
+      {% endif %}
       {% if match.status == 'live' %}
         <span class="badge badge-live"><span class="pulse-dot"></span> LIVE IN-PROGRESS</span>
       {% elif match.status == 'squads_announced' %}
@@ -936,5 +945,10 @@
 {% endblock %}
 
 {% block extra_js %}
+  {% if current_user and current_user.email %}
+    <script>
+      try { localStorage.setItem('deptcup_admin_email', '{{ current_user.email }}'); } catch(e){}
+    </script>
+  {% endif %}
   <script src="/static/js/admin.js"></script>
 {% endblock %}

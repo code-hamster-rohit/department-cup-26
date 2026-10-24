@@ -22,6 +22,7 @@ from database.storage import (
     undo_last_action,
     end_match,
     delete_match,
+    restore_match_to_screen,
 )
 from routes.ws import manager
 
@@ -352,9 +353,23 @@ async def api_end_match(match_id: str, payload: EndMatchRequest, request: Reques
 async def api_delete_match(match_id: str, request: Request):
     verify_admin_access(request)
     try:
-        await delete_match(match_id)
-        await manager.broadcast_match(match_id, "MATCH_DELETED", {"match_id": match_id})
-        return {"success": True}
+        result = await delete_match(match_id)
+        if result.get("deleted_from_db"):
+            await manager.broadcast_match(match_id, "MATCH_DELETED", {"match_id": match_id, "action": "deleted"})
+        else:
+            await manager.broadcast_match(match_id, "MATCH_CLEARED_SCREEN", {"match_id": match_id, "action": "cleared_from_screen"})
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.post("/match/{match_id}/restore")
+async def api_restore_match(match_id: str, request: Request):
+    verify_admin_access(request)
+    try:
+        match = await restore_match_to_screen(match_id)
+        await manager.broadcast_match(match_id, "MATCH_RESTORED", {"match_id": match_id})
+        return {"success": True, "match": match}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

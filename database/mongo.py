@@ -252,19 +252,21 @@ def sync_match_to_mongo(match: dict[str, Any]):
 
 
 def delete_match_from_mongo(match_id: str, sport_id: str | None = None):
-    """Deletes a match from its sport collection and any backup collection."""
+    """Deletes an unconcluded match from its sport collection and any backup collection."""
     db = get_db()
     if db is None:
         return
     try:
+        query = {"$or": [{"id": match_id}, {"_id": match_id}]}
         if sport_id:
             col_name = get_sport_collection_name(sport_id)
-            db[col_name].delete_one({"id": match_id})
+            db[col_name].delete_many(query)
         for col in SPORT_COLLECTIONS:
-            db[col].delete_one({"id": match_id})
+            db[col].delete_many(query)
         existing_cols = db.list_collection_names()
         if "matches" in existing_cols:
-            db["matches"].delete_one({"id": match_id})
+            db["matches"].delete_many(query)
+        print(f"[MongoDB] Successfully deleted unconcluded match {match_id} from database collections.")
     except Exception as e:
         print(f"[MongoDB] Error deleting match {match_id}: {e}")
 

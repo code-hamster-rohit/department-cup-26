@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (data.success && data.is_admin) {
+          try { localStorage.setItem('deptcup_admin_email', emailVal); } catch(e){}
           quickVerifyMsg.style.color = '#10b981';
           quickVerifyMsg.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verified Admin! Launching match creator...';
           setTimeout(() => {
@@ -270,6 +271,13 @@ document.addEventListener('DOMContentLoaded', () => {
         pollMatchState();
       }
 
+      if (msg.type === 'MATCH_DELETED' || msg.type === 'MATCH_CLEARED_SCREEN') {
+        if (msg.data && msg.data.match_id === matchId) {
+          window.location.href = '/';
+          return;
+        }
+      }
+
       if (msg.type === 'REACTION_SENT' && msg.data && msg.data.content) {
         if (typeof window.triggerFadingReaction === 'function') {
           window.triggerFadingReaction(msg.data.content);
@@ -288,12 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const data = await res.json();
         if (data.match) {
-          if (data.match.status === 'completed') {
-            // Match concluded: show final toast and reload to disappear
+          if (data.match.hidden_from_screen || data.match.status === 'completed') {
+            // Match concluded or cleared from screen: return to main arena
             if (typeof window.showNotification === 'function') {
               window.showNotification(`🏆 Match Completed! Winner: ${data.match.winner_name || 'Declared'}. Returning to Arena...`, 'success', 3000);
             }
-            setTimeout(() => { window.location.href = '/'; }, 2500);
+            setTimeout(() => { window.location.href = '/'; }, 2000);
             return;
           }
           // If status transitioned from upcoming -> squads_announced or live, reload to render accurate UI
@@ -415,6 +423,57 @@ document.addEventListener('DOMContentLoaded', () => {
         playerTags[1].innerHTML = `<i class="fa-solid fa-user" style="color: #059669;"></i> ${match.score.players_b}`;
       }
     }
+
+    // Arena delete/clear button for admins
+    document.querySelectorAll('.btn-arena-delete-match').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const mId = btn.getAttribute('data-id');
+        const mStatus = btn.getAttribute('data-status') || '';
+        const isConcluded = (mStatus === 'completed' || mStatus === 'archived_completed');
+
+        let confirmPrompt;
+        if (isConcluded) {
+          confirmPrompt = 'This match is CONCLUDED.\n\nClear it from your screen? (Match record and score details will remain safely preserved in the database).';
+        } else {
+          confirmPrompt = 'This match is NOT concluded.\n\nAre you sure you want to permanently DELETE it from BOTH your screen and the database?';
+        }
+
+        if (!confirm(confirmPrompt)) return;
+
+        try {
+          const adminEmail = localStorage.getItem('deptcup_admin_email') || '';
+          const headers = { 'Content-Type': 'application/json' };
+          if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+
+          const res = await fetch(`/api/match/${mId}/delete`, {
+            method: 'POST',
+            headers
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) {
+            alert('Action failed: ' + (data.detail || data.message || 'Server error'));
+            return;
+          }
+
+          const toastMsg = isConcluded
+            ? 'Concluded match cleared from screen (preserved in database).'
+            : 'Match deleted from screen and database.';
+
+          if (window.App && window.App.showToast) {
+            window.App.showToast(toastMsg, isConcluded ? 'info' : 'success');
+          } else {
+            alert(toastMsg);
+          }
+
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 350);
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
 
     initWebSocket();
     setInterval(pollMatchState, 3500);

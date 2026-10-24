@@ -91,21 +91,114 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Delete match handler
-  document.querySelectorAll('.btn-delete-match').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const matchId = btn.getAttribute('data-id');
-      if (!confirm('Are you sure you want to delete/reset this match?')) return;
+  // -------------------------------------------------------------
+  // DUAL MATCH DELETION / SCREEN CLEARING LOGIC:
+  // - If match is NOT concluded: delete from screen AND database.
+  // - If match IS concluded: clear ONLY from screen, KEEP in database.
+  // -------------------------------------------------------------
+  async function handleMatchDeletion(matchId, status, cardElement = null) {
+    const isConcluded = (status === 'completed' || status === 'archived_completed');
+    
+    let confirmPrompt;
+    if (isConcluded) {
+      confirmPrompt = 'This match is CONCLUDED.\n\nClear it from your screen? (Match record and score details will remain safely preserved in the database).';
+    } else {
+      confirmPrompt = 'This match is NOT concluded.\n\nAre you sure you want to permanently DELETE it from BOTH your screen and the database?';
+    }
 
+    if (!confirm(confirmPrompt)) return;
+
+    try {
+      const adminEmail = localStorage.getItem('deptcup_admin_email') || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+
+      const res = await fetch(`/api/match/${matchId}/delete`, {
+        method: 'POST',
+        headers
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        alert('Action failed: ' + (data.detail || data.message || 'Server error'));
+        return;
+      }
+
+      if (cardElement) {
+        cardElement.style.transition = 'all 0.3s ease';
+        cardElement.style.opacity = '0';
+        cardElement.style.transform = 'scale(0.95)';
+        setTimeout(() => cardElement.remove(), 300);
+      }
+
+      const toastMsg = isConcluded
+        ? 'Concluded match cleared from screen (preserved in database).'
+        : 'Unconcluded match permanently deleted from screen and database.';
+
+      if (window.App && window.App.showToast) {
+        window.App.showToast(toastMsg, isConcluded ? 'info' : 'success');
+      } else {
+        alert(toastMsg);
+      }
+
+      // If inside match control room, redirect back to admin dashboard
+      if (window.location.pathname.includes(`/admin/match/`)) {
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 400);
+      }
+    } catch (err) {
+      alert('Error deleting/clearing match: ' + err.message);
+    }
+  }
+
+  // Delete/Clear match handler on Admin dashboard cards
+  document.querySelectorAll('.btn-delete-match').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const matchId = btn.getAttribute('data-id');
+      const status = btn.getAttribute('data-status') || '';
+      const card = document.getElementById(`match-card-${matchId}`);
+      handleMatchDeletion(matchId, status, card);
+    });
+  });
+
+  // Delete/Clear match handler inside Control Room header
+  document.querySelectorAll('.btn-delete-control-room').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const matchId = btn.getAttribute('data-id');
+      const status = btn.getAttribute('data-status') || '';
+      handleMatchDeletion(matchId, status, null);
+    });
+  });
+
+  // Restore archived match handler
+  document.querySelectorAll('.btn-restore-match').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const matchId = btn.getAttribute('data-id');
       try {
-        const res = await fetch(`/api/match/${matchId}/delete`, { method: 'POST' });
-        if (res.ok) {
-          const card = document.getElementById(`match-card-${matchId}`);
-          if (card) card.remove();
-          window.App.showToast('Match removed successfully.', 'info');
+        const adminEmail = localStorage.getItem('deptcup_admin_email') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+
+        const res = await fetch(`/api/match/${matchId}/restore`, {
+          method: 'POST',
+          headers
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          if (window.App && window.App.showToast) {
+            window.App.showToast('Match restored to active screen!', 'success');
+          }
+          setTimeout(() => window.location.reload(), 400);
+        } else {
+          alert('Failed to restore match: ' + (data.detail || data.message || 'Unknown error'));
         }
       } catch (err) {
-        alert('Error deleting match: ' + err.message);
+        alert('Error: ' + err.message);
       }
     });
   });

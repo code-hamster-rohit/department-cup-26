@@ -146,7 +146,7 @@ def get_match(match_id: str) -> dict[str, Any] | None:
     return None
 
 
-def list_matches(limit: int = 50) -> list[dict[str, Any]]:
+def list_matches(limit: int = 50, include_hidden: bool = False) -> list[dict[str, Any]]:
     # In serverless environment, if cache is empty, load from MongoDB
     if not _matches_cache:
         try:
@@ -156,7 +156,11 @@ def list_matches(limit: int = 50) -> list[dict[str, Any]]:
                 _matches_cache.update(mongo_matches)
         except Exception:
             pass
-    matches = [_normalize_match_squad_and_sport(m) for m in _matches_cache.values() if m]
+    matches = [
+        _normalize_match_squad_and_sport(m)
+        for m in _matches_cache.values()
+        if m and (include_hidden or not m.get("hidden_from_screen", False))
+    ]
     # Sort by created_at descending
     matches.sort(key=lambda m: m.get("created_at", ""), reverse=True)
     return matches[:limit]
@@ -171,7 +175,11 @@ def get_active_matches() -> list[dict[str, Any]]:
                 _matches_cache.update(mongo_matches)
         except Exception:
             pass
-    return [_normalize_match_squad_and_sport(m) for m in _matches_cache.values() if m and m.get("status") in ["upcoming", "squads_announced", "live"]]
+    return [
+        _normalize_match_squad_and_sport(m)
+        for m in _matches_cache.values()
+        if m and not m.get("hidden_from_screen", False) and m.get("status") in ["upcoming", "squads_announced", "live"]
+    ]
 
 
 
@@ -1421,18 +1429,84 @@ async def end_match(match_id: str, winner: str, result_summary: str, motm: str =
         return match
 
 
-async def delete_match(match_id: str):
+async def delete_match(match_id: str) -> dict[str, Any]:
+    """
+    Deletes or clears a match based on conclusion status:
+    - If match is NOT concluded: Clears from BOTH screen AND database (permanently erased).
+    - If match IS concluded: Clears ONLY from screen (marked hidden_from_screen), preserving historical records in database.
+    """
     async with _lock:
-        match = _matches_cache.get(match_id)
-        sport_id = match.get("sport_id") if match else None
-        if match_id in _matches_cache:
-            del _matches_cache[match_id]
+        # 1. Fetch match from memory cache or MongoDB
+        match = _matches_cache.get(match_id) or get_match(match_id)
+        if not match:
+            # If match not found, ensure any lingering references are purged
+            _matches_cache.pop(match_id, None)
+            _save_matches_to_disk()
+            try:
+                from database.mongo import delete_match_from_mongo
+                delete_match_from_mongo(match_id)
+            except Exception as e:
+                print(f"[Storage] MongoDB delete error: {e}")
+            return {
+                "success": True,
+                "status": "not_found_purged",
+                "concluded": False,
+                "deleted_from_db": True,
+                "message": "Match removed from screen and database."
+            }
+
+        sport_id = match.get("sport_id") or match.get("sport_type")
+        status = match.get("status")
+        is_concluded = (status in ["completed", "archived_completed"])
+
+        if not is_concluded:
+            # ---------------------------------------------------------
+            # 1. UNCONCLUDED MATCH:
+            # Delete from BOTH user's screen AND database
+            # ---------------------------------------------------------
+            _matches_cache.pop(match_id, None)
             _save_matches_to_disk()
             try:
                 from database.mongo import delete_match_from_mongo
                 delete_match_from_mongo(match_id, sport_id)
             except Exception as e:
                 print(f"[Storage] MongoDB match delete error: {e}")
+
+            return {
+                "success": True,
+                "status": "deleted_everywhere",
+                "concluded": False,
+                "deleted_from_db": True,
+                "message": "Unconcluded match permanently deleted from screen and database."
+            }
+        else:
+            # ---------------------------------------------------------
+            # 2. CONCLUDED MATCH:
+            # Clear ONLY from screen, and KEEP in database
+            # ---------------------------------------------------------
+            match["hidden_from_screen"] = True
+            _matches_cache[match_id] = match
+            _save_matches_to_disk(match)
+
+            return {
+                "success": True,
+                "status": "cleared_from_screen",
+                "concluded": True,
+                "deleted_from_db": False,
+                "message": "Concluded match cleared from screen. Historical data preserved in database."
+            }
+
+
+async def restore_match_to_screen(match_id: str) -> dict[str, Any]:
+    """Restores a concluded match back to active screen display."""
+    async with _lock:
+        match = _matches_cache.get(match_id) or get_match(match_id)
+        if not match:
+            raise ValueError(f"Match {match_id} not found")
+        match["hidden_from_screen"] = False
+        _matches_cache[match_id] = match
+        _save_matches_to_disk(match)
+        return match
 
 
 def calculate_department_standings() -> dict[str, Any]:

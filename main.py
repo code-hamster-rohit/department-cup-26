@@ -146,8 +146,8 @@ async def audience_view(request: Request, match: str | None = None):
 
     if match:
         m_doc = get_match(match)
-        # Completed matches disappear from stream
-        if m_doc and m_doc.get("status") != "completed":
+        # Completed or hidden matches disappear from audience stream
+        if m_doc and not m_doc.get("hidden_from_screen", False) and m_doc.get("status") != "completed":
             active_m = m_doc
 
     if not active_m and active_matches:
@@ -202,7 +202,9 @@ async def admin_dashboard(request: Request):
 
     show_dest_modal = bool(request.session.pop("just_signed_in", False) and is_admin)
 
-    matches = list_matches()
+    matches = list_matches(limit=50, include_hidden=False)
+    all_raw = list_matches(limit=100, include_hidden=True)
+    archived_matches = [m for m in all_raw if m.get("hidden_from_screen", False)]
     sports = get_all_sports()
 
     return templates.TemplateResponse(
@@ -211,6 +213,7 @@ async def admin_dashboard(request: Request):
         context={
             "active_nav": "admin",
             "matches": matches,
+            "archived_matches": archived_matches,
             "sports": sports,
             "current_user": user,
             "is_admin": is_admin,

@@ -151,6 +151,9 @@
               <a href="/admin/match/{{ active_match.id }}" class="btn-control-room-link" title="Open Referee Control Room">
                 <i class="fa-solid fa-sliders"></i> Scorer Room
               </a>
+              <button type="button" class="btn-arena-delete-match" data-id="{{ active_match.id }}" data-status="{{ active_match.status }}" title="{% if active_match.status == 'completed' %}Clear from Screen (Keep in Database){% else %}Delete Match (Screen & Database){% endif %}" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 8px; padding: 6px 12px; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <i class="fa-solid fa-trash-can"></i> Delete
+              </button>
             {% endif %}
           </div>
         </div>
@@ -679,5 +682,10 @@
 {% endblock %}
 
 {% block extra_js %}
+  {% if current_user and current_user.email %}
+    <script>
+      try { localStorage.setItem('deptcup_admin_email', '{{ current_user.email }}'); } catch(e){}
+    </script>
+  {% endif %}
   <script src="/static/js/index.js"></script>
 {% endblock %}
