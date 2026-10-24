@@ -91,13 +91,13 @@
     </button>
   </div>
 
-  <!-- STAGE 2: SQUADS & TOSS ANNOUNCEMENT SECTION -->
+  <!-- STAGE 2: PLAYERS & TOSS SETUP SECTION -->
   <section class="squads-setup-box {% if match.status in ['live', 'completed'] %}d-none{% endif %}" id="squads-section">
     <div class="panel-header" style="margin-bottom: 1.5rem;">
       <div>
-        <span class="panel-title" style="font-size: 1.25rem;"><i class="fa-solid fa-users-gear" style="color: #2563eb;"></i> Step 2: Confirm Lineups & Record Match Toss</span>
+        <span class="panel-title" style="font-size: 1.25rem;"><i class="fa-solid fa-users" style="color: #2563eb;"></i> Step 2: Enter Players & Toss</span>
         <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 0.25rem;">
-          Verified registered rosters for {{ match.team_a.abbr }} and {{ match.team_b.abbr }} are pre-loaded. Select toss winner and start the match.
+          Enter the player(s) playing in this match and record the toss.
         </div>
       </div>
     </div>
@@ -167,90 +167,31 @@
       </div>
     </div>
 
-    <!-- Final Squad Entry & Toss Confirmation -->
-    <div class="squad-cards-grid">
-      <!-- Team A Lineup -->
-      <div class="squad-roster-card team-a">
-        <div>
-          <div class="squad-roster-header">
-            <div>
-              <h4 style="color: #2563eb; font-family: var(--font-heading); margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-users"></i> {{ match.team_a.name }} ({{ match.team_a.abbr }})
-              </h4>
-              <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.2rem;">
-                {{ match.squads.team_a.playing|length if (match.squads and match.squads.team_a and match.squads.team_a.playing) else 0 }} Playing Players Registered
-              </div>
-            </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('drawer-squad-a').classList.toggle('d-none');">
-              <i class="fa-solid fa-pen-to-square"></i> Edit
-            </button>
-          </div>
-
-          <div class="squad-chips-preview">
-            {% if match.squads and match.squads.team_a and match.squads.team_a.playing %}
-              {% for p in match.squads.team_a.playing %}
-                <span class="player-chip {% if p.is_captain or p.role == 'Captain' %}captain{% endif %}">
-                  {% if p.is_captain or p.role == 'Captain' %}👑{% else %}<span style="color: var(--text-dim); font-size: 0.75rem;">#{{ loop.index }}</span>{% endif %}
-                  {{ p.name }}
-                </span>
-              {% endfor %}
-            {% endif %}
-          </div>
-        </div>
-
-        <div id="drawer-squad-a" class="d-none" style="margin-top: 1rem; border-top: 1px solid #bfdbfe; padding-top: 1rem;">
-          <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.35rem;">
-            Edit playing roster (1 player per line · add <code>(C)</code> for Captain):
-          </div>
-          <textarea id="squad-team-a-input" class="form-control" rows="8" style="font-family: monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical;" placeholder="Player 1 (C)&#10;Player 2&#10;Player 3">{% if match.squads and match.squads.team_a and match.squads.team_a.playing %}{% for p in match.squads.team_a.playing %}{{ p.name }}{% if p.is_captain or p.role == 'Captain' %} (C){% endif %}&#10;{% endfor %}{% endif %}</textarea>
-        </div>
+    <!-- Players Playing Entry -->
+    <div style="background: var(--bg-card); border: 1.5px solid var(--border-medium); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+      <div style="font-size: 0.84rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.85rem;">
+        <i class="fa-solid fa-user-tag"></i> Players Playing in this Match
       </div>
-
-      <!-- Team B Lineup -->
-      <div class="squad-roster-card team-b">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
         <div>
-          <div class="squad-roster-header">
-            <div>
-              <h4 style="color: #059669; font-family: var(--font-heading); margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-users"></i> {{ match.team_b.name }} ({{ match.team_b.abbr }})
-              </h4>
-              <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.2rem;">
-                {{ match.squads.team_b.playing|length if (match.squads and match.squads.team_b and match.squads.team_b.playing) else 0 }} Playing Players Registered
-              </div>
-            </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('drawer-squad-b').classList.toggle('d-none');">
-              <i class="fa-solid fa-pen-to-square"></i> Edit
-            </button>
-          </div>
-
-          <div class="squad-chips-preview">
-            {% if match.squads and match.squads.team_b and match.squads.team_b.playing %}
-              {% for p in match.squads.team_b.playing %}
-                <span class="player-chip {% if p.is_captain or p.role == 'Captain' %}captain{% endif %}">
-                  {% if p.is_captain or p.role == 'Captain' %}👑{% else %}<span style="color: var(--text-dim); font-size: 0.75rem;">#{{ loop.index }}</span>{% endif %}
-                  {{ p.name }}
-                </span>
-              {% endfor %}
-            {% endif %}
-          </div>
+          <label style="display: block; font-weight: 700; font-size: 0.88rem; color: #2563eb; margin-bottom: 0.4rem;">
+            {{ match.team_a.name }} ({{ match.team_a.abbr }}) Player(s)
+          </label>
+          <input type="text" id="input-players-a" class="form-control" style="font-size: 1rem; font-weight: 600; padding: 0.65rem 0.85rem;" placeholder="e.g. Rohit Kumar (or Rohit / Sam for doubles)" value="{{ match.score.players_a or match.players_a or '' }}">
         </div>
-
-        <div id="drawer-squad-b" class="d-none" style="margin-top: 1rem; border-top: 1px solid #a7f3d0; padding-top: 1rem;">
-          <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.35rem;">
-            Edit playing roster (1 player per line · add <code>(C)</code> for Captain):
-          </div>
-          <textarea id="squad-team-b-input" class="form-control" rows="8" style="font-family: monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical;" placeholder="Player 1 (C)&#10;Player 2&#10;Player 3">{% if match.squads and match.squads.team_b and match.squads.team_b.playing %}{% for p in match.squads.team_b.playing %}{{ p.name }}{% if p.is_captain or p.role == 'Captain' %} (C){% endif %}&#10;{% endfor %}{% endif %}</textarea>
+        <div>
+          <label style="display: block; font-weight: 700; font-size: 0.88rem; color: #059669; margin-bottom: 0.4rem;">
+            {{ match.team_b.name }} ({{ match.team_b.abbr }}) Player(s)
+          </label>
+          <input type="text" id="input-players-b" class="form-control" style="font-size: 1rem; font-weight: 600; padding: 0.65rem 0.85rem;" placeholder="e.g. Rahul Sharma (or Rahul / Alex for doubles)" value="{{ match.score.players_b or match.players_b or '' }}">
         </div>
       </div>
     </div>
 
-    <!-- Step 2 Actions -->
-    <div class="step-actions-bar">
-      <button class="btn btn-secondary" id="btn-announce-squads">
-        <i class="fa-solid fa-bullhorn"></i> Announce Squads & Toss Only
-      </button>
-      <button class="btn btn-launch-live" id="btn-start-match-live">
-        <i class="fa-solid fa-play"></i> Commence Match & Launch Live Scorer
+    <!-- Actions -->
+    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+      <button class="btn btn-launch-live" id="btn-start-match-live" style="font-size: 1.1rem; padding: 0.85rem 2rem; font-weight: 800;">
+        <i class="fa-solid fa-play"></i> Start Match & Launch Live Scorer
       </button>
     </div>
   </section>
@@ -804,15 +745,6 @@
           </div>
         {% endif %}
 
-        <!-- Custom Commentary Input -->
-        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.25rem; margin-top: 1.5rem;">
-          <form id="form-custom-commentary" style="display: flex; gap: 0.75rem;">
-            <input type="text" class="form-control" id="custom-comment-text" placeholder="Add custom commentary note (e.g. 'Stunning diving catch at long-off!')" required>
-            <button type="submit" class="btn btn-secondary">
-              <i class="fa-solid fa-paper-plane"></i> Broadcast
-            </button>
-          </form>
-        </div>
       </div>
 
       <!-- Right: Sport Regulation Reference Card -->

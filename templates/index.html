@@ -92,7 +92,7 @@
         </div>
         <h2 class="empty-title">Stadium is Awaiting the Next Clash</h2>
         <p class="empty-desc">
-          When an authorized referee creates and announces a match, live scorecards, toss outcomes, playing squads, and real-time commentary will stream here automatically.
+          When an authorized referee creates a match, live scorecards, toss outcomes, and real-time point scores will stream here automatically.
         </p>
 
         <div class="empty-departments-preview">
@@ -165,11 +165,11 @@
             <div class="team-dept-name">{{ active_match.team_a.name if (active_match.team_a is mapping and active_match.team_a.name) else (active_match.team_a | upper) }}</div>
             {% if active_match.score and active_match.score.players_a %}
               <div class="team-athlete-tag" title="Playing Athlete">
-                <i class="fa-solid fa-user-check" style="color: #2563eb;"></i> {{ active_match.score.players_a }}
+                <i class="fa-solid fa-user" style="color: #2563eb;"></i> {{ active_match.score.players_a }}
               </div>
-            {% elif active_match.squads and active_match.squads.team_a and active_match.squads.team_a.captain %}
-              <div class="team-captain-badge">
-                <i class="fa-solid fa-crown"></i> Capt: {{ active_match.squads.team_a.captain }}
+            {% elif active_match.players_a %}
+              <div class="team-athlete-tag" title="Playing Athlete">
+                <i class="fa-solid fa-user" style="color: #2563eb;"></i> {{ active_match.players_a }}
               </div>
             {% endif %}
           </div>
@@ -315,11 +315,11 @@
             <div class="team-dept-name">{{ active_match.team_b.name if (active_match.team_b is mapping and active_match.team_b.name) else (active_match.team_b | upper) }}</div>
             {% if active_match.score and active_match.score.players_b %}
               <div class="team-athlete-tag" title="Playing Athlete" style="margin-left: auto;">
-                <i class="fa-solid fa-user-check" style="color: #059669;"></i> {{ active_match.score.players_b }}
+                <i class="fa-solid fa-user" style="color: #059669;"></i> {{ active_match.score.players_b }}
               </div>
-            {% elif active_match.squads and active_match.squads.team_b and active_match.squads.team_b.captain %}
-              <div class="team-captain-badge">
-                <i class="fa-solid fa-crown"></i> Capt: {{ active_match.squads.team_b.captain }}
+            {% elif active_match.players_b %}
+              <div class="team-athlete-tag" title="Playing Athlete" style="margin-left: auto;">
+                <i class="fa-solid fa-user" style="color: #059669;"></i> {{ active_match.players_b }}
               </div>
             {% endif %}
           </div>
@@ -396,116 +396,6 @@
             <button type="button" class="btn-cheer" data-emoji="🏏" title="Cheer: Shot!">🏏</button>
             <button type="button" class="btn-cheer" data-emoji="⚡" title="Cheer: Maximum!">⚡</button>
             <button type="button" class="btn-cheer" data-emoji="🎉" title="Cheer: Celebration!">🎉</button>
-          </div>
-        </div>
-
-        <!-- SQUADS & PLAYING LINEUP DISPLAY -->
-        {% if active_match.squads %}
-          <div class="squads-display-section">
-            <div class="section-title-bar">
-              <h3><i class="fa-solid fa-users"></i> Department Playing Squads</h3>
-              <span class="squad-verified-tag"><i class="fa-solid fa-circle-check"></i> Official Team Rosters</span>
-            </div>
-
-            <div class="squads-grid">
-              <!-- Team A Roster -->
-              <div class="squad-column team-a-column">
-                <div class="squad-team-header dept-border-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
-                  <span class="dept-badge dept-badge-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
-                    {{ active_match.team_a.abbr if (active_match.team_a is mapping and active_match.team_a.abbr) else (active_match.team_a | upper) }}
-                  </span>
-                  <span class="squad-count">
-                    {{ active_match.squads.team_a.playing | length }} Playing
-                  </span>
-                </div>
-
-                <div class="players-list">
-                  {% for p in active_match.squads.team_a.playing %}
-                    <div class="player-item {% if p.is_captain %}captain-item{% endif %}">
-                      <span class="player-num">{{ loop.index }}</span>
-                      <span class="player-name">{{ p.name }}</span>
-                      {% if p.is_captain %}
-                        <span class="captain-badge-pill"><i class="fa-solid fa-crown"></i> C</span>
-                      {% endif %}
-                      {% if p.role and p.role != 'Captain' %}
-                        <span class="player-role-sub">{{ p.role }}</span>
-                      {% endif %}
-                    </div>
-                  {% endfor %}
-                </div>
-
-                {% if active_match.squads.team_a.substitutes %}
-                  <div class="subs-header">Substitutes (Bench):</div>
-                  <div class="subs-list">
-                    {% for s in active_match.squads.team_a.substitutes %}
-                      <span class="sub-chip">{{ s.name }}</span>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-
-              <!-- Team B Roster -->
-              <div class="squad-column team-b-column">
-                <div class="squad-team-header dept-border-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
-                  <span class="dept-badge dept-badge-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
-                    {{ active_match.team_b.abbr if (active_match.team_b is mapping and active_match.team_b.abbr) else (active_match.team_b | upper) }}
-                  </span>
-                  <span class="squad-count">
-                    {{ active_match.squads.team_b.playing | length }} Playing
-                  </span>
-                </div>
-
-                <div class="players-list">
-                  {% for p in active_match.squads.team_b.playing %}
-                    <div class="player-item {% if p.is_captain %}captain-item{% endif %}">
-                      <span class="player-num">{{ loop.index }}</span>
-                      <span class="player-name">{{ p.name }}</span>
-                      {% if p.is_captain %}
-                        <span class="captain-badge-pill"><i class="fa-solid fa-crown"></i> C</span>
-                      {% endif %}
-                      {% if p.role and p.role != 'Captain' %}
-                        <span class="player-role-sub">{{ p.role }}</span>
-                      {% endif %}
-                    </div>
-                  {% endfor %}
-                </div>
-
-                {% if active_match.squads.team_b.substitutes %}
-                  <div class="subs-header">Substitutes (Bench):</div>
-                  <div class="subs-list">
-                    {% for s in active_match.squads.team_b.substitutes %}
-                      <span class="sub-chip">{{ s.name }}</span>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- LIVE COMMENTARY FEED -->
-        <div class="commentary-section">
-          <div class="section-title-bar">
-            <h3><i class="fa-solid fa-tower-broadcast"></i> Live Commentary & Match Events</h3>
-            <span class="auto-sync-tag"><span class="pulse-dot"></span> Real-Time Network</span>
-          </div>
-
-          <div class="commentary-feed" id="commentary-feed">
-            {% if active_match.commentary %}
-              {% for comm in active_match.commentary | reverse %}
-                <div class="comm-card comm-{{ comm.type or 'info' }}">
-                  <div class="comm-meta">
-                    <span class="comm-ball">{{ comm.ball or comm.time }}</span>
-                    {% if comm.badge %}
-                      <span class="comm-badge">{{ comm.badge }}</span>
-                    {% endif %}
-                  </div>
-                  <div class="comm-text">{{ comm.text }}</div>
-                </div>
-              {% endfor %}
-            {% else %}
-              <div class="comm-empty">Commentary updates will appear here as balls and points are recorded.</div>
-            {% endif %}
           </div>
         </div>
 

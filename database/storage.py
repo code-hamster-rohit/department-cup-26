@@ -202,10 +202,6 @@ async def create_match(
             norm_cat = "Open"
             g_badge = "⚡ Open"
 
-        # Initial squads from registered database matching this category
-        squad_a = get_default_squad(team_a_code, sport_id, sport_rule, category=norm_cat)
-        squad_b = get_default_squad(team_b_code, sport_id, sport_rule, category=norm_cat)
-
         max_overs = custom_overs or sport_rule.get("match_format", {}).get("innings_overs", 10)
 
         match_obj: dict[str, Any] = {
@@ -221,12 +217,14 @@ async def create_match(
             "sport_icon": sport_rule["icon"],
             "venue": venue,
             "stage": stage,
-            "day_label": day_label or "Day 1",
+            "day_label": day_label or "",
             "scheduled_date": scheduled_date or "",
             "status": "upcoming",  # upcoming -> squads_announced -> live -> completed
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
             "completed_at": None,
+            "players_a": "",
+            "players_b": "",
             "team_a": {
                 "code": team_a_code.lower(),
                 "abbr": team_a_info.get("abbr", team_a_code.upper()),
@@ -239,11 +237,7 @@ async def create_match(
                 "name": team_b_info.get("name", team_b_code.upper()),
                 "color": team_b_info.get("color", "#10b981")
             },
-            "squads": {
-                "team_a": squad_a,
-                "team_b": squad_b,
-                "squads_confirmed": False
-            },
+            "squads": {},
             "toss": {
                 "conducted": False,
                 "winner": None,
@@ -429,12 +423,14 @@ async def update_squads_and_toss(
 
         # Auto-extract athlete names for single-match sports (Badminton, Table Tennis, Carrom, Volleyball)
         if match.get("sport_type") in ["badminton", "table_tennis", "volleyball", "carrom"]:
-            p_a = [p.get("name") for p in match["squads"]["team_a"].get("playing", []) if p.get("name")]
-            p_b = [p.get("name") for p in match["squads"]["team_b"].get("playing", []) if p.get("name")]
+            p_a = [p.get("name") for p in match.get("squads", {}).get("team_a", {}).get("playing", []) if p.get("name")]
+            p_b = [p.get("name") for p in match.get("squads", {}).get("team_b", {}).get("playing", []) if p.get("name")]
             if p_a:
-                match["score"]["players_a"] = " / ".join(p_a)
+                match["players_a"] = " / ".join(p_a)
+                match["score"]["players_a"] = match["players_a"]
             if p_b:
-                match["score"]["players_b"] = " / ".join(p_b)
+                match["players_b"] = " / ".join(p_b)
+                match["score"]["players_b"] = match["players_b"]
 
         if toss_winner and toss_decision:
             toss_team_name = match["team_a"]["abbr"] if toss_winner == "team_a" else match["team_b"]["abbr"]
@@ -463,15 +459,48 @@ async def update_squads_and_toss(
 
         match["status"] = "squads_announced"
         match["updated_at"] = datetime.utcnow().isoformat()
-        
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": "-",
-            "text": f"Squads announced! {match['toss'].get('summary', '')}",
-            "badge": "SQUADS & TOSS",
-            "type": "toss"
-        })
+        _save_matches_to_disk(match)
+        return match
 
+
+async def update_players_and_toss(
+    match_id: str,
+    players_a: str = "",
+    players_b: str = "",
+    toss_winner: str | None = None,
+    toss_decision: str | None = None
+) -> dict[str, Any]:
+    async with _lock:
+        match = get_match(match_id)
+        if not match:
+            raise ValueError(f"Match {match_id} not found")
+
+        if players_a:
+            match["players_a"] = players_a
+            if "score" in match and isinstance(match["score"], dict):
+                match["score"]["players_a"] = players_a
+        if players_b:
+            match["players_b"] = players_b
+            if "score" in match and isinstance(match["score"], dict):
+                match["score"]["players_b"] = players_b
+
+        if toss_winner and toss_decision:
+            toss_team_name = match["team_a"]["abbr"] if toss_winner == "team_a" else match["team_b"]["abbr"]
+            summary = f"{toss_team_name} won the toss and elected to {toss_decision} first."
+            match["toss"] = {
+                "conducted": True,
+                "winner": toss_winner,
+                "decision": toss_decision,
+                "summary": summary
+            }
+            if match.get("sport_type") in ["volleyball", "badminton", "table_tennis"]:
+                if (toss_winner == "team_a" and toss_decision == "serve") or (toss_winner == "team_b" and toss_decision == "receive"):
+                    match["score"]["server"] = "team_a"
+                else:
+                    match["score"]["server"] = "team_b"
+
+        match["status"] = "squads_announced"
+        match["updated_at"] = datetime.utcnow().isoformat()
         _save_matches_to_disk(match)
         return match
 
@@ -504,14 +533,6 @@ async def start_match(match_id: str) -> dict[str, Any]:
             if not inn["bowler"] and len(bowl_playing) > 0:
                 inn["bowler"] = bowl_playing[0].get("name", "Bowler")
                 inn["bowlers"][inn["bowler"]] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0}
-
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": "0.1",
-            "text": "The match has officially begun! Players take the field.",
-            "badge": "MATCH START",
-            "type": "start"
-        })
 
         _save_matches_to_disk(match)
         return match

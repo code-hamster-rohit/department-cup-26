@@ -406,25 +406,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audCarromBoard) audCarromBoard.textContent = `🎯 Board ${match.score.current_board || 1} of 8`;
       }
 
-      // Commentary updates
-      if (match.commentary && match.commentary.length > 0) {
-        const commFeed = document.getElementById('commentary-feed');
-        if (commFeed) {
-          const latest = match.commentary[match.commentary.length - 1];
-          const firstCard = commFeed.querySelector('.comm-card');
-          if (!firstCard || !firstCard.textContent.includes(latest.text)) {
-            const newCard = document.createElement('div');
-            newCard.className = `comm-card comm-${latest.type || 'info'}`;
-            newCard.innerHTML = `
-              <div class="comm-meta">
-                <span class="comm-ball">${latest.ball || latest.time}</span>
-                ${latest.badge ? `<span class="comm-badge">${latest.badge}</span>` : ''}
-              </div>
-              <div class="comm-text">${latest.text}</div>
-            `;
-            commFeed.insertBefore(newCard, commFeed.firstChild);
-          }
-        }
+      // Real-time player name updates if available
+      const playerTags = broadcastCard.querySelectorAll('.team-athlete-tag');
+      if (match.score && match.score.players_a && playerTags[0]) {
+        playerTags[0].innerHTML = `<i class="fa-solid fa-user" style="color: #2563eb;"></i> ${match.score.players_a}`;
+      }
+      if (match.score && match.score.players_b && playerTags[1]) {
+        playerTags[1].innerHTML = `<i class="fa-solid fa-user" style="color: #059669;"></i> ${match.score.players_b}`;
       }
     }
 

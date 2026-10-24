@@ -16,6 +16,7 @@ from database.storage import (
     get_match,
     list_matches,
     update_squads_and_toss,
+    update_players_and_toss,
     start_match,
     update_score_action,
     undo_last_action,
@@ -61,8 +62,17 @@ class CreateMatchRequest(BaseModel):
 
 
 class SquadsTossRequest(BaseModel):
-    squad_a: dict[str, Any]
-    squad_b: dict[str, Any]
+    squad_a: dict[str, Any] | None = None
+    squad_b: dict[str, Any] | None = None
+    players_a: str | None = None
+    players_b: str | None = None
+    toss_winner: str | None = None
+    toss_decision: str | None = None
+
+
+class PlayersTossRequest(BaseModel):
+    players_a: str = ""
+    players_b: str = ""
     toss_winner: str | None = None
     toss_decision: str | None = None
 
@@ -238,14 +248,40 @@ async def api_create_match(payload: CreateMatchRequest, request: Request):
 async def api_update_squads(match_id: str, payload: SquadsTossRequest, request: Request):
     verify_admin_access(request)
     try:
-        match = await update_squads_and_toss(
+        if payload.players_a or payload.players_b:
+            match = await update_players_and_toss(
+                match_id=match_id,
+                players_a=payload.players_a or "",
+                players_b=payload.players_b or "",
+                toss_winner=payload.toss_winner,
+                toss_decision=payload.toss_decision
+            )
+        else:
+            match = await update_squads_and_toss(
+                match_id=match_id,
+                squad_a=payload.squad_a or {},
+                squad_b=payload.squad_b or {},
+                toss_winner=payload.toss_winner,
+                toss_decision=payload.toss_decision
+            )
+        await manager.broadcast_match(match_id, "SQUADS_ANNOUNCED", match)
+        return {"success": True, "match": match}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.post("/match/{match_id}/players")
+async def api_update_players(match_id: str, payload: PlayersTossRequest, request: Request):
+    verify_admin_access(request)
+    try:
+        match = await update_players_and_toss(
             match_id=match_id,
-            squad_a=payload.squad_a,
-            squad_b=payload.squad_b,
+            players_a=payload.players_a,
+            players_b=payload.players_b,
             toss_winner=payload.toss_winner,
             toss_decision=payload.toss_decision
         )
-        await manager.broadcast_match(match_id, "SQUADS_ANNOUNCED", match)
+        await manager.broadcast_match(match_id, "PLAYERS_UPDATED", match)
         return {"success": True, "match": match}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

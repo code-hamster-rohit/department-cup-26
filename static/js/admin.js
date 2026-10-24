@@ -119,85 +119,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const matchId = root.getAttribute('data-match-id');
   const sportType = root.getAttribute('data-sport-type');
 
-  const btnAnnounceSquads = document.getElementById('btn-announce-squads');
   const btnStartMatchLive = document.getElementById('btn-start-match-live');
 
-  function extractSquadFromTextarea(textareaId) {
-    const el = document.getElementById(textareaId);
-    if (!el) return null;
-    const text = el.value.trim();
-    if (!text) return { playing: [], substitutes: [] };
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    const playing = lines.map(line => {
-      const isCaptain = /\(c\)/i.test(line);
-      const cleanName = line.replace(/\(c\)/i, '').trim();
-      return {
-        name: cleanName,
-        role: isCaptain ? 'Captain' : 'Player',
-        is_captain: isCaptain,
-        student_id: ''
-      };
-    });
-    return { playing, substitutes: [] };
-  }
-
-  if (btnAnnounceSquads) {
-    btnAnnounceSquads.addEventListener('click', async () => {
-      const tossWinner = document.getElementById('toss-winner-select').value;
-      const tossDecision = document.getElementById('toss-decision-select').value;
-      const squadA = extractSquadFromTextarea('squad-team-a-input') || {};
-      const squadB = extractSquadFromTextarea('squad-team-b-input') || {};
-
+  if (btnStartMatchLive) {
+    btnStartMatchLive.addEventListener('click', async () => {
+      if (!confirm('Commence match and start live scoring?')) return;
       try {
-        btnAnnounceSquads.disabled = true;
-        const res = await fetch(`/api/match/${matchId}/squads`, {
+        btnStartMatchLive.disabled = true;
+        const tossWinner = document.getElementById('toss-winner-select')?.value;
+        const tossDecision = document.getElementById('toss-decision-select')?.value;
+        const playersA = document.getElementById('input-players-a')?.value.trim() || '';
+        const playersB = document.getElementById('input-players-b')?.value.trim() || '';
+
+        // Save players and toss
+        await fetch(`/api/match/${matchId}/players`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            squad_a: squadA,
-            squad_b: squadB,
+            players_a: playersA,
+            players_b: playersB,
             toss_winner: tossWinner,
             toss_decision: tossDecision
           })
         });
-        const data = await res.json();
-        if (data.success) {
-          window.App.showToast('Squads & Toss confirmed! Visible on audience view.', 'success');
-          setTimeout(() => window.location.reload(), 500);
-        } else {
-          alert('Failed announcing squads: ' + (data.detail || ''));
-          btnAnnounceSquads.disabled = false;
-        }
-      } catch (err) {
-        alert('Error: ' + err.message);
-        btnAnnounceSquads.disabled = false;
-      }
-    });
-  }
-
-  if (btnStartMatchLive) {
-    btnStartMatchLive.addEventListener('click', async () => {
-      if (!confirm('Commence match and start live streaming to audience view?')) return;
-      try {
-        btnStartMatchLive.disabled = true;
-        // Auto-save entered squads and toss before commencing
-        const tossWinner = document.getElementById('toss-winner-select')?.value;
-        const tossDecision = document.getElementById('toss-decision-select')?.value;
-        const squadA = extractSquadFromTextarea('squad-team-a-input') || {};
-        const squadB = extractSquadFromTextarea('squad-team-b-input') || {};
-
-        if (tossWinner && tossDecision) {
-          await fetch(`/api/match/${matchId}/squads`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              squad_a: squadA,
-              squad_b: squadB,
-              toss_winner: tossWinner,
-              toss_decision: tossDecision
-            })
-          });
-        }
 
         const res = await fetch(`/api/match/${matchId}/start`, { method: 'POST' });
         const data = await res.json();
@@ -658,24 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
       freeHitBanner.style.display = match.score.is_free_hit ? 'flex' : 'none';
     }
 
-    // Prepend commentary item
-    if (match.commentary && match.commentary.length > 0) {
-      const latest = match.commentary[match.commentary.length - 1];
-      const feed = document.getElementById('admin-commentary-feed');
-      if (feed) {
-        const item = document.createElement('div');
-        item.className = `commentary-item ${latest.type}`;
-        item.style.padding = '0.6rem';
-        item.innerHTML = `
-          <div class="comm-ball" style="font-size: 0.85rem;">${latest.ball}</div>
-          <div class="comm-text-group">
-            ${latest.badge ? `<span class="comm-badge" style="background: rgba(255,255,255,0.08); font-size: 0.62rem;">${latest.badge}</span>` : ''}
-            <div class="comm-text" style="font-size: 0.82rem;">${latest.text}</div>
-          </div>
-        `;
-        feed.insertBefore(item, feed.firstChild);
-      }
-    }
   }
 
   // Admin Directory Modal
