@@ -100,29 +100,47 @@ window.AdminCore = (function() {
     }
 
     // 4. Conclude Match Modal
+    const modalFinish = document.getElementById('conclude-match-modal') || document.getElementById('modal-conclude-match');
     const btnTopConclude = document.getElementById('btn-top-conclude');
-    const btnModalConclude = document.getElementById('btn-conclude-match-modal');
-    const modalFinish = document.getElementById('modal-conclude-match');
+    const btnModalConclude = document.getElementById('btn-open-conclude') || document.getElementById('btn-conclude-match-modal');
+    const btnCloseModal = document.getElementById('btn-close-conclude-modal');
+    const btnCancelModal = document.getElementById('btn-cancel-conclude');
 
     function openFinishModal() {
       if (modalFinish) modalFinish.classList.remove('d-none');
     }
 
+    function closeFinishModal() {
+      if (modalFinish) modalFinish.classList.add('d-none');
+    }
+
     if (btnTopConclude) btnTopConclude.addEventListener('click', openFinishModal);
     if (btnModalConclude) btnModalConclude.addEventListener('click', openFinishModal);
 
-    const btnCloseModal = document.getElementById('btn-close-conclude-modal');
-    if (btnCloseModal && modalFinish) {
-      btnCloseModal.addEventListener('click', () => modalFinish.classList.add('d-none'));
+    if (btnCloseModal) btnCloseModal.addEventListener('click', closeFinishModal);
+    if (btnCancelModal) btnCancelModal.addEventListener('click', closeFinishModal);
+
+    if (modalFinish) {
+      modalFinish.addEventListener('click', function(e) {
+        if (e.target === modalFinish) closeFinishModal();
+      });
     }
 
-    const formFinish = document.getElementById('form-finish-match');
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeFinishModal();
+    });
+
+    const formFinish = document.getElementById('form-conclude-match') || document.getElementById('form-finish-match');
     if (formFinish) {
       formFinish.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const winner = document.getElementById('conclude-winner-select').value;
-        const summary = document.getElementById('conclude-summary-input').value.trim();
-        const motm = document.getElementById('conclude-motm-input') ? document.getElementById('conclude-motm-input').value.trim() : '';
+        const selWinner = document.getElementById('conclude-winner') || document.getElementById('conclude-winner-select');
+        const inpSummary = document.getElementById('conclude-summary') || document.getElementById('conclude-summary-input');
+        const inpMotm = document.getElementById('conclude-motm') || document.getElementById('conclude-motm-input');
+
+        const winner = selWinner ? selWinner.value : 'team_a';
+        const summary = inpSummary ? inpSummary.value.trim() : '';
+        const motm = inpMotm ? inpMotm.value.trim() : '';
 
         try {
           const res = await fetch(`/api/match/${matchId}/end`, {

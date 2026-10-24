@@ -73,7 +73,7 @@ window.AdminBadminton = (function() {
     const btnFinalizeTie = document.getElementById('btn-finalize-tie');
     if (btnFinalizeTie) {
       btnFinalizeTie.addEventListener('click', function() {
-        const modal = document.getElementById('modal-conclude-match');
+        const modal = document.getElementById('conclude-match-modal') || document.getElementById('modal-conclude-match');
         if (modal) modal.classList.remove('d-none');
       });
     }
@@ -82,12 +82,22 @@ window.AdminBadminton = (function() {
     const modalLate = document.getElementById('modal-late-arrival');
     const btnOpenLate = document.getElementById('btn-late-arrival-tool');
     const btnCloseLate = document.getElementById('btn-close-late-modal');
+    const btnCancelLate = document.getElementById('btn-cancel-late-modal');
+
+    function closeLateModal() {
+      if (modalLate) modalLate.classList.add('d-none');
+    }
 
     if (btnOpenLate && modalLate) {
       btnOpenLate.addEventListener('click', () => modalLate.classList.remove('d-none'));
     }
-    if (btnCloseLate && modalLate) {
-      btnCloseLate.addEventListener('click', () => modalLate.classList.add('d-none'));
+    if (btnCloseLate) btnCloseLate.addEventListener('click', closeLateModal);
+    if (btnCancelLate) btnCancelLate.addEventListener('click', closeLateModal);
+
+    if (modalLate) {
+      modalLate.addEventListener('click', function(e) {
+        if (e.target === modalLate) closeLateModal();
+      });
     }
 
     document.querySelectorAll('.btn-late-action').forEach(btn => {
@@ -95,7 +105,7 @@ window.AdminBadminton = (function() {
         const advTeam = btn.dataset.team;
         if (confirm(`Apply Rule 5: Award 2-point opening set advantage to ${advTeam.toUpperCase()}?`)) {
           _sendAction({ type: 'late_arrival_penalty', advantaged_team: advTeam });
-          if (modalLate) modalLate.classList.add('d-none');
+          closeLateModal();
         }
       });
     });
@@ -107,15 +117,29 @@ window.AdminBadminton = (function() {
     const btnCancelLineup = document.getElementById('btn-cancel-lineup');
     const formLineup = document.getElementById('form-event-lineup');
 
+    function closeLineupModal() {
+      if (modalLineup) modalLineup.classList.add('d-none');
+    }
+
     if (btnOpenLineup && modalLineup) {
       btnOpenLineup.addEventListener('click', () => modalLineup.classList.remove('d-none'));
     }
-    if (btnCloseLineup && modalLineup) {
-      btnCloseLineup.addEventListener('click', () => modalLineup.classList.add('d-none'));
+    if (btnCloseLineup) btnCloseLineup.addEventListener('click', closeLineupModal);
+    if (btnCancelLineup) btnCancelLineup.addEventListener('click', closeLineupModal);
+
+    if (modalLineup) {
+      modalLineup.addEventListener('click', function(e) {
+        if (e.target === modalLineup) closeLineupModal();
+      });
     }
-    if (btnCancelLineup && modalLineup) {
-      btnCancelLineup.addEventListener('click', () => modalLineup.classList.add('d-none'));
-    }
+
+    // Universal Escape key listener for modals
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeLateModal();
+        closeLineupModal();
+      }
+    });
 
     if (formLineup) {
       formLineup.addEventListener('submit', function(e) {
@@ -128,7 +152,7 @@ window.AdminBadminton = (function() {
           players_a: plA,
           players_b: plB
         });
-        if (modalLineup) modalLineup.classList.add('d-none');
+        closeLineupModal();
       });
     }
   }
