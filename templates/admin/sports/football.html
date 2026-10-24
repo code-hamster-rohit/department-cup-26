@@ -1,0 +1,82 @@
+<!-- ADMIN FOOTBALL SCORING COCKPIT -->
+<div class="sport-admin-football" id="admin-football-controls">
+  <div class="keypad-section-title">Record Football Match Events & Goals</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+    <!-- Team A Box -->
+    <div style="background: var(--bg-secondary); border: 1.5px solid #bfdbfe; padding: 1.25rem; border-radius: 10px;">
+      <h4 style="color: #2563eb; margin-bottom: 0.75rem;">{{ match.team_a.name }} ({{ match.team_a.abbr }})</h4>
+      <button class="btn btn-success btn-fb-goal" data-team="team_a" style="width: 100%; margin-bottom: 0.5rem; font-weight: 800;">
+        ⚽ Goal for {{ match.team_a.abbr }}
+      </button>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+        <button class="btn btn-warning btn-sm btn-fb-card" data-team="team_a" data-card="yellow" style="flex: 1;">🟨 Yellow Card</button>
+        <button class="btn btn-danger btn-sm btn-fb-card" data-team="team_a" data-card="red" style="flex: 1;">🟥 Red Card</button>
+      </div>
+      <!-- Fast Match Stats +1 buttons -->
+      <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); margin-bottom: 0.35rem; text-transform: uppercase;">Match Stats</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;">
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="shots">+1 Shot</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="shots_on_target">+1 On Target</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="corners">+1 Corner</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="fouls">+1 Foul</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="offsides">+1 Offside</button>
+      </div>
+    </div>
+
+    <!-- Team B Box -->
+    <div style="background: var(--bg-secondary); border: 1.5px solid #a7f3d0; padding: 1.25rem; border-radius: 10px;">
+      <h4 style="color: #059669; margin-bottom: 0.75rem;">{{ match.team_b.name }} ({{ match.team_b.abbr }})</h4>
+      <button class="btn btn-success btn-fb-goal" data-team="team_b" style="width: 100%; margin-bottom: 0.5rem; font-weight: 800;">
+        ⚽ Goal for {{ match.team_b.abbr }}
+      </button>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+        <button class="btn btn-warning btn-sm btn-fb-card" data-team="team_b" data-card="yellow" style="flex: 1;">🟨 Yellow Card</button>
+        <button class="btn btn-danger btn-sm btn-fb-card" data-team="team_b" data-card="red" style="flex: 1;">🟥 Red Card</button>
+      </div>
+      <!-- Fast Match Stats +1 buttons -->
+      <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); margin-bottom: 0.35rem; text-transform: uppercase;">Match Stats</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;">
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="shots">+1 Shot</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="shots_on_target">+1 On Target</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="corners">+1 Corner</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="fouls">+1 Foul</button>
+        <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="offsides">+1 Offside</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Period / Half Selector -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+    <div style="font-size: 0.85rem; font-weight: 700;">Current Period: <span style="color: #2563eb;" id="admin-current-period-display">{{ match.score.period_label or ('Half ' ~ match.score.half) }}</span></div>
+    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="1">1st Half</button>
+      <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="2">2nd Half</button>
+      <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="3">Extra Time</button>
+      <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="4">Penalty Shootout</button>
+    </div>
+  </div>
+
+  <!-- Shootout Penalty Controls (If in shootout or Girls penalty shootout) -->
+  {% if match.sport_type == 'penalty_shootout' or (match.score and match.score.half == 4) %}
+    <div class="keypad-section-title">Record Penalty Kick (5 Kicks / Player)</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.3); padding: 1.25rem; border-radius: 12px;">
+        <h4 style="color: #2563eb; margin-bottom: 0.75rem;">{{ match.team_a.name }}</h4>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-success btn-sm btn-shootout-kick" data-team="team_a" data-result="goal">⚽ Goal</button>
+          <button class="btn btn-warning btn-sm btn-shootout-kick" data-team="team_a" data-result="saved">🧤 Saved</button>
+          <button class="btn btn-danger btn-sm btn-shootout-kick" data-team="team_a" data-result="missed">❌ Missed</button>
+        </div>
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.25rem; border-radius: 12px;">
+        <h4 style="color: #059669; margin-bottom: 0.75rem;">{{ match.team_b.name }}</h4>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-success btn-sm btn-shootout-kick" data-team="team_b" data-result="goal">⚽ Goal</button>
+          <button class="btn btn-warning btn-sm btn-shootout-kick" data-team="team_b" data-result="saved">🧤 Saved</button>
+          <button class="btn btn-danger btn-sm btn-shootout-kick" data-team="team_b" data-result="missed">❌ Missed</button>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>

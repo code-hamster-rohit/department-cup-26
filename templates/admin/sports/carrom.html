@@ -1,0 +1,78 @@
+<!-- ADMIN CARROM SCORING COCKPIT -->
+<div class="sport-admin-carrom" id="admin-carrom-controls">
+  <div class="carrom-scorer-cockpit" style="background: var(--bg-card); border: 2px solid var(--border-medium); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+      <div>
+        <span class="badge" style="background: #d97706; color: #fff; font-size: 0.85rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px;">
+          🎯 BOARD <span id="admin-carrom-cur-board">{{ match.score.current_board or 1 }}</span> OF 8
+        </span>
+        <span style="font-size: 0.85rem; color: var(--text-dim); margin-left: 0.5rem;">
+          Target: 29 Points to Win
+        </span>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-next-carrom-board">
+        <i class="fa-solid fa-check-double"></i> Conclude Board {{ match.score.current_board or 1 }}
+      </button>
+    </div>
+
+    <!-- Digital Board Display -->
+    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; text-align: center; margin-bottom: 1.5rem; background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px;">
+      <div>
+        <div style="font-size: 0.95rem; font-weight: 800; color: #2563eb; text-transform: uppercase; margin-bottom: 0.25rem;">
+          {{ match.team_a.name }} ({{ match.team_a.abbr }})
+        </div>
+        <div id="admin-carrom-pts-a" style="font-family: var(--font-heading); font-size: 3.8rem; font-weight: 900; line-height: 1; color: #2563eb;">
+          {{ match.score.score_team_a or 0 }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; font-weight: 600;">Total Match Points</div>
+      </div>
+
+      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-dim); opacity: 0.4;">
+        VS
+      </div>
+
+      <div>
+        <div style="font-size: 0.95rem; font-weight: 800; color: #059669; text-transform: uppercase; margin-bottom: 0.25rem;">
+          {{ match.team_b.name }} ({{ match.team_b.abbr }})
+        </div>
+        <div id="admin-carrom-pts-b" style="font-family: var(--font-heading); font-size: 3.8rem; font-weight: 900; line-height: 1; color: #059669;">
+          {{ match.score.score_team_b or 0 }}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; font-weight: 600;">Total Match Points</div>
+      </div>
+    </div>
+
+    <!-- Points Keypad for Team A and Team B -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+      <!-- Team A Add Points -->
+      <div style="background: rgba(37,99,235,0.04); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 1rem;">
+        <div style="font-weight: 800; font-size: 0.85rem; color: #2563eb; margin-bottom: 0.75rem;">
+          Award Points to {{ match.team_a.abbr }}
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <button type="button" class="btn btn-primary btn-sm btn-carrom-add" data-team="team_a" data-delta="1">+1 Pt</button>
+          <button type="button" class="btn btn-primary btn-sm btn-carrom-add" data-team="team_a" data-delta="2">+2 Pts</button>
+          <button type="button" class="btn btn-primary btn-sm btn-carrom-add" data-team="team_a" data-delta="3">+3 Pts</button>
+          <button type="button" class="btn btn-primary btn-sm btn-carrom-add" data-team="team_a" data-delta="4">+4 Pts</button>
+          <button type="button" class="btn btn-warning btn-sm btn-carrom-add" data-team="team_a" data-delta="5" title="Queen Covered (+3) + 2 White">+5 (Queen)</button>
+          <button type="button" class="btn btn-secondary btn-sm btn-carrom-add" data-team="team_a" data-delta="-1">-1 Deduct</button>
+        </div>
+      </div>
+
+      <!-- Team B Add Points -->
+      <div style="background: rgba(16,185,129,0.04); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 1rem;">
+        <div style="font-weight: 800; font-size: 0.85rem; color: #059669; margin-bottom: 0.75rem;">
+          Award Points to {{ match.team_b.abbr }}
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <button type="button" class="btn btn-success btn-sm btn-carrom-add" data-team="team_b" data-delta="1">+1 Pt</button>
+          <button type="button" class="btn btn-success btn-sm btn-carrom-add" data-team="team_b" data-delta="2">+2 Pts</button>
+          <button type="button" class="btn btn-success btn-sm btn-carrom-add" data-team="team_b" data-delta="3">+3 Pts</button>
+          <button type="button" class="btn btn-success btn-sm btn-carrom-add" data-team="team_b" data-delta="4">+4 Pts</button>
+          <button type="button" class="btn btn-warning btn-sm btn-carrom-add" data-team="team_b" data-delta="5" title="Queen Covered (+3) + 2 Black">+5 (Queen)</button>
+          <button type="button" class="btn btn-secondary btn-sm btn-carrom-add" data-team="team_b" data-delta="-1">-1 Deduct</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

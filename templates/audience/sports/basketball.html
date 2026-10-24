@@ -1,0 +1,61 @@
+<!-- AUDIENCE BASKETBALL SHOOTOUT LIVE SCORECARD -->
+<div class="sport-audience-basketball" id="audience-basketball-container">
+  <div class="live-score-display basketball-display">
+    <div class="score-main-line">
+      <span class="bb-pts-a" id="aud-bb-pts-a" style="color: #2563eb;">{{ active_match.score.score_team_a or 0 }}</span>
+      <span class="score-dash">-</span>
+      <span class="bb-pts-b" id="aud-bb-pts-b" style="color: #059669;">{{ active_match.score.score_team_b or 0 }}</span>
+    </div>
+    <div class="score-sub-line">
+      <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 700;">
+        🏀 Department Shootout Challenge
+      </span>
+      <span class="badge badge-secondary" id="aud-bb-remaining">
+        Remaining Shots: {{ active_match.score.remaining_shots_a or 0 }} ({{ active_match.team_a.abbr }}) · {{ active_match.score.remaining_shots_b or 0 }} ({{ active_match.team_b.abbr }})
+      </span>
+    </div>
+  </div>
+
+  <!-- Shooters Box Score Matrix -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
+    <!-- Team A Shooters -->
+    <div style="background: var(--bg-card); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 1rem;">
+      <h4 style="color: #2563eb; font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+        <span>{{ active_match.team_a.abbr }} Shooters</span>
+        <span>{{ active_match.score.score_team_a or 0 }} Pts</span>
+      </h4>
+      <div id="aud-bb-shooters-a" style="display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem;">
+        {% if active_match.score.shooters_a %}
+          {% for name, sh in active_match.score.shooters_a.items() %}
+            <div style="display: flex; justify-content: space-between; background: var(--bg-secondary); padding: 0.4rem 0.6rem; border-radius: 6px;">
+              <span><strong>{{ name }}</strong></span>
+              <span>{{ sh.total_pts }} pts ({{ sh.pct }})</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="color: var(--text-muted); font-size: 0.78rem;">No shots recorded yet</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Team B Shooters -->
+    <div style="background: var(--bg-card); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 1rem;">
+      <h4 style="color: #059669; font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+        <span>{{ active_match.team_b.abbr }} Shooters</span>
+        <span>{{ active_match.score.score_team_b or 0 }} Pts</span>
+      </h4>
+      <div id="aud-bb-shooters-b" style="display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem;">
+        {% if active_match.score.shooters_b %}
+          {% for name, sh in active_match.score.shooters_b.items() %}
+            <div style="display: flex; justify-content: space-between; background: var(--bg-secondary); padding: 0.4rem 0.6rem; border-radius: 6px;">
+              <span><strong>{{ name }}</strong></span>
+              <span>{{ sh.total_pts }} pts ({{ sh.pct }})</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="color: var(--text-muted); font-size: 0.78rem;">No shots recorded yet</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

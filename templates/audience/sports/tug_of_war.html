@@ -1,0 +1,30 @@
+<!-- AUDIENCE TUG OF WAR LIVE SCORECARD -->
+<div class="sport-audience-tow" id="audience-tow-container">
+  <div class="live-score-display tow-display">
+    <div class="score-main-line">
+      <span class="tow-pulls-a" id="aud-tow-pulls-a" style="color: #2563eb;">{{ active_match.score.pulls_team_a or 0 }}</span>
+      <span class="score-dash">-</span>
+      <span class="tow-pulls-b" id="aud-tow-pulls-b" style="color: #059669;">{{ active_match.score.pulls_team_b or 0 }}</span>
+    </div>
+    <div class="score-sub-line">
+      <span class="badge badge-tow" id="aud-tow-pull-info">Best of 3 Pulls · Pull {{ active_match.score.current_pull or 1 }}</span>
+    </div>
+  </div>
+
+  <!-- Pull History Breakdown -->
+  {% if active_match.score.pull_history and active_match.score.pull_history|length > 0 %}
+    <div class="tow-pull-history" style="margin-top: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.65rem;">
+        <i class="fa-solid fa-list-check"></i> Pulls Summary
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        {% for p in active_match.score.pull_history %}
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary); padding: 0.5rem 0.85rem; border-radius: 8px; font-size: 0.85rem;">
+            <span><strong>Pull {{ p.pull }}:</strong> Won by <strong style="color: #2563eb;">{{ p.team_name }}</strong></span>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">⏱️ {{ p.duration }} {% if p.cautions_a or p.cautions_b %} · ⚠️ Cautions ({{ p.cautions_a }}-{{ p.cautions_b }}){% endif %}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,57 @@
+<!-- AUDIENCE CRICKET LIVE DETAIL (PITCH STRIP & RECENT BALLS) -->
+{% set inn_num = active_match.score.innings or 1 %}
+{% set cur_inn = active_match.score['innings_' ~ inn_num] %}
+
+<div class="sport-audience-cricket" id="audience-cricket-container">
+
+  <!-- On-Pitch Batters & Bowler Strip -->
+  <div class="cricket-pitch-strip" id="aud-pitch-strip">
+    <div class="pitch-batters">
+      <div class="batter-card striker">
+        <div class="batter-label"><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> STRIKER (FACING)</div>
+        <div class="batter-name" id="aud-striker-name">{{ cur_inn.striker or 'Batter 1' }} *</div>
+        {% if cur_inn.batsmen and cur_inn.batsmen[cur_inn.striker] %}
+          {% set b = cur_inn.batsmen[cur_inn.striker] %}
+          <div class="batter-stats" id="aud-striker-stats">{{ b.runs }} ({{ b.balls }}b) · {{ b.fours }}x4 · {{ b.sixes }}x6 · SR: {{ b.sr }}</div>
+        {% else %}
+          <div class="batter-stats" id="aud-striker-stats">0 (0b)</div>
+        {% endif %}
+      </div>
+      <div class="batter-card non-striker">
+        <div class="batter-label">NON-STRIKER</div>
+        <div class="batter-name" id="aud-non-striker-name">{{ cur_inn.non_striker or 'Batter 2' }}</div>
+        {% if cur_inn.batsmen and cur_inn.batsmen[cur_inn.non_striker] %}
+          {% set b = cur_inn.batsmen[cur_inn.non_striker] %}
+          <div class="batter-stats" id="aud-non-striker-stats">{{ b.runs }} ({{ b.balls }}b)</div>
+        {% else %}
+          <div class="batter-stats" id="aud-non-striker-stats">0 (0b)</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="pitch-bowler">
+      <div class="bowler-card">
+        <div class="bowler-label"><i class="fa-solid fa-baseball"></i> CURRENT BOWLER</div>
+        <div class="bowler-name" id="aud-bowler-name">{{ cur_inn.bowler or 'Bowler' }}</div>
+        {% if cur_inn.bowlers and cur_inn.bowlers[cur_inn.bowler] %}
+          {% set bw = cur_inn.bowlers[cur_inn.bowler] %}
+          <div class="bowler-stats" id="aud-bowler-stats">{{ bw.overs }} ov · {{ bw.maidens }}m · {{ bw.runs }}r · {{ bw.wickets }}w · Econ: {{ bw.econ }}</div>
+        {% else %}
+          <div class="bowler-stats" id="aud-bowler-stats">0.0 ov · 0r · 0w</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Deliveries Strip -->
+  {% if cur_inn.timeline %}
+    <div class="recent-balls-bar">
+      <span class="recent-label">RECENT:</span>
+      <div class="recent-chips" id="aud-timeline-chips">
+        {% for b in cur_inn.timeline[-12:] %}
+          <span class="ball-chip {% if b == '4' %}four{% elif b == '6' %}six{% elif b == 'W' %}wicket{% elif 'Wd' in b or 'NB' in b %}extra{% elif b == '.' or b == '0' %}dot{% endif %}">{{ b }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>

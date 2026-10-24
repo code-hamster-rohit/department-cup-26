@@ -1,0 +1,120 @@
+<!-- ADMIN CRICKET SCORING COCKPIT -->
+{% set cur_inn = match.score.innings_1 if match.score.innings == 1 else match.score.innings_2 %}
+{% set bat_squad = match.squads.team_a if match.score.batting_team == 'team_a' else match.squads.team_b %}
+{% set bowl_squad = match.squads.team_b if match.score.batting_team == 'team_a' else match.squads.team_a %}
+
+<div class="sport-admin-cricket" id="admin-cricket-controls">
+  <!-- Tactical Current Batters & Bowler Strip -->
+  <div class="tactical-cricket-bar">
+    <!-- Striker Card -->
+    <div class="tactical-card striker">
+      <div class="tactical-label" style="color: #2563eb;">
+        <span>🏏 On Strike (Facing)</span>
+        <button type="button" id="btn-rotate-strike" class="btn btn-secondary btn-sm" style="padding: 0.15rem 0.45rem; font-size: 0.72rem; cursor: pointer;" title="Swap Batter On Strike">
+          <i class="fa-solid fa-arrows-rotate"></i> Swap
+        </button>
+      </div>
+      <select class="form-control" id="select-striker" style="font-weight: 700;">
+        {% if bat_squad and bat_squad.playing %}
+          {% for p in bat_squad.playing %}
+            <option value="{{ p.name }}" {% if (cur_inn.striker == p.name) or (not cur_inn.striker and loop.first) %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
+
+    <!-- Non-Striker Card -->
+    <div class="tactical-card">
+      <div class="tactical-label" style="color: var(--text-dim);">
+        <span>Non-Striker Runner</span>
+      </div>
+      <select class="form-control" id="select-non-striker" style="font-weight: 700;">
+        {% if bat_squad and bat_squad.playing %}
+          {% for p in bat_squad.playing %}
+            <option value="{{ p.name }}" {% if (cur_inn.non_striker == p.name) or (not cur_inn.non_striker and loop.index == 2) %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
+
+    <!-- Current Bowler Card -->
+    <div class="tactical-card bowler">
+      <div class="tactical-label" style="color: #d97706;">
+        <span>⚾ Current Bowler (Max 2 ov)</span>
+      </div>
+      <select class="form-control" id="select-bowler" style="font-weight: 700;">
+        {% if bowl_squad and bowl_squad.playing %}
+          {% for p in bowl_squad.playing %}
+            {% set bstat = cur_inn.bowlers[p.name] if (cur_inn.bowlers and p.name in cur_inn.bowlers) else none %}
+            <option value="{{ p.name }}" {% if (cur_inn.bowler == p.name) or (not cur_inn.bowler and loop.first) %}selected{% endif %}>
+              {{ p.name }} ({{ bstat.overs if bstat else '0.0' }} ov)
+            </option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
+  </div>
+
+  <!-- Free Hit Indicator Banner -->
+  <div id="admin-freehit-banner" class="{% if not match.score.is_free_hit %}d-none{% endif %}" style="margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(245,158,11,0.2)); border: 2px solid #ef4444; padding: 0.85rem 1.25rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+    <span style="font-weight: 900; color: #dc2626;"><i class="fa-solid fa-bullseye"></i> FREE HIT ACTIVE! Batter can ONLY be dismissed via RUN OUT!</span>
+    <span class="badge badge-freehit">FREE HIT</span>
+  </div>
+
+  <!-- Fast Runs Keypad -->
+  <div class="keypad-section-title">
+    <i class="fa-solid fa-bolt" style="color: #2563eb;"></i> 1. Record Ball Outcome (Runs)
+  </div>
+  <div class="runs-keypad">
+    <button class="keypad-btn btn-run" data-runs="0">0<span class="keypad-sub">Dot</span></button>
+    <button class="keypad-btn btn-run" data-runs="1">1<span class="keypad-sub">Single</span></button>
+    <button class="keypad-btn btn-run" data-runs="2">2<span class="keypad-sub">Two</span></button>
+    <button class="keypad-btn btn-run" data-runs="3">3<span class="keypad-sub">Three</span></button>
+    <button class="keypad-btn four btn-run" data-runs="4">4<span class="keypad-sub" style="color: #047857; font-weight: 900;">FOUR!</span></button>
+    <button class="keypad-btn six btn-run" data-runs="6">6<span class="keypad-sub" style="color: #6d28d9; font-weight: 900;">SIX!</span></button>
+  </div>
+
+  <!-- Extras Keypad -->
+  <div class="keypad-section-title">
+    <i class="fa-solid fa-plus-minus" style="color: #d97706;"></i> 2. Extras & Free Hit Generators
+  </div>
+  <div class="extras-keypad">
+    <button class="extra-btn" id="btn-wide">+1 Wide</button>
+    <button class="extra-btn noball" id="btn-noball">
+      <i class="fa-solid fa-bolt"></i> No-Ball + Free Hit
+    </button>
+    <button class="extra-btn" id="btn-bye">+1 Bye</button>
+    <button class="extra-btn" id="btn-legbye">+1 Leg Bye</button>
+  </div>
+
+  <!-- Wickets Keypad (LBW strictly blocked per rules) -->
+  <div class="keypad-section-title">
+    <i class="fa-solid fa-circle-xmark" style="color: #dc2626;"></i> 3. Dismissal (Rule: LBW Strictly NOT Applicable)
+  </div>
+  <div class="wicket-keypad">
+    <button class="wicket-btn" data-dismissal="bowled">🎯 Bowled</button>
+    <button class="wicket-btn" data-dismissal="caught">🧤 Caught</button>
+    <button class="wicket-btn run-out" data-dismissal="run_out">🏃 Run Out (Valid on FH)</button>
+    <button class="wicket-btn" data-dismissal="stumped">⚡ Stumped</button>
+    <button class="wicket-btn" data-dismissal="hit_wicket">💥 Hit Wicket</button>
+    <button class="wicket-btn" disabled title="Rule: LBW is NOT applicable in Department Cup!">
+      🚫 LBW (Disabled)
+    </button>
+  </div>
+
+  <!-- Special Rulebook Actions (Dead ball, Innings Switch, Late Arrival) -->
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; border-top: 1.5px solid var(--border-subtle); padding-top: 1.25rem; margin-top: 1.5rem;">
+    {% if match.sport_id == 'box_cricket_girls' or match.sport_id == 'box_cricket' %}
+      <button class="btn btn-warning btn-sm" id="btn-box-dead-ball">
+        <i class="fa-solid fa-triangle-exclamation"></i> Box Cricket Dead Ball
+      </button>
+      <button class="btn btn-danger btn-sm" id="btn-box-dead-ball-penalty">
+        <i class="fa-solid fa-ban"></i> Dead Ball Bowler Changed (+6 Runs & Re-bowl)
+      </button>
+    {% endif %}
+
+    <button class="btn btn-secondary btn-sm" id="btn-switch-innings">
+      <i class="fa-solid fa-arrows-rotate"></i> End 1st Innings / Switch to 2nd Innings
+    </button>
+  </div>
+</div>

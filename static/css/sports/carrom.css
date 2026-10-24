@@ -1,0 +1,23 @@
+/* ==========================================================================
+   CARROM SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.carrom-display .score-main-line {
+  font-family: var(--font-heading);
+  font-size: 3.8rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.badge-board {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.8rem;
+}

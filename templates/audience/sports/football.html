@@ -1,0 +1,89 @@
+<!-- AUDIENCE FOOTBALL LIVE DETAIL (EVENTS & STATS) -->
+<div class="sport-audience-football" id="audience-football-container">
+
+  <!-- Football In-Match Events Timeline -->
+  {% if active_match.score.events and active_match.score.events|length > 0 %}
+    <div class="football-events-timeline" style="margin-top: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.65rem;">
+        <i class="fa-solid fa-clock"></i> Match Events
+      </div>
+      <div class="events-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+        {% for ev in active_match.score.events %}
+          <div class="event-item" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem;">
+            <span class="badge" style="background: rgba(0,0,0,0.06); font-family: monospace; font-size: 0.78rem;">{{ ev.minute }}</span>
+            {% if ev.type == 'goal' %}
+              <span style="color: #10b981; font-weight: 700;">⚽ GOAL!</span>
+              <span><strong>{{ ev.player }}</strong> ({{ active_match[ev.team].abbr if ev.team in active_match else ev.team|upper }}){% if ev.assist %} · <span style="color: var(--text-dim); font-size: 0.8rem;">Assist: {{ ev.assist }}</span>{% endif %}</span>
+            {% elif ev.type == 'yellow_card' %}
+              <span style="color: #f59e0b; font-weight: 700;">🟨 Card</span>
+              <span><strong>{{ ev.player }}</strong> ({{ active_match[ev.team].abbr if ev.team in active_match else ev.team|upper }})</span>
+            {% elif ev.type == 'red_card' %}
+              <span style="color: #ef4444; font-weight: 700;">🟥 Red Card</span>
+              <span><strong>{{ ev.player }}</strong> ({{ active_match[ev.team].abbr if ev.team in active_match else ev.team|upper }})</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Match Statistics Grid (FlashScore / SofaScore Style) -->
+  {% if active_match.score.stats %}
+    {% set st_a = active_match.score.stats.team_a %}
+    {% set st_b = active_match.score.stats.team_b %}
+    <div class="football-stats-card" style="margin-top: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.75rem; text-align: center;">
+        Match Statistics
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+        <div style="display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center;">
+          <strong style="color: #2563eb;">{{ st_a.shots }}</strong>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Shots</span>
+          <strong style="color: #059669;">{{ st_b.shots }}</strong>
+        </div>
+        <div style="display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center;">
+          <strong style="color: #2563eb;">{{ st_a.shots_on_target }}</strong>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Shots on Target</span>
+          <strong style="color: #059669;">{{ st_b.shots_on_target }}</strong>
+        </div>
+        <div style="display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center;">
+          <strong style="color: #2563eb;">{{ st_a.corners }}</strong>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Corners</span>
+          <strong style="color: #059669;">{{ st_b.corners }}</strong>
+        </div>
+        <div style="display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; text-align: center;">
+          <strong style="color: #2563eb;">{{ st_a.fouls }}</strong>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Fouls</span>
+          <strong style="color: #059669;">{{ st_b.fouls }}</strong>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Penalty Shootout Section (If Active) -->
+  {% if active_match.score.shootout and active_match.score.shootout.active %}
+    <div class="football-shootout-card" style="margin-top: 1rem; background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06)); border: 1.5px solid var(--border-medium); border-radius: 12px; padding: 1rem;">
+      <div style="font-weight: 800; font-size: 0.85rem; color: #dc2626; margin-bottom: 0.5rem; text-align: center;">
+        ⚽ PENALTY SHOOTOUT IN PROGRESS
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center;">
+        <div>
+          <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb;">{{ active_match.team_a.abbr }}</div>
+          <div style="display: flex; gap: 0.35rem; justify-content: center; margin-top: 0.35rem;">
+            {% for k in active_match.score.shootout.team_a_kicks %}
+              <span>{% if k.result == 'goal' %}🟢{% else %}🔴{% endif %}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 0.82rem; font-weight: 700; color: #059669;">{{ active_match.team_b.abbr }}</div>
+          <div style="display: flex; gap: 0.35rem; justify-content: center; margin-top: 0.35rem;">
+            {% for k in active_match.score.shootout.team_b_kicks %}
+              <span>{% if k.result == 'goal' %}🟢{% else %}🔴{% endif %}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>

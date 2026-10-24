@@ -1,0 +1,29 @@
+/* ==========================================================================
+   BADMINTON SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.server-shuttle {
+  font-size: 1.4rem;
+  margin-left: 0.35rem;
+  animation: shuttleFloat 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes shuttleFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+.badge-deuce {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #f87171;
+  font-weight: 900;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  animation: pulseDeuce 1.2s infinite;
+}
+
+@keyframes pulseDeuce {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}

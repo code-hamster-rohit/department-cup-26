@@ -1,0 +1,41 @@
+<!-- AUDIENCE BADMINTON LIVE SCORECARD -->
+{% set cur_set = (active_match.score.set_scores | default([])) | last %}
+
+<div class="sport-audience-badminton" id="audience-badminton-container">
+  <div class="live-score-display set-sport-display">
+    <div class="sets-header-bar">
+      <span class="sets-label">SETS:</span>
+      <span class="score-sets-big" id="aud-badminton-sets-a">{{ active_match.score.sets_team_a or 0 }}</span>
+      <span class="score-dash">-</span>
+      <span class="score-sets-big" id="aud-badminton-sets-b">{{ active_match.score.sets_team_b or 0 }}</span>
+      <span style="font-size: 0.72rem; color: var(--text-dim); margin-left: 0.3rem;">(Best of 3)</span>
+    </div>
+
+    <div class="cur-set-points-row">
+      <span class="live-points-val team-a-pts" id="aud-badminton-pts-a">
+        {{ cur_set.team_a if cur_set else 0 }}
+        {% if active_match.score.server != 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-a">🏸</span>{% endif %}
+      </span>
+      <span class="points-colon" style="color: var(--text-dim); opacity: 0.4;">:</span>
+      <span class="live-points-val team-b-pts" id="aud-badminton-pts-b">
+        {% if active_match.score.server == 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-b">🏸</span>{% endif %}
+        {{ cur_set.team_b if cur_set else 0 }}
+      </span>
+    </div>
+
+    <div class="score-sub-line">
+      <span class="badge badge-set-pill" id="aud-badminton-set-info">Set {{ active_match.score.current_set }} (Target: {{ active_match.score.points_to_win_set or 21 }} pts)</span>
+      {% if active_match.score.in_deuce %}
+        <span class="badge badge-deuce" id="aud-badminton-deuce-badge">🔥 DEUCE (Win by 2)</span>
+      {% endif %}
+    </div>
+
+    {% if active_match.score.set_scores and active_match.score.set_scores|length > 0 %}
+      <div class="set-history-chips" id="aud-badminton-set-history">
+        {% for s in active_match.score.set_scores %}
+          <span class="set-chip">Set {{ s.set }}: {{ s.team_a }}-{{ s.team_b }}{% if s.winner %} ({{ active_match[s.winner].abbr if s.winner in active_match else s.winner|upper }}){% endif %}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>

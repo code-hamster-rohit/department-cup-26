@@ -204,12 +204,6 @@ async def get_match_detail(match_id: str, response: Response):
     return {"match": m}
 
 
-@api_router.get("/standings")
-async def get_standings():
-    """Endpoint deprecated as application focuses strictly on live scorecard viewing and scoring."""
-    return {"status": "inactive", "message": "Leaderboard not included in live scorecard management application."}
-
-
 @api_router.post("/match/create")
 async def api_create_match(payload: CreateMatchRequest, request: Request):
     verify_admin_access(request)

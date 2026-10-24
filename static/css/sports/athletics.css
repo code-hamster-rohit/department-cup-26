@@ -1,0 +1,13 @@
+/* ==========================================================================
+   ATHLETICS DISTANCE SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.athletics-display .score-main-line {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.athletics-leaderboard-card table td,
+.athletics-leaderboard-card table th {
+  vertical-align: middle;
+}

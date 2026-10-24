@@ -1,0 +1,54 @@
+<!-- ADMIN BASKETBALL SHOOTOUT SCORING COCKPIT -->
+<div class="sport-admin-basketball" id="admin-basketball-controls">
+  <div style="background: var(--bg-card); border: 2px solid var(--border-medium); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md);">
+    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">
+      <i class="fa-solid fa-basketball"></i> Record Shootout Shot
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <!-- Team A Shooter Controls -->
+      <div style="background: rgba(37,99,235,0.04); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 1.25rem;">
+        <h4 style="color: #2563eb; margin-bottom: 0.75rem;">{{ match.team_a.name }} ({{ match.team_a.abbr }})</h4>
+        <div style="margin-bottom: 0.75rem;">
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Shooter Name</label>
+          <input type="text" class="form-control bb-shooter-input" id="bb-shooter-a" placeholder="Shooter Name">
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn active" data-team="team_a" data-zone="1">1-Pt Zone</button>
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn" data-team="team_a" data-zone="2">2-Pt Zone</button>
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn" data-team="team_a" data-zone="3">3-Pt Zone</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <button type="button" class="btn btn-success btn-bb-shot" data-team="team_a" data-success="true">
+            🏀 Basket Made!
+          </button>
+          <button type="button" class="btn btn-danger btn-bb-shot" data-team="team_a" data-success="false">
+            ❌ Missed Shot
+          </button>
+        </div>
+      </div>
+
+      <!-- Team B Shooter Controls -->
+      <div style="background: rgba(16,185,129,0.04); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 1.25rem;">
+        <h4 style="color: #059669; margin-bottom: 0.75rem;">{{ match.team_b.name }} ({{ match.team_b.abbr }})</h4>
+        <div style="margin-bottom: 0.75rem;">
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Shooter Name</label>
+          <input type="text" class="form-control bb-shooter-input" id="bb-shooter-b" placeholder="Shooter Name">
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn active" data-team="team_b" data-zone="1">1-Pt Zone</button>
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn" data-team="team_b" data-zone="2">2-Pt Zone</button>
+          <button type="button" class="btn btn-secondary btn-sm bb-zone-btn" data-team="team_b" data-zone="3">3-Pt Zone</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <button type="button" class="btn btn-success btn-bb-shot" data-team="team_b" data-success="true">
+            🏀 Basket Made!
+          </button>
+          <button type="button" class="btn btn-danger btn-bb-shot" data-team="team_b" data-success="false">
+            ❌ Missed Shot
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

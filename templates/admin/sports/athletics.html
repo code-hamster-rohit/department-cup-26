@@ -1,0 +1,51 @@
+<!-- ADMIN ATHLETICS DISTANCE SCORING COCKPIT -->
+<div class="sport-admin-athletics" id="admin-athletics-controls">
+  <div style="background: var(--bg-card); border: 2px solid var(--border-medium); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md);">
+    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">
+      <i class="fa-solid fa-stopwatch-20"></i> Record Throw / Jump Attempt
+    </div>
+
+    <form id="form-athletics-attempt">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Athlete Name</label>
+          <input type="text" class="form-control" id="ath-name-input" required placeholder="Full Name">
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Department</label>
+          <select class="form-control" id="ath-dept-select">
+            <option value="{{ match.team_a.abbr }}">{{ match.team_a.abbr }}</option>
+            <option value="{{ match.team_b.abbr }}">{{ match.team_b.abbr }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Bib Number</label>
+          <input type="text" class="form-control" id="ath-bib-input" placeholder="e.g. 104">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.5fr 1fr auto; gap: 1rem; align-items: flex-end;">
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Attempt Type</label>
+          <select class="form-control" id="ath-attempt-type">
+            <option value="official">Official Attempt</option>
+            <option value="trial">Practice / Trial</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Distance (Meters)</label>
+          <input type="number" step="0.01" min="0" class="form-control" id="ath-distance-input" placeholder="e.g. 12.85">
+        </div>
+        <div style="padding-bottom: 0.5rem;">
+          <label class="form-check-label" style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.85rem; color: #dc2626; cursor: pointer;">
+            <input type="checkbox" id="ath-foul-checkbox">
+            <span>Foul Attempt (X)</span>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 800;">
+          <i class="fa-solid fa-plus"></i> Record Attempt
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

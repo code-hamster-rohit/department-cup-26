@@ -1,0 +1,21 @@
+/* ==========================================================================
+   TUG OF WAR SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.tow-display .score-main-line {
+  font-family: var(--font-heading);
+  font-size: 3.8rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.badge-tow {
+  background: rgba(37,99,235,0.12);
+  color: #2563eb;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-weight: 800;
+}

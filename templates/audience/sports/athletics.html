@@ -1,0 +1,53 @@
+<!-- AUDIENCE ATHLETICS DISTANCE LIVE LEADERBOARD -->
+<div class="sport-audience-athletics" id="audience-athletics-container">
+  <!-- Real-Time Athletes Standings Table -->
+  <div class="athletics-leaderboard-card" style="margin-top: 1.25rem; background: var(--bg-card); border: 1.5px solid var(--border-medium); border-radius: 12px; overflow: hidden;">
+    <div style="padding: 0.85rem 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); font-size: 0.82rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase;">
+      <i class="fa-solid fa-ranking-star"></i> Event Leaderboard
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="table" style="width: 100%; margin: 0; font-size: 0.88rem; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 1.5px solid var(--border-medium); background: var(--bg-secondary); color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">
+            <th style="padding: 0.65rem 1rem; text-align: center; width: 50px;">Rank</th>
+            <th style="padding: 0.65rem 1rem; text-align: left;">Athlete</th>
+            <th style="padding: 0.65rem 1rem; text-align: center;">Dept</th>
+            <th style="padding: 0.65rem 1rem; text-align: center;">Trial</th>
+            <th style="padding: 0.65rem 1rem; text-align: center;">#1</th>
+            <th style="padding: 0.65rem 1rem; text-align: center;">#2</th>
+            <th style="padding: 0.65rem 1rem; text-align: center;">#3</th>
+            <th style="padding: 0.65rem 1rem; text-align: center; font-weight: 800; color: var(--text-main);">Best</th>
+          </tr>
+        </thead>
+        <tbody id="aud-athletics-tbody">
+          {% if active_match.score.athletes and active_match.score.athletes|length > 0 %}
+            {% for a in active_match.score.athletes %}
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.65rem 1rem; text-align: center; font-weight: 800;">
+                  {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                </td>
+                <td style="padding: 0.65rem 1rem; font-weight: 700; color: var(--text-main);">{{ a.name }}</td>
+                <td style="padding: 0.65rem 1rem; text-align: center;">
+                  <span class="dept-badge {{ a.department|lower }}">{{ a.department|upper }}</span>
+                </td>
+                <td style="padding: 0.65rem 1rem; text-align: center; color: var(--text-muted);">{{ a.trial or '-' }}</td>
+                <td style="padding: 0.65rem 1rem; text-align: center;">{{ a.attempts[0] if a.attempts|length > 0 else '-' }}</td>
+                <td style="padding: 0.65rem 1rem; text-align: center;">{{ a.attempts[1] if a.attempts|length > 1 else '-' }}</td>
+                <td style="padding: 0.65rem 1rem; text-align: center;">{{ a.attempts[2] if a.attempts|length > 2 else '-' }}</td>
+                <td style="padding: 0.65rem 1rem; text-align: center; font-weight: 900; color: #2563eb; font-size: 1rem;">
+                  {{ a.best }}m
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                Awaiting first athlete throw / jump attempt...
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

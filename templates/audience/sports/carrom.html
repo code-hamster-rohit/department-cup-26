@@ -1,0 +1,33 @@
+<!-- AUDIENCE CARROM LIVE SCORECARD -->
+<div class="sport-audience-carrom" id="audience-carrom-container">
+  <div class="live-score-display carrom-display">
+    <div class="score-main-line">
+      <span class="carrom-pts" id="aud-carrom-a" style="color: #2563eb;">{{ active_match.score.score_team_a or 0 }}</span>
+      <span class="score-dash">-</span>
+      <span class="carrom-pts" id="aud-carrom-b" style="color: #059669;">{{ active_match.score.score_team_b or 0 }}</span>
+    </div>
+    <div class="score-sub-line">
+      <span class="badge badge-board" id="aud-carrom-board">🎯 Board {{ active_match.score.current_board or 1 }} of 8</span>
+      <span class="badge badge-target">Target: 29 pts</span>
+    </div>
+  </div>
+
+  <!-- Board by Board History -->
+  {% if active_match.score.boards and active_match.score.boards|length > 0 %}
+    <div class="carrom-boards-history" style="margin-top: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem;">
+      <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.65rem;">
+        <i class="fa-solid fa-list-ol"></i> Completed Boards Breakdown
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem;">
+        {% for b in active_match.score.boards %}
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 0.75rem; border-radius: 8px; text-align: center;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">Board {{ b.board }}</div>
+            <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin-top: 0.2rem;">
+              {{ b.score_a }} - {{ b.score_b }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>

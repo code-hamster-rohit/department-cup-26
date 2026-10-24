@@ -1,0 +1,252 @@
+/* ==========================================================================
+   CRICKET & BOX CRICKET SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+/* Pitch Strip (Striker, Non-Striker, Bowler) */
+.cricket-pitch-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-top: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 640px) {
+  .cricket-pitch-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pitch-batters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.batter-card, .bowler-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.batter-card.striker {
+  border-left: 3px solid #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), var(--bg-secondary));
+}
+
+.batter-label, .bowler-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.batter-name, .bowler-name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.batter-stats, .bowler-stats {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+/* Recent Balls Bar */
+.recent-balls-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.65rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+}
+
+.recent-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.recent-chips {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.ball-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  color: var(--text-main);
+}
+
+.ball-chip.dot {
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.ball-chip.four {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.ball-chip.six {
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #6d28d9;
+}
+
+.ball-chip.wicket {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.ball-chip.extra {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #d97706;
+}
+
+/* Tactical Strip in Admin Scorer */
+.tactical-cricket-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .tactical-cricket-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tactical-card {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-medium);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.tactical-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+/* Keypads */
+.runs-keypad, .extras-keypad, .wicket-keypad {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.runs-keypad {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.extras-keypad {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.wicket-keypad {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 640px) {
+  .runs-keypad { grid-template-columns: repeat(3, 1fr); }
+  .extras-keypad { grid-template-columns: repeat(2, 1fr); }
+  .wicket-keypad { grid-template-columns: repeat(3, 1fr); }
+}
+
+.keypad-btn {
+  height: 60px;
+  border-radius: 10px;
+  font-size: 1.35rem;
+  font-weight: 900;
+  border: 1.5px solid var(--border-medium);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.keypad-btn:hover {
+  transform: translateY(-2px);
+  border-color: #2563eb;
+  box-shadow: 0 4px 10px rgba(37,99,235,0.15);
+}
+
+.keypad-btn.four {
+  border-color: #059669;
+  background: rgba(16,185,129,0.06);
+}
+
+.keypad-btn.six {
+  border-color: #7c3aed;
+  background: rgba(124,58,237,0.06);
+}
+
+.keypad-sub {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.extra-btn, .wicket-btn {
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.extra-btn:hover, .wicket-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.extra-btn.noball {
+  border-color: #ef4444;
+  color: #dc2626;
+  background: rgba(239,68,68,0.06);
+}
+
+.wicket-btn {
+  border-color: #fca5a5;
+  color: #dc2626;
+  background: rgba(239,68,68,0.04);
+}

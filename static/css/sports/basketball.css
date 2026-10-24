@@ -1,0 +1,19 @@
+/* ==========================================================================
+   BASKETBALL SHOOTOUT SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.basketball-display .score-main-line {
+  font-family: var(--font-heading);
+  font-size: 3.8rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.bb-zone-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+  border-color: var(--accent-blue);
+}

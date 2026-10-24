@@ -1,0 +1,35 @@
+<!-- ADMIN TUG OF WAR SCORING COCKPIT -->
+<div class="sport-admin-tow" id="admin-tow-controls">
+  <div style="background: var(--bg-card); border: 2px solid var(--border-medium); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md);">
+    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+      <span>🪢 Record Pull <span id="admin-tow-cur-pull">{{ match.score.current_pull or 1 }}</span> Outcome</span>
+      <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.8rem;">Best of 3 Pulls (First to 2 Wins)</span>
+    </div>
+
+    <!-- Pull Parameters Form -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+      <div>
+        <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">Pull Duration</label>
+        <input type="text" class="form-control" id="tow-duration-input" value="1m 15s" placeholder="e.g. 1m 24s">
+      </div>
+      <div>
+        <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">{{ match.team_a.abbr }} Cautions</label>
+        <input type="number" class="form-control" id="tow-cautions-a" value="0" min="0" max="3">
+      </div>
+      <div>
+        <label class="form-label" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim);">{{ match.team_b.abbr }} Cautions</label>
+        <input type="number" class="form-control" id="tow-cautions-b" value="0" min="0" max="3">
+      </div>
+    </div>
+
+    <!-- Award Pull Win Buttons -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <button type="button" class="btn btn-primary btn-tow-award" data-team="team_a" style="padding: 1rem; font-size: 1.1rem; font-weight: 800;">
+        🪢 Award Pull {{ match.score.current_pull or 1 }} to {{ match.team_a.abbr }}
+      </button>
+      <button type="button" class="btn btn-success btn-tow-award" data-team="team_b" style="padding: 1rem; font-size: 1.1rem; font-weight: 800;">
+        🪢 Award Pull {{ match.score.current_pull or 1 }} to {{ match.team_b.abbr }}
+      </button>
+    </div>
+  </div>
+</div>

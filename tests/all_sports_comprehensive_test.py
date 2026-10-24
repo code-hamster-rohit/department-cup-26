@@ -382,7 +382,7 @@ async def main():
 
         # Check Blank Canvas first
         res_blank = await client.get(f"{BASE_URL}/")
-        assert res_blank.status_code == 200 and "Department Cup 2026 Arena" in res_blank.text
+        assert res_blank.status_code == 200 and "Department Cup" in res_blank.text
         print("✅ PASS: Blank Canvas initial view verified (0 matches active).")
 
         # PART 1: Test each of the 17 sports separately

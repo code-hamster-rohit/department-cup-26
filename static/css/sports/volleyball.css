@@ -1,0 +1,54 @@
+/* ==========================================================================
+   VOLLEYBALL SPORT STYLES (AUDIENCE & ADMIN)
+   ========================================================================== */
+
+.set-sport-display .sets-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-sets-big {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.cur-set-points-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  font-family: var(--font-heading);
+  font-size: 3.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.cur-set-points-row .team-a-pts {
+  color: #2563eb;
+}
+
+.cur-set-points-row .team-b-pts {
+  color: #059669;
+}
+
+.set-history-chips {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.set-chip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
