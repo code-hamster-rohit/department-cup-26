@@ -122,12 +122,12 @@ def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any], 
     if "girl" in cat_lower or cat_lower == "girls":
         gender_keys = {
             "shotput": ["shotput_girls"],
-            "discuss_throw": ["discus_girls"],
+            "discuss_throw": ["discus_girls", "discus_throw"],
             "long_jump": ["long_jump_girls"],
             "tug_of_war": ["tow_girls"],
             "box_cricket": ["box_cricket_girls"],
             "football": ["football_girls"],
-            "cricket": ["cricket_girls", "box_cricket_girls"],
+            "cricket": ["box_cricket_girls", "cricket_girls"],
         }
         candidates.extend(gender_keys.get(sid_lower, [f"{sid_lower}_girls"]))
     elif "boy" in cat_lower or cat_lower == "boys":
@@ -149,26 +149,26 @@ def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any], 
             "basketball": ["basketball_shootout"],
         }
         candidates.extend(mixed_keys.get(sid_lower, [f"{sid_lower}_mix"]))
-
-    # 2. General aliases
-    candidates.append(sid_lower)
-    alias_map = {
-        "badminton": ["badminton_mix"],
-        "cricket": ["cricket_boys", "box_cricket_girls"],
-        "box_cricket": ["box_cricket_girls"],
-        "football": ["football_boys", "football_girls"],
-        "volleyball": ["volleyball_boys"],
-        "table_tennis": ["tt_boys"],
-        "carrom": ["carrom_mix"],
-        "tug_of_war": ["tow_boys", "tow_girls"],
-        "shotput": ["shotput_boys", "shotput_girls"],
-        "discuss_throw": ["discus_boys", "discus_girls", "discus_throw"],
-        "long_jump": ["long_jump_boys", "long_jump_girls"],
-        "basketball": ["basketball_shootout"]
-    }
-    for a in alias_map.get(sid_lower, []):
-        if a not in candidates:
-            candidates.append(a)
+    else:
+        # General aliases only when category is unspecified
+        candidates.append(sid_lower)
+        alias_map = {
+            "badminton": ["badminton_mix"],
+            "cricket": ["cricket_boys"],
+            "box_cricket": ["box_cricket_girls"],
+            "football": ["football_boys"],
+            "volleyball": ["volleyball_boys"],
+            "table_tennis": ["tt_boys"],
+            "carrom": ["carrom_mix"],
+            "tug_of_war": ["tow_boys"],
+            "shotput": ["shotput_boys"],
+            "discuss_throw": ["discus_boys", "discus_throw"],
+            "long_jump": ["long_jump_boys"],
+            "basketball": ["basketball_shootout"]
+        }
+        for a in alias_map.get(sid_lower, []):
+            if a not in candidates:
+                candidates.append(a)
 
     matched_key = next((c for c in candidates if c in dept_rosters), None)
     
@@ -192,10 +192,42 @@ def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any], 
             "substitutes": saved.get("substitutes", [])
         }
 
-    # Generate standard template for that sport rule
+    # Generate standard template for that sport rule strictly following tournament plan
     squad_cfg = sport_cfg.get("squad", {})
-    playing_count = squad_cfg.get("playing_count", 11)
-    max_subs = squad_cfg.get("max_substitutes", 4)
+    playing_count = squad_cfg.get("playing_count")
+    max_subs = squad_cfg.get("max_substitutes")
+    
+    sid_clean = sport_id.lower().strip()
+    cat_clean = (category or "").lower().strip()
+    
+    if sid_clean in ["cricket_boys", "cricket"]:
+        playing_count = 11
+        max_subs = 4
+    elif sid_clean in ["box_cricket_girls", "box_cricket"]:
+        playing_count = 5
+        max_subs = 3
+    elif sid_clean == "football_girls" or (sid_clean == "football" and "girl" in cat_clean):
+        playing_count = 3
+        max_subs = 2
+    elif sid_clean in ["football_boys", "football"]:
+        playing_count = 7
+        max_subs = 3
+    elif sid_clean in ["volleyball_boys", "volleyball"]:
+        playing_count = 6
+        max_subs = 2
+    elif sid_clean == "tow_girls" or (sid_clean in ["tug_of_war", "tow"] and "girl" in cat_clean):
+        playing_count = 5
+        max_subs = 2
+    elif sid_clean in ["tow_boys", "tug_of_war", "tow"]:
+        playing_count = 7
+        max_subs = 2
+    elif sid_clean in ["basketball", "basketball_shootout"]:
+        playing_count = 6
+        max_subs = 2
+    else:
+        playing_count = playing_count or 11
+        max_subs = max_subs or 4
+
     dept_name = DEPARTMENTS.get(dept_code.lower(), {}).get("abbr", dept_code.upper())
     
     playing = []
@@ -210,7 +242,7 @@ def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any], 
         })
         
     subs = []
-    for j in range(1, min(max_subs + 1, 4)):
+    for j in range(1, max_subs + 1):
         subs.append({
             "name": f"{dept_name} Sub {j}",
             "student_id": f"2693{j:04d}",

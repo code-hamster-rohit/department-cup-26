@@ -11,7 +11,7 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-from database.rules import RULES_DATA, get_sport_rule
+from database.rules import RULES_DATA, get_sport_rule, is_team_sport, is_single_double_sport
 from database.teams_data import DEPARTMENTS, get_default_squad
 
 VALID_DEPARTMENTS = {"amsc", "ppe", "ppt"}
@@ -95,10 +95,34 @@ def init_storage():
     print(f"Storage initialized with {len(_matches_cache)} matches.")
 
 
+def _normalize_match_squad_and_sport(match: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not match or not isinstance(match, dict):
+        return match
+    is_team = is_team_sport(match.get("sport_id") or match.get("sport_type"))
+    match["is_team_sport"] = is_team
+    if is_team:
+        # For team sports (cricket, football, volleyball, box cricket, TOW, etc.):
+        # ensure whole squad info is present
+        squads = match.get("squads")
+        if not squads or not isinstance(squads, dict) or not squads.get("team_a") or not squads.get("team_b"):
+            team_a_code = match.get("team_a", {}).get("code", "amsc") if isinstance(match.get("team_a"), dict) else str(match.get("team_a", "amsc")).lower()
+            team_b_code = match.get("team_b", {}).get("code", "ppe") if isinstance(match.get("team_b"), dict) else str(match.get("team_b", "ppe")).lower()
+            sport_rule = get_sport_rule(match.get("sport_id", match.get("sport_type"))) or {}
+            match["squads"] = {
+                "team_a": get_default_squad(team_a_code, match.get("sport_id", match.get("sport_type")), sport_rule, category=match.get("category")),
+                "team_b": get_default_squad(team_b_code, match.get("sport_id", match.get("sport_type")), sport_rule, category=match.get("category")),
+            }
+    else:
+        # For single/doubles sports (badminton, TT, carrom, athletics):
+        # do NOT take a whole squad.
+        match["squads"] = {}
+    return match
+
+
 def get_match(match_id: str) -> dict[str, Any] | None:
     m = _matches_cache.get(match_id)
     if m:
-        return m
+        return _normalize_match_squad_and_sport(m)
     # Fallback to MongoDB sport collections if not in memory
     try:
         from database.mongo import get_db, SPORT_COLLECTIONS
@@ -109,14 +133,14 @@ def get_match(match_id: str) -> dict[str, Any] | None:
                 if doc:
                     doc.pop("_id", None)
                     _matches_cache[match_id] = doc
-                    return doc
+                    return _normalize_match_squad_and_sport(doc)
             existing_cols = db.list_collection_names()
             if "matches" in existing_cols:
                 doc = db["matches"].find_one({"id": match_id})
                 if doc:
                     doc.pop("_id", None)
                     _matches_cache[match_id] = doc
-                    return doc
+                    return _normalize_match_squad_and_sport(doc)
     except Exception:
         pass
     return None
@@ -132,10 +156,8 @@ def list_matches(limit: int = 50) -> list[dict[str, Any]]:
                 _matches_cache.update(mongo_matches)
         except Exception:
             pass
-    matches = list(_matches_cache.values())
+    matches = [_normalize_match_squad_and_sport(m) for m in _matches_cache.values() if m]
     # Sort by created_at descending
-    matches.sort(key=lambda m: m.get("created_at", ""), reverse=True)
-    return matches[:limit]
     matches.sort(key=lambda m: m.get("created_at", ""), reverse=True)
     return matches[:limit]
 
@@ -149,7 +171,8 @@ def get_active_matches() -> list[dict[str, Any]]:
                 _matches_cache.update(mongo_matches)
         except Exception:
             pass
-    return [m for m in _matches_cache.values() if m.get("status") in ["upcoming", "squads_announced", "live"]]
+    return [_normalize_match_squad_and_sport(m) for m in _matches_cache.values() if m and m.get("status") in ["upcoming", "squads_announced", "live"]]
+
 
 
 async def create_match(
@@ -203,6 +226,13 @@ async def create_match(
             g_badge = "⚡ Open"
 
         max_overs = custom_overs or sport_rule.get("match_format", {}).get("innings_overs", 10)
+        is_team = is_team_sport(sport_rule["id"]) or is_team_sport(sport_rule.get("sport_type"))
+        squads = {}
+        if is_team:
+            squads = {
+                "team_a": get_default_squad(team_a_key, sport_rule["id"], sport_rule, category=norm_cat),
+                "team_b": get_default_squad(team_b_key, sport_rule["id"], sport_rule, category=norm_cat)
+            }
 
         match_obj: dict[str, Any] = {
             "id": match_id,
@@ -223,6 +253,7 @@ async def create_match(
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
             "completed_at": None,
+            "is_team_sport": is_team,
             "players_a": "",
             "players_b": "",
             "team_a": {
@@ -237,7 +268,7 @@ async def create_match(
                 "name": team_b_info.get("name", team_b_code.upper()),
                 "color": team_b_info.get("color", "#10b981")
             },
-            "squads": {},
+            "squads": squads,
             "toss": {
                 "conducted": False,
                 "winner": None,
@@ -415,10 +446,31 @@ async def update_squads_and_toss(
         if not match:
             raise ValueError(f"Match {match_id} not found")
 
-        if squad_a and (squad_a.get("playing") or isinstance(squad_a, dict)):
-            match["squads"]["team_a"] = squad_a
-        if squad_b and (squad_b.get("playing") or isinstance(squad_b, dict)):
-            match["squads"]["team_b"] = squad_b
+        if not match.get("squads") or not isinstance(match["squads"], dict):
+            match["squads"] = {}
+
+        if squad_a and isinstance(squad_a, dict) and squad_a.get("playing") and len(squad_a["playing"]) > 0:
+            if "team_a" not in match["squads"]:
+                match["squads"]["team_a"] = {}
+            match["squads"]["team_a"]["playing"] = squad_a["playing"]
+            cap = next((p["name"] for p in squad_a["playing"] if p.get("is_captain") or p.get("role") == "Captain"), None)
+            if cap:
+                match["squads"]["team_a"]["captain"] = cap
+        elif "team_a" not in match.get("squads", {}):
+            sport_rule = get_sport_rule(match.get("sport_id", match.get("sport_type"))) or {}
+            match["squads"]["team_a"] = get_default_squad(match["team_a"]["code"], match.get("sport_id", match.get("sport_type")), sport_rule, category=match.get("category"))
+
+        if squad_b and isinstance(squad_b, dict) and squad_b.get("playing") and len(squad_b["playing"]) > 0:
+            if "team_b" not in match["squads"]:
+                match["squads"]["team_b"] = {}
+            match["squads"]["team_b"]["playing"] = squad_b["playing"]
+            cap = next((p["name"] for p in squad_b["playing"] if p.get("is_captain") or p.get("role") == "Captain"), None)
+            if cap:
+                match["squads"]["team_b"]["captain"] = cap
+        elif "team_b" not in match.get("squads", {}):
+            sport_rule = get_sport_rule(match.get("sport_id", match.get("sport_type"))) or {}
+            match["squads"]["team_b"] = get_default_squad(match["team_b"]["code"], match.get("sport_id", match.get("sport_type")), sport_rule, category=match.get("category"))
+
         match["squads"]["squads_confirmed"] = True
 
         # Auto-extract athlete names for single-match sports (Badminton, Table Tennis, Carrom, Volleyball)
@@ -521,17 +573,18 @@ async def start_match(match_id: str) -> dict[str, Any]:
             bat_team_key = match["score"]["batting_team"]
             bowl_team_key = match["score"]["bowling_team"]
             
-            bat_playing = match["squads"][bat_team_key].get("playing", [])
-            bowl_playing = match["squads"][bowl_team_key].get("playing", [])
+            bat_playing = match.get("squads", {}).get(bat_team_key, {}).get("playing", [])
+            bowl_playing = match.get("squads", {}).get(bowl_team_key, {}).get("playing", [])
             
-            if not inn["striker"] and len(bat_playing) > 0:
+            if not inn.get("striker") and len(bat_playing) > 0:
                 inn["striker"] = bat_playing[0].get("name", "Striker")
                 inn["batsmen"][inn["striker"]] = {"runs": 0, "balls": 0, "fours": 0, "sixes": 0, "status": "not out"}
-            if not inn["non_striker"] and len(bat_playing) > 1:
+            if not inn.get("non_striker") and len(bat_playing) > 1:
                 inn["non_striker"] = bat_playing[1].get("name", "Non-Striker")
                 inn["batsmen"][inn["non_striker"]] = {"runs": 0, "balls": 0, "fours": 0, "sixes": 0, "status": "not out"}
-            if not inn["bowler"] and len(bowl_playing) > 0:
+            if not inn.get("bowler") and len(bowl_playing) > 0:
                 inn["bowler"] = bowl_playing[0].get("name", "Bowler")
+                inn["bowlers"][inn["bowler"]] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0}
                 inn["bowlers"][inn["bowler"]] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0}
 
         _save_matches_to_disk(match)

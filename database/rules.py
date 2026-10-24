@@ -19,6 +19,323 @@ Matches the 12 primary tournament sports mapped directly to MongoDB collections:
 
 from typing import Any
 
+# Sports Specification and Limits (16 sports - strictly following tournament plan)
+TOURNAMENT_SPORTS_CONFIG_16: dict[str, dict[str, Any]] = {
+    "cricket_boys": {
+        "id": "cricket_boys",
+        "name": "Cricket (boys)",
+        "category": "Boys",
+        "icon": "🏏",
+        "main_count": 11,
+        "sub_max": 4,
+        "formula": "11 + 4",
+        "squad_notation": "11 Playing (1 Captain + 10 Main) + up to 4 Substitutes (Bench)",
+        "squad_badge": "11 Playing + up to 4 Subs",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 11 to 15 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "11 Playing Players (1 Captain + 10 Main) + up to 4 Substitutes on bench. Total squad: 11 to 15 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": True,
+    },
+    "box_cricket_girls": {
+        "id": "box_cricket_girls",
+        "name": "Box cricket (girls)",
+        "category": "Girls",
+        "icon": "🏏",
+        "main_count": 5,
+        "sub_max": 3,
+        "formula": "5 + 3",
+        "squad_notation": "5 Playing (1 Captain + 4 Main) + up to 3 Substitutes (Bench)",
+        "squad_badge": "5 Playing + up to 3 Subs",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 5 to 8 squad members (Captain, Main squad, and Bench) must be female students ('Girl').",
+        "description": "5 Playing Players (1 Captain + 4 Main) + up to 3 Substitutes on bench. Total squad: 5 to 8 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": True,
+    },
+    "football_boys": {
+        "id": "football_boys",
+        "name": "Football (boys)",
+        "category": "Boys",
+        "icon": "⚽",
+        "main_count": 7,
+        "sub_max": 3,
+        "formula": "7 + 3",
+        "squad_notation": "7 Playing (1 Captain + 6 Main) + up to 3 Substitutes (Bench)",
+        "squad_badge": "7 Playing + up to 3 Subs",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 7 to 10 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "7 Playing Players (1 Captain + 6 Main) + up to 3 Substitutes on bench. Total squad: 7 to 10 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": True,
+    },
+    "football_girls": {
+        "id": "football_girls",
+        "name": "Football (girls)",
+        "category": "Girls",
+        "icon": "⚽",
+        "main_count": 3,
+        "sub_max": 2,
+        "formula": "3 + 2",
+        "squad_notation": "3 Playing (1 Captain + 2 Main) + up to 2 Substitutes (Bench)",
+        "squad_badge": "3 Playing + up to 2 Subs",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 3 to 5 squad members (Captain, Main squad, and Bench) must be female students ('Girl').",
+        "description": "3 Playing Players (1 Captain + 2 Main) + up to 2 Substitutes on bench. Total squad: 3 to 5 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": True,
+    },
+    "volleyball_boys": {
+        "id": "volleyball_boys",
+        "name": "Volleyball (boys)",
+        "category": "Boys",
+        "icon": "🏐",
+        "main_count": 6,
+        "sub_max": 2,
+        "formula": "6 + 2",
+        "squad_notation": "6 Playing (1 Captain + 5 Main) + up to 2 Substitutes (Bench)",
+        "squad_badge": "6 Playing + up to 2 Subs",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 6 to 8 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "6 Playing Players (1 Captain + 5 Main) + up to 2 Substitutes on bench. Total squad: 6 to 8 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": True,
+    },
+    "badminton_mix": {
+        "id": "badminton_mix",
+        "name": "Badminton (mix)",
+        "category": "Mixed",
+        "icon": "🏸",
+        "main_count": 4,
+        "sub_max": 2,
+        "formula": "b2,g2 + up to 2 (max 1B, 1G)",
+        "squad_notation": "4 Playing (1 Captain + 3 Main: exactly 2 Boys & 2 Girls) + up to 2 Substitutes (at most 1 Boy & 1 Girl)",
+        "squad_badge": "4 Playing (2B + 2G) + up to 2 Subs",
+        "gender_badge": "👫 Mixed: 2 Boys & 2 Girls Playing (Subs: max 1B, 1G)",
+        "gender_rule_desc": "The 4 playing squad members (Captain + Main squad) MUST include exactly 2 Boys and 2 Girls. Up to 2 substitutes are allowed (at most 1 Boy and at most 1 Girl).",
+        "description": "4 Playing Players (1 Captain + 3 Main: exactly 2 Boys and 2 Girls) + up to 2 Substitutes on bench (at most 1 Boy and at most 1 Girl). Total squad: 4 to 6 Athletes.",
+        "gender_spec": "2 Boys & 2 Girls Playing (Subs: max 1B, 1G)",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "tt_boys": {
+        "id": "tt_boys",
+        "name": "TT (boys)",
+        "category": "Boys",
+        "icon": "🏓",
+        "main_count": 3,
+        "sub_max": 2,
+        "formula": "3 + 2",
+        "squad_notation": "3 Playing (1 Captain + 2 Main) + up to 2 Substitutes (Bench)",
+        "squad_badge": "3 Playing + up to 2 Subs",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 3 to 5 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "3 Playing Players (1 Captain + 2 Main) + up to 2 Substitutes on bench. Total squad: 3 to 5 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "carrom_mix": {
+        "id": "carrom_mix",
+        "name": "Carrom (mix)",
+        "category": "Mixed",
+        "icon": "🎯",
+        "main_count": 2,
+        "sub_max": 2,
+        "formula": "b1,g1 + up to 2 (max 1B, 1G)",
+        "squad_notation": "2 Playing (1 Captain + 1 Main: exactly 1 Boy & 1 Girl) + up to 2 Substitutes (at most 1 Boy & 1 Girl)",
+        "squad_badge": "2 Playing (1B + 1G) + up to 2 Subs",
+        "gender_badge": "👫 Mixed: 1 Boy & 1 Girl Playing (Subs: max 1B, 1G)",
+        "gender_rule_desc": "The 2 playing squad members (Captain + 1 Main player) MUST include exactly 1 Boy and 1 Girl. Up to 2 substitutes are allowed (at most 1 Boy and at most 1 Girl).",
+        "description": "2 Playing Players (1 Captain + 1 Main: exactly 1 Boy and 1 Girl) + up to 2 Substitutes on bench (at most 1 Boy and at most 1 Girl). Total squad: 2 to 4 Athletes.",
+        "gender_spec": "1 Boy & 1 Girl Playing (Subs: max 1B, 1G)",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "tow_boys": {
+        "id": "tow_boys",
+        "name": "TOW (boys)",
+        "category": "Boys",
+        "icon": "🪢",
+        "main_count": 7,
+        "sub_max": 2,
+        "formula": "7 + 2",
+        "squad_notation": "7 Playing (1 Captain + 6 Main) + up to 2 Substitutes (Bench)",
+        "squad_badge": "7 Playing + up to 2 Subs",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 7 to 9 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "7 Playing Players (1 Captain + 6 Main) + up to 2 Substitutes on bench. Total squad: 7 to 9 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": True,
+    },
+    "tow_girls": {
+        "id": "tow_girls",
+        "name": "TOW (girls)",
+        "category": "Girls",
+        "icon": "🪢",
+        "main_count": 5,
+        "sub_max": 2,
+        "formula": "5 + 2",
+        "squad_notation": "5 Playing (1 Captain + 4 Main) + up to 2 Substitutes (Bench)",
+        "squad_badge": "5 Playing + up to 2 Subs",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 5 to 7 squad members (Captain, Main squad, and Bench) must be female students ('Girl').",
+        "description": "5 Playing Players (1 Captain + 4 Main) + up to 2 Substitutes on bench. Total squad: 5 to 7 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": True,
+    },
+    "shotput_boys": {
+        "id": "shotput_boys",
+        "name": "Shotput (boys)",
+        "category": "Boys",
+        "icon": "☄️",
+        "main_count": 2,
+        "sub_max": 1,
+        "formula": "2 + 1",
+        "squad_notation": "2 Playing (1 Captain + 1 Main) + up to 1 Substitute (Bench)",
+        "squad_badge": "2 Playing + up to 1 Sub",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 2 to 3 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "2 Playing Players (1 Captain + 1 Main) + up to 1 Substitute on bench. Total squad: 2 to 3 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "shotput_girls": {
+        "id": "shotput_girls",
+        "name": "Shotput (girls)",
+        "category": "Girls",
+        "icon": "☄️",
+        "main_count": 1,
+        "sub_max": 1,
+        "formula": "1 + 1",
+        "squad_notation": "1 Playing (Captain) + up to 1 Substitute (Bench)",
+        "squad_badge": "1 Playing + up to 1 Sub",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 1 to 2 squad members (Captain and Bench) must be female students ('Girl').",
+        "description": "1 Playing Player (Captain) + up to 1 Substitute on bench. Total squad: 1 to 2 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": False,
+    },
+    "discus_boys": {
+        "id": "discus_boys",
+        "name": "Discus throw (boys)",
+        "category": "Boys",
+        "icon": "🥏",
+        "main_count": 2,
+        "sub_max": 1,
+        "formula": "2 + 1",
+        "squad_notation": "2 Playing (1 Captain + 1 Main) + up to 1 Substitute (Bench)",
+        "squad_badge": "2 Playing + up to 1 Sub",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 2 to 3 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "2 Playing Players (1 Captain + 1 Main) + up to 1 Substitute on bench. Total squad: 2 to 3 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "discus_girls": {
+        "id": "discus_girls",
+        "name": "Discus throw (girls)",
+        "category": "Girls",
+        "icon": "🥏",
+        "main_count": 1,
+        "sub_max": 1,
+        "formula": "1 + 1",
+        "squad_notation": "1 Playing (Captain) + up to 1 Substitute (Bench)",
+        "squad_badge": "1 Playing + up to 1 Sub",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 1 to 2 squad members (Captain and Bench) must be female students ('Girl').",
+        "description": "1 Playing Player (Captain) + up to 1 Substitute on bench. Total squad: 1 to 2 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": False,
+    },
+    "long_jump_boys": {
+        "id": "long_jump_boys",
+        "name": "Long jump (boys)",
+        "category": "Boys",
+        "icon": "🏃♂️",
+        "main_count": 2,
+        "sub_max": 1,
+        "formula": "2 + 1",
+        "squad_notation": "2 Playing (1 Captain + 1 Main) + up to 1 Substitute (Bench)",
+        "squad_badge": "2 Playing + up to 1 Sub",
+        "gender_badge": "👦 Strictly Boys Only",
+        "gender_rule_desc": "All 2 to 3 squad members (Captain, Main squad, and Bench) must be male students ('Boy').",
+        "description": "2 Playing Players (1 Captain + 1 Main) + up to 1 Substitute on bench. Total squad: 2 to 3 Boys.",
+        "default_gender": "Boy",
+        "is_team_sport": False,
+    },
+    "long_jump_girls": {
+        "id": "long_jump_girls",
+        "name": "Long jump (girls)",
+        "category": "Girls",
+        "icon": "🏃♀️",
+        "main_count": 1,
+        "sub_max": 1,
+        "formula": "1 + 1",
+        "squad_notation": "1 Playing (Captain) + up to 1 Substitute (Bench)",
+        "squad_badge": "1 Playing + up to 1 Sub",
+        "gender_badge": "👧 Strictly Girls Only",
+        "gender_rule_desc": "All 1 to 2 squad members (Captain and Bench) must be female students ('Girl').",
+        "description": "1 Playing Player (Captain) + up to 1 Substitute on bench. Total squad: 1 to 2 Girls.",
+        "default_gender": "Girl",
+        "is_team_sport": False,
+    },
+}
+
+# Team sports vs Single/Doubles classification sets
+TEAM_SPORT_KEYS: set[str] = {
+    "cricket",
+    "cricket_boys",
+    "box_cricket",
+    "box_cricket_girls",
+    "football",
+    "football_boys",
+    "football_girls",
+    "volleyball",
+    "volleyball_boys",
+    "tow_boys",
+    "tow_girls",
+    "tug_of_war",
+    "basketball",
+    "basketball_shootout",
+}
+
+SINGLE_DOUBLE_SPORT_KEYS: set[str] = {
+    "badminton",
+    "badminton_mix",
+    "table_tennis",
+    "tt_boys",
+    "carrom",
+    "carrom_mix",
+    "shotput",
+    "shotput_boys",
+    "shotput_girls",
+    "discus_boys",
+    "discus_girls",
+    "discus_throw",
+    "discuss_throw",
+    "long_jump",
+    "long_jump_boys",
+    "long_jump_girls",
+}
+
+
+def is_team_sport(sport_id_or_type: str | None) -> bool:
+    """
+    Returns True if the sport is played like a team (Cricket, Football, Volleyball, Tug of War, etc.)
+    requiring the whole squad info altogether (Captain, playing squad, substitutes bench).
+    Returns False if played with a single or double player at a time (Badminton, TT, Carrom, Athletics).
+    """
+    if not sport_id_or_type:
+        return False
+    sid = str(sport_id_or_type).lower().strip()
+    return sid in TEAM_SPORT_KEYS or sid in ["cricket", "box_cricket", "football", "volleyball", "tug_of_war", "basketball"]
+
+
+def is_single_double_sport(sport_id_or_type: str | None) -> bool:
+    """Returns True if the sport is played with a single or double player at a time."""
+    return not is_team_sport(sport_id_or_type)
+
+
 # Primary 12 Sports Configuration & Limits
 SPORTS_CONFIG: dict[str, dict[str, Any]] = {
     "badminton": {
@@ -686,14 +1003,28 @@ def get_sport_rule(sport_id: str) -> dict[str, Any] | None:
     if not sport_id:
         return None
     sid = sport_id.lower().strip()
+    rule = None
     if sid in RULES_DATA:
-        return RULES_DATA[sid]
-    target_id = SPORT_ALIASES.get(sid)
-    if target_id and target_id in RULES_DATA:
-        return RULES_DATA[target_id]
+        rule = dict(RULES_DATA[sid])
+    else:
+        target_id = SPORT_ALIASES.get(sid)
+        if target_id and target_id in RULES_DATA:
+            rule = dict(RULES_DATA[target_id])
+    if rule:
+        rule["is_team_sport"] = is_team_sport(sid)
+        if sid in TOURNAMENT_SPORTS_CONFIG_16:
+            cfg = TOURNAMENT_SPORTS_CONFIG_16[sid]
+            rule["tournament_config"] = cfg
+            if "main_count" in cfg:
+                if "squad" not in rule:
+                    rule["squad"] = {}
+                rule["squad"]["playing_count"] = cfg["main_count"]
+                rule["squad"]["max_substitutes"] = cfg.get("sub_max", 2)
+        return rule
     return None
 
 
 def get_sports_config() -> dict[str, dict[str, Any]]:
     """Returns the 12 primary sports configuration map."""
     return SPORTS_CONFIG
+
