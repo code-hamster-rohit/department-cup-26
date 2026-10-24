@@ -26,30 +26,46 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnCloseModal) btnCloseModal.addEventListener('click', closeCreateModal);
   if (btnCancelModal) btnCancelModal.addEventListener('click', closeCreateModal);
 
-  const sportSelect = document.getElementById('form-sport');
+  const sportRadios = document.querySelectorAll('input[name="sport_id"]');
   const catSelect = document.getElementById('form-category');
-  if (sportSelect && catSelect) {
-    sportSelect.addEventListener('change', () => {
-      const selectedOpt = sportSelect.options[sportSelect.selectedIndex];
-      const defGender = selectedOpt ? selectedOpt.getAttribute('data-default-gender') : null;
-      if (defGender) {
+  const oversGroup = document.getElementById('overs-group');
+
+  sportRadios.forEach(r => {
+    r.addEventListener('change', () => {
+      const defGender = r.getAttribute('data-default-gender');
+      if (defGender && catSelect) {
         catSelect.value = defGender;
       }
+      if (oversGroup) {
+        if (r.value === 'cricket' || r.value === 'box_cricket') {
+          oversGroup.style.display = 'block';
+          const oversInput = document.getElementById('form-overs');
+          if (oversInput) oversInput.value = (r.value === 'box_cricket') ? 6 : 10;
+        } else {
+          oversGroup.style.display = 'none';
+        }
+      }
     });
-  }
+  });
 
   if (createForm) {
     createForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const sportId = document.getElementById('form-sport').value;
-      const categoryVal = document.getElementById('form-category') ? document.getElementById('form-category').value : '';
+      const selectedSport = document.querySelector('input[name="sport_id"]:checked');
+      const sportId = selectedSport ? selectedSport.value : (document.getElementById('form-sport') ? document.getElementById('form-sport').value : '');
+      if (!sportId) {
+        alert('Please choose one of the 12 tournament sports.');
+        return;
+      }
+
+      const categoryVal = catSelect ? catSelect.value : 'Boys';
       const teamA = document.getElementById('form-team-a').value;
       const teamB = document.getElementById('form-team-b').value;
       const venue = document.getElementById('form-venue').value;
       const stage = document.getElementById('form-stage').value;
       const dayVal = document.getElementById('form-day') ? document.getElementById('form-day').value : 'Day 1';
       const schedDateVal = document.getElementById('form-sched-date') ? document.getElementById('form-sched-date').value : '';
-      const oversVal = document.getElementById('form-overs').value;
+      const oversVal = document.getElementById('form-overs') ? document.getElementById('form-overs').value : null;
 
       if (teamA === teamB) {
         alert('Please choose two different departments.');
@@ -57,13 +73,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const submitBtn = document.getElementById('btn-submit-match');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+      }
 
       try {
+        const adminEmail = localStorage.getItem('deptcup_admin_email') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+
         const res = await fetch('/api/match/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             sport_id: sportId,
             category: categoryVal,
@@ -82,11 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
           window.location.href = `/admin/match/${data.match.id}`;
         } else {
           alert('Error: ' + (data.detail || 'Failed creating match'));
-          submitBtn.disabled = false;
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Create Match & Enter Control Room';
+          }
         }
       } catch (err) {
         alert('Network error: ' + err.message);
-        submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Create Match & Enter Control Room';
+        }
       }
     });
   }

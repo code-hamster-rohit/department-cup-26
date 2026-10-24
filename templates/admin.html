@@ -3,6 +3,7 @@
 {% block title %}Administrator Center · Department Cup 2026{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="/static/css/index.css">
   <link rel="stylesheet" href="/static/css/admin.css">
 {% endblock %}
 
@@ -240,92 +241,100 @@
     </section>
     {% endif %}
 
-    <!-- MODAL: CREATE NEW MATCH -->
+    <!-- MODAL: CREATE NEW MATCH (Rich 12-Sports Visual Grid) -->
     <div class="modal-overlay" id="create-match-modal">
-      <div class="modal-content">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-          <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-main);">
-            <i class="fa-solid fa-calendar-plus" style="color: #3b82f6;"></i> Initiate Tournament Match
-          </h3>
-          <button id="btn-close-modal" style="background: none; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+      <div class="modal-card create-match-card">
+        <div class="modal-header">
+          <div class="modal-badge"><i class="fa-solid fa-plus-circle"></i> INITIATE TOURNAMENT MATCH</div>
+          <button type="button" class="modal-close-btn" id="btn-close-modal">&times;</button>
         </div>
 
-        <form id="create-match-form">
-          <!-- Sport Selection & Division/Category -->
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Sport Event (Official Rulebook)</label>
-              <select class="form-control" id="form-sport" required>
-                {% for s in sports %}
-                  <option value="{{ s.id }}" data-default-gender="{{ s.default_gender }}">
-                    {{ s.icon }} {{ s.name }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Division / Category</label>
-              <select class="form-control" id="form-category" required>
-                <option value="Boys" selected>👦 Boys</option>
-                <option value="Girls">👧 Girls</option>
-                <option value="Mixed">👫 Mixed</option>
-                <option value="Open">⚡ Open</option>
-              </select>
+        <form id="create-match-form" class="create-match-form">
+          <div class="form-section">
+            <label class="form-label">
+              <span class="label-step">1</span> Choose from the 12 Tournament Sports:
+            </label>
+            <div class="sports-selection-grid">
+              {% for sp in sports %}
+                <label class="sport-card-label">
+                  <input type="radio" name="sport_id" value="{{ sp.id }}" class="sport-radio" {% if loop.first %}checked{% endif %} data-default-gender="{{ sp.default_gender }}">
+                  <div class="sport-select-card">
+                    <span class="sp-icon">{{ sp.icon }}</span>
+                    <span class="sp-name">{{ sp.name }}</span>
+                    <span class="sp-badge">{{ sp.formula or sp.category }}</span>
+                  </div>
+                </label>
+              {% endfor %}
             </div>
           </div>
 
-          <!-- Teams Selection -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Department Team 1</label>
-              <select class="form-control" id="form-team-a" required>
-                <option value="amsc" selected>AMSC (Applied Math)</option>
-                <option value="ppe">PPE (Polymer & Process)</option>
-                <option value="ppt">PPT (Pulp & Paper)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Department Team 2</label>
-              <select class="form-control" id="form-team-b" required>
-                <option value="ppe" selected>PPE (Polymer & Process)</option>
-                <option value="amsc">AMSC (Applied Math)</option>
-                <option value="ppt">PPT (Pulp & Paper)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Venue & Stage -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label class="form-label">Venue</label>
-              <input type="text" class="form-control" id="form-venue" value="Main Sports Ground, IITR SRE" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Match Stage</label>
-              <select class="form-control" id="form-stage">
-                <option value="League Match">League Match</option>
-                <option value="Semi-Final">Semi-Final</option>
-                <option value="Grand Final">Grand Final</option>
-                <option value="Friendly Match">Friendly Match</option>
-              </select>
+          <div class="form-section">
+            <label class="form-label">
+              <span class="label-step">2</span> Departments Playing (AMSC · PPE · PPT):
+            </label>
+            <div class="dept-selection-grid">
+              <div class="form-group">
+                <span class="dept-input-tag">Department 1 (Team A)</span>
+                <select id="form-team-a" class="input-select" required>
+                  <option value="amsc" selected>AMSC (Applied Math & Sci Comp)</option>
+                  <option value="ppe">PPE (Polymer & Process Engg)</option>
+                  <option value="ppt">PPT (Pulp & Paper Tech)</option>
+                </select>
+              </div>
+              <div class="vs-divider-box">VS</div>
+              <div class="form-group">
+                <span class="dept-input-tag">Department 2 (Team B)</span>
+                <select id="form-team-b" class="input-select" required>
+                  <option value="ppe" selected>PPE (Polymer & Process Engg)</option>
+                  <option value="amsc">AMSC (Applied Math & Sci Comp)</option>
+                  <option value="ppt">PPT (Pulp & Paper Tech)</option>
+                </select>
+              </div>
             </div>
           </div>
 
+          <div class="form-section">
+            <label class="form-label">
+              <span class="label-step">3</span> Match Meta-Data & Rules Parameters:
+            </label>
+            <div class="meta-inputs-grid">
+              <div class="form-group">
+                <span class="dept-input-tag">Division / Gender</span>
+                <select id="form-category" class="input-select">
+                  <option value="Boys" selected>👦 Boys</option>
+                  <option value="Girls">👧 Girls</option>
+                  <option value="Mixed">👫 Mixed Match</option>
+                  <option value="Open">⚡ Open</option>
+                </select>
+              </div>
 
-          <div class="form-group" id="overs-group">
-            <label class="form-label">Innings Overs (Default follows Rulebook: 10 overs / Box Cricket: 6)</label>
-            <input type="number" class="form-control" id="form-overs" min="1" max="50" placeholder="Rulebook default">
+              <div class="form-group">
+                <span class="dept-input-tag">Tournament Stage</span>
+                <select id="form-stage" class="input-select">
+                  <option value="League Match" selected>League Match</option>
+                  <option value="Quarter-Final">Quarter-Final</option>
+                  <option value="Semi-Final">Semi-Final</option>
+                  <option value="Final">Grand Final</option>
+                  <option value="Friendly">Friendly</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <span class="dept-input-tag">Venue / Court</span>
+                <input type="text" id="form-venue" class="input-text" value="Main Sports Ground, IITR SRE" required>
+              </div>
+
+              <div class="form-group" id="overs-group">
+                <span class="dept-input-tag">Total Overs (Cricket / Box)</span>
+                <input type="number" id="form-overs" class="input-text" value="10" min="1" max="50">
+              </div>
+            </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+          <div class="form-actions">
             <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="btn-submit-match">
-              <i class="fa-solid fa-play"></i> Create & Open Control Room
+            <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-match">
+              <i class="fa-solid fa-rocket"></i> Create Match & Enter Control Room
             </button>
           </div>
         </form>
