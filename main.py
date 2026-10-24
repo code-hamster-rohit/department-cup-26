@@ -141,20 +141,27 @@ async def audience_view(request: Request, match: str | None = None):
     user, is_admin = get_session_user_context(request)
     show_dest_modal = bool(request.session.pop("just_signed_in", False) and is_admin)
 
-    all_m = list_matches()
+    active_matches = get_active_matches()
     active_m = None
 
     if match:
-        active_m = get_match(match)
+        m_doc = get_match(match)
+        # Completed matches disappear from stream
+        if m_doc and m_doc.get("status") != "completed":
+            active_m = m_doc
 
-    # If no match query specified, pick the currently live or first match if any
-    if not active_m and all_m:
-        # Prioritize live match, then squads_announced, then upcoming
-        live_matches = [m for m in all_m if m.get("status") == "live"]
+    if not active_m and active_matches:
+        live_matches = [m for m in active_matches if m.get("status") == "live"]
         if live_matches:
             active_m = live_matches[0]
         else:
-            active_m = all_m[0]
+            squad_matches = [m for m in active_matches if m.get("status") == "squads_announced"]
+            if squad_matches:
+                active_m = squad_matches[0]
+            else:
+                active_m = active_matches[0]
+
+    sports = get_all_sports()
 
     return templates.TemplateResponse(
         request=request,
@@ -162,7 +169,8 @@ async def audience_view(request: Request, match: str | None = None):
         context={
             "active_nav": "audience",
             "active_match": active_m,
-            "all_matches": all_m,
+            "all_matches": active_matches,
+            "sports": sports,
             "current_user": user,
             "is_admin": is_admin,
             "show_dest_modal": show_dest_modal,

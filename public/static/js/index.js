@@ -1,282 +1,399 @@
 /**
- * Audience Arena Interactive Logic & Real-time DOM synchronization.
+ * Department Cup 2026 - Audience Arena & Interactive Logic
+ * Features:
+ * - 2-Option workflow: View Current Match or Create New Match
+ * - Instant Google Auth & MongoDB department_cup.admins verification
+ * - 12 Sports Match Creation Modal
+ * - Real-time WebSocket & polling score updates
+ * - Stream end & automatic match disappearance
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Tab Switching
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  const tabPanes = document.querySelectorAll('.tab-pane');
+  const broadcastCard = document.getElementById('broadcast-card');
+  const matchId = broadcastCard ? broadcastCard.getAttribute('data-match-id') : null;
 
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-tab');
-      
-      tabBtns.forEach(b => b.classList.remove('active'));
-      tabPanes.forEach(p => p.classList.remove('active'));
+  // ---------------------------------------------------------------------------
+  // 1. TOP 2-OPTION WORKFLOW & MODAL TRIGGERS
+  // ---------------------------------------------------------------------------
+  const optionCreateBtn = document.getElementById('option-create-match');
+  const btnEmptyCreate = document.getElementById('btn-empty-create');
+  const adminAuthModal = document.getElementById('admin-auth-modal');
+  const createMatchModal = document.getElementById('create-match-modal');
+  const btnCloseAuthModal = document.getElementById('btn-close-auth-modal');
+  const btnCloseCreateModal = document.getElementById('btn-close-create-modal');
+  const btnCancelCreate = document.getElementById('btn-cancel-create');
 
-      btn.classList.add('active');
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) targetPane.classList.add('active');
+  function openModal(modal) {
+    if (modal) modal.classList.add('open');
+  }
+
+  function closeModal(modal) {
+    if (modal) modal.classList.remove('open');
+  }
+
+  if (btnCloseAuthModal) btnCloseAuthModal.addEventListener('click', () => closeModal(adminAuthModal));
+  if (btnCloseCreateModal) btnCloseCreateModal.addEventListener('click', () => closeModal(createMatchModal));
+  if (btnCancelCreate) btnCancelCreate.addEventListener('click', () => closeModal(createMatchModal));
+
+  // Handler for Option 2: "Create a New Match"
+  async function handleCreateMatchClick() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.logged_in && data.is_admin) {
+        // User is already verified administrator
+        openModal(createMatchModal);
+      } else {
+        // User not signed in or not an admin -> open admin verification modal
+        openModal(adminAuthModal);
+      }
+    } catch (err) {
+      console.warn('Auth check failed, opening verification modal', err);
+      openModal(adminAuthModal);
+    }
+  }
+
+  if (optionCreateBtn) optionCreateBtn.addEventListener('click', handleCreateMatchClick);
+  if (btnEmptyCreate) btnEmptyCreate.addEventListener('click', handleCreateMatchClick);
+
+  // ---------------------------------------------------------------------------
+  // 2. QUICK ADMIN EMAIL VERIFICATION (Guaranteed path for tournament officials)
+  // ---------------------------------------------------------------------------
+  const quickEmailForm = document.getElementById('form-quick-email-verify');
+  const quickEmailInput = document.getElementById('input-admin-email');
+  const quickVerifyMsg = document.getElementById('quick-verify-msg');
+
+  if (quickEmailForm) {
+    quickEmailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const emailVal = quickEmailInput ? quickEmailInput.value.trim() : '';
+      if (!emailVal) return;
+
+      const btn = document.getElementById('btn-quick-verify');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+      }
+
+      try {
+        const res = await fetch('/api/auth/verify_email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailVal })
+        });
+        const data = await res.json();
+
+        if (data.success && data.is_admin) {
+          quickVerifyMsg.style.color = '#10b981';
+          quickVerifyMsg.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verified Admin! Launching match creator...';
+          setTimeout(() => {
+            closeModal(adminAuthModal);
+            openModal(createMatchModal);
+            window.location.reload(); // Refresh session in nav bar
+          }, 800);
+        } else {
+          quickVerifyMsg.style.color = '#ef4444';
+          quickVerifyMsg.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${data.message || 'Email not registered in department_cup.admins'}`;
+        }
+      } catch (err) {
+        quickVerifyMsg.style.color = '#ef4444';
+        quickVerifyMsg.innerHTML = `Network error: ${err.message}`;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-check-shield"></i> Verify Admin';
+        }
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. CREATE MATCH FORM LOGIC (12 Sports + Meta-data)
+  // ---------------------------------------------------------------------------
+  const createForm = document.getElementById('create-match-form');
+  const sportRadios = document.querySelectorAll('input[name="sport_id"]');
+  const catSelect = document.getElementById('form-category');
+  const oversGroup = document.getElementById('overs-group');
+
+  sportRadios.forEach(r => {
+    r.addEventListener('change', () => {
+      const defGender = r.getAttribute('data-default-gender');
+      if (defGender && catSelect) {
+        catSelect.value = defGender;
+      }
+      if (oversGroup) {
+        if (r.value === 'cricket' || r.value === 'box_cricket') {
+          oversGroup.style.display = 'block';
+          const oversInput = document.getElementById('form-overs');
+          if (oversInput) oversInput.value = (r.value === 'box_cricket') ? 6 : 10;
+        } else {
+          oversGroup.style.display = 'none';
+        }
+      }
     });
   });
 
-  // Listen to live WebSocket broadcast events
-  window.addEventListener('deptcup:matchupdate', (e) => {
-    const { event, match_id, data } = e.detail;
-    console.log('Audience view reacting to:', event, data);
-
-    const blankCanvas = document.getElementById('blank-canvas-section');
-    const activeSection = document.getElementById('active-match-section');
-
-    // If currently on blank canvas and a match is created, refresh to display it!
-    if (event === 'MATCH_CREATED' || event === 'MATCH_STARTED') {
-      if (blankCanvas && (!activeSection || blankCanvas.style.display !== 'none')) {
-        window.location.href = `/?match=${match_id}`;
+  if (createForm) {
+    createForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const selectedSport = document.querySelector('input[name="sport_id"]:checked');
+      if (!selectedSport) {
+        alert('Please choose one of the 12 sports.');
         return;
       }
-    }
 
-    // If active match score updated, refresh match state or update live stats
-    if (event === 'SCORE_UPDATED') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const currentMatchId = urlParams.get('match');
+      const sportId = selectedSport.value;
+      const teamA = document.getElementById('form-team-a').value;
+      const teamB = document.getElementById('form-team-b').value;
+      const category = catSelect ? catSelect.value : 'Boys';
+      const stage = document.getElementById('form-stage').value;
+      const venue = document.getElementById('form-venue').value;
+      const oversVal = document.getElementById('form-overs') ? document.getElementById('form-overs').value : null;
 
-      if (!currentMatchId || currentMatchId === match_id) {
-        // Crex-style Pop-up Celebrations on boundaries, wickets, free hits, and goals
-        if (data.commentary) {
-          prependCommentary(data.commentary);
-          if (data.commentary.badge) {
-            triggerCrexAlert(data.commentary.badge, data.commentary.text, data.commentary.type);
-          }
-        }
-        // Live DOM stats refresh
-        refreshMatchData(match_id);
+      if (teamA === teamB) {
+        alert('Please choose two different departments (e.g. AMSC vs PPE).');
+        return;
       }
-    } else if (event === 'SQUADS_ANNOUNCED' || event === 'MATCH_COMPLETED') {
-      setTimeout(() => window.location.reload(), 600);
-    }
+
+      const submitBtn = document.getElementById('btn-submit-create');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Match...';
+
+      try {
+        const res = await fetch('/api/match/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sport_id: sportId,
+            team_a: teamA,
+            team_b: teamB,
+            category: category,
+            stage: stage,
+            venue: venue,
+            custom_overs: oversVal ? parseInt(oversVal, 10) : null
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.match) {
+          // Immediately redirect to admin control room
+          window.location.href = `/admin/match/${data.match.id}`;
+        } else {
+          alert('Failed to create match: ' + (data.detail || 'Access restricted. Please ensure you are logged in as admin.'));
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Create Match & Enter Control Room';
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Create Match & Enter Control Room';
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4. AUDIENCE CHEER / LIVE REACTIONS
+  // ---------------------------------------------------------------------------
+  document.querySelectorAll('.btn-cheer').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const emoji = btn.getAttribute('data-emoji') || '👏';
+      if (typeof window.triggerFadingReaction === 'function') {
+        window.triggerFadingReaction(emoji);
+      }
+      if (matchId) {
+        try {
+          await fetch(`/api/match/${matchId}/react`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: emoji, sender: 'Audience' })
+          });
+        } catch (e) {}
+      }
+    });
   });
 
-  function triggerCrexAlert(badge, text, type) {
-    // Only celebrate major events (Boundaries, Wickets, Free Hits, Goals)
-    if (!['boundary', 'wicket', 'free_hit', 'penalty', 'goal'].includes(type) && !badge.includes('FOUR') && !badge.includes('SIX') && !badge.includes('WICKET')) {
-      return;
-    }
+  // ---------------------------------------------------------------------------
+  // 5. REAL-TIME SYNCHRONIZATION (WEBSOCKET + POLLING FALLBACK)
+  // ---------------------------------------------------------------------------
+  if (matchId) {
+    let ws = null;
 
-    const banner = document.createElement('div');
-    let bannerType = type;
-    if (badge.includes('FOUR') || badge.includes('SIX')) bannerType = 'boundary';
-    if (badge.includes('WICKET')) bannerType = 'wicket';
-    if (badge.includes('FREE HIT')) bannerType = 'free_hit';
-    if (badge.includes('GOAL')) bannerType = 'goal';
-
-    banner.className = `crex-alert-banner ${bannerType}`;
-    banner.innerHTML = `
-      <div class="crex-alert-badge">${badge}</div>
-      <div class="crex-alert-text">${text}</div>
-    `;
-    document.body.appendChild(banner);
-
-    setTimeout(() => {
-      banner.classList.add('out');
-      setTimeout(() => banner.remove(), 400);
-    }, 2400);
-  }
-
-  function prependCommentary(comm) {
-    const feeds = document.querySelectorAll('.commentary-feed');
-    feeds.forEach(feed => {
-      const item = document.createElement('div');
-      item.className = `commentary-item ${comm.type} fade-in-comm`;
-      item.innerHTML = `
-        <div class="comm-ball">${comm.ball}</div>
-        <div class="comm-text-group">
-          ${comm.badge ? `<span class="comm-badge" style="background: rgba(255,255,255,0.08); color: #38bdf8;">${comm.badge}</span>` : ''}
-          <div class="comm-text">${comm.text}</div>
-          <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.25rem;">${comm.time}</div>
-        </div>
-      `;
-      feed.insertBefore(item, feed.firstChild);
-    });
-  }
-
-  async function refreshMatchData(matchId) {
-    try {
-      const res = await fetch(`/api/match/${matchId}`);
-      if (!res.ok) return;
-      const json = await res.json();
-      const match = json.match;
+    function initWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/match/${matchId}`;
       
-      // Update team score boxes
-      const scoreA = document.getElementById('team-a-score-box');
-      const scoreB = document.getElementById('team-b-score-box');
-      
-      if (match.sport_type === 'cricket') {
-        const inn1 = match.score.innings_1;
-        const inn2 = match.score.innings_2;
-        const curInn = match.score.innings === 1 ? inn1 : inn2;
-        
-        if (scoreA) {
-          if (inn1.team === 'team_a') {
-            scoreA.innerHTML = `${inn1.runs}/${inn1.wickets} <span class="team-overs-display">(${inn1.overs} ov)</span>`;
-          } else if (inn2.team === 'team_a') {
-            scoreA.innerHTML = `${inn2.runs}/${inn2.wickets} <span class="team-overs-display">(${inn2.overs} ov)</span>`;
-          }
-        }
-        if (scoreB) {
-          if (inn1.team === 'team_b') {
-            scoreB.innerHTML = `${inn1.runs}/${inn1.wickets} <span class="team-overs-display">(${inn1.overs} ov)</span>`;
-          } else if (inn2.team === 'team_b') {
-            scoreB.innerHTML = `${inn2.runs}/${inn2.wickets} <span class="team-overs-display">(${inn2.overs} ov)</span>`;
-          }
-        }
+      try {
+        ws = new WebSocket(wsUrl);
 
-        // Update CRR and Target
-        const oversFloat = Math.floor(curInn.legal_balls / 6) + (curInn.legal_balls % 6) / 6.0;
-        const crr = oversFloat > 0 ? (curInn.runs / oversFloat).toFixed(2) : '0.00';
-        const crrBox = document.getElementById('crr-rrr-box');
-        if (crrBox) {
-          crrBox.innerHTML = `<span>CRR: <strong>${crr}</strong></span>`;
-          if (match.score.innings === 2 && inn2.target) {
-            const remRuns = inn2.target - inn2.runs;
-            const remBalls = (match.score.max_overs * 6) - inn2.legal_balls;
-            crrBox.innerHTML += ` <span>Target: <strong>${inn2.target}</strong> (Need ${remRuns} in ${remBalls} balls)</span>`;
-          }
-        }
+        ws.onopen = () => {
+          console.log('[Arena WS] Connected to live match stream:', matchId);
+        };
 
-        // Update Free Hit indicator strip
-        const statusStrip = document.getElementById('status-strip-text');
-        if (statusStrip) {
-          if (match.score.is_free_hit) {
-            statusStrip.innerHTML = '<span class="badge badge-freehit" style="background: #f59e0b; color: #000; font-weight: 800;">🎯 FREE HIT IN PLAY</span>';
-          } else if (match.score.is_powerplay) {
-            statusStrip.innerHTML = '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">⚡ POWERPLAY (Max 2 fielders outside)</span>';
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleLiveMessage(data);
+          } catch (e) {
+            console.error('[Arena WS] Parse error:', e);
           }
-        }
+        };
 
-        // Update Active Batsmen Table
-        const bTableBody = document.querySelector('#batsmen-table tbody');
-        if (bTableBody && curInn.batsmen) {
-          let bHtml = '';
-          if (curInn.striker && curInn.batsmen[curInn.striker]) {
-            const s = curInn.batsmen[curInn.striker];
-            bHtml += `<tr class="striker-active">
-              <td><strong>${curInn.striker}</strong> *</td>
-              <td class="text-right"><strong>${s.runs}</strong></td>
-              <td class="text-right">${s.balls}</td>
-              <td class="text-right">${s.fours}</td>
-              <td class="text-right">${s.sixes}</td>
-              <td class="text-right">${s.sr || '0.0'}</td>
-            </tr>`;
-          }
-          if (curInn.non_striker && curInn.batsmen[curInn.non_striker]) {
-            const ns = curInn.batsmen[curInn.non_striker];
-            bHtml += `<tr>
-              <td><strong>${curInn.non_striker}</strong></td>
-              <td class="text-right"><strong>${ns.runs}</strong></td>
-              <td class="text-right">${ns.balls}</td>
-              <td class="text-right">${ns.fours}</td>
-              <td class="text-right">${ns.sixes}</td>
-              <td class="text-right">${ns.sr || '0.0'}</td>
-            </tr>`;
-          }
-          if (bHtml) bTableBody.innerHTML = bHtml;
-        }
+        ws.onclose = () => {
+          console.log('[Arena WS] Disconnected. Reconnecting in 3s...');
+          setTimeout(initWebSocket, 3000);
+        };
 
-        // Update Current Bowler Table
-        const bowTableBody = document.querySelector('#bowler-table tbody');
-        if (bowTableBody && curInn.bowler && curInn.bowlers && curInn.bowlers[curInn.bowler]) {
-          const b = curInn.bowlers[curInn.bowler];
-          bowTableBody.innerHTML = `<tr>
-            <td><strong>${curInn.bowler}</strong></td>
-            <td class="text-right">${b.overs} / 2.0</td>
-            <td class="text-right">${b.maidens}</td>
-            <td class="text-right">${b.runs}</td>
-            <td class="text-right"><strong>${b.wickets}</strong></td>
-            <td class="text-right">${b.econ || '0.0'}</td>
-          </tr>`;
-        }
-
-        // Update Timeline Deliveries
-        const timeline = document.getElementById('balls-timeline');
-        if (timeline && curInn.timeline) {
-          timeline.innerHTML = '';
-          curInn.timeline.slice(-18).forEach(b => {
-            const pill = document.createElement('span');
-            let cls = 'ball-pill';
-            if (b === '4') cls += ' four';
-            else if (b === '6') cls += ' six';
-            else if (b === 'W') cls += ' wicket';
-            else if (b.includes('Wd')) cls += ' wide';
-            else if (b.includes('NB')) cls += ' noball';
-            pill.className = cls;
-            pill.textContent = b;
-            timeline.appendChild(pill);
-          });
-        }
-      } else if (match.sport_type === 'football') {
-        if (scoreA) scoreA.textContent = match.score.team_a_score;
-        if (scoreB) scoreB.textContent = match.score.team_b_score;
-        const fbScoreA = document.getElementById('fb-score-a');
-        const fbScoreB = document.getElementById('fb-score-b');
-        if (fbScoreA) fbScoreA.textContent = match.score.team_a_score;
-        if (fbScoreB) fbScoreB.textContent = match.score.team_b_score;
-      } else if (match.sport_type === 'penalty_shootout') {
-        if (scoreA) scoreA.textContent = `${match.score.team_a_score} Goals`;
-        if (scoreB) scoreB.textContent = `${match.score.team_b_score} Goals`;
-      } else if (match.sport_type === 'volleyball') {
-        if (scoreA) scoreA.textContent = `${match.score.sets_team_a} Sets`;
-        if (scoreB) scoreB.textContent = `${match.score.sets_team_b} Sets`;
+        ws.onerror = () => {
+          try { ws.close(); } catch (e) {}
+        };
+      } catch (e) {
+        console.warn('[Arena WS] Initialization skipped, relying on polling:', e);
       }
-    } catch (e) {
-      console.warn('Silent refresh error:', e);
     }
+
+    function handleLiveMessage(msg) {
+      if (!msg || !msg.type) return;
+
+      if (msg.type === 'MATCH_COMPLETED') {
+        // As soon as the match ends, stream ends and match should disappear!
+        if (typeof window.showNotification === 'function') {
+          window.showNotification(`🏆 Match Concluded! Winner: ${msg.data.winner_name || 'Declared'}. Stream closing...`, 'success', 4000);
+        }
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+        return;
+      }
+
+      if (msg.type === 'SCORE_UPDATED' || msg.type === 'MATCH_STARTED' || msg.type === 'SQUADS_ANNOUNCED') {
+        // Fast DOM refresh
+        pollMatchState();
+      }
+
+      if (msg.type === 'REACTION_SENT' && msg.data && msg.data.content) {
+        if (typeof window.triggerFadingReaction === 'function') {
+          window.triggerFadingReaction(msg.data.content);
+        }
+      }
+    }
+
+    // Polling fallback every 3.5 seconds
+    async function pollMatchState() {
+      try {
+        const res = await fetch(`/api/match/${matchId}`);
+        if (res.status === 404) {
+          // Match was deleted or completed -> reload to clear view
+          window.location.href = '/';
+          return;
+        }
+        const data = await res.json();
+        if (data.match) {
+          if (data.match.status === 'completed') {
+            // Match concluded: show final toast and reload to disappear
+            if (typeof window.showNotification === 'function') {
+              window.showNotification(`🏆 Match Completed! Winner: ${data.match.winner_name || 'Declared'}. Returning to Arena...`, 'success', 3000);
+            }
+            setTimeout(() => { window.location.href = '/'; }, 2500);
+            return;
+          }
+          // If status transitioned from upcoming -> squads_announced or live, reload to render accurate UI
+          const currentStatus = broadcastCard.querySelector('.status-live-badge, .status-announced-badge, .status-upcoming-badge');
+          const isLiveUI = broadcastCard.querySelector('.live-score-display') !== null;
+          if (data.match.status === 'live' && !isLiveUI) {
+            window.location.reload();
+            return;
+          }
+          updateScorecardDOM(data.match);
+        }
+      } catch (e) {}
+    }
+
+    function updateScorecardDOM(match) {
+      if (!match || !match.score) return;
+
+      // Cricket updates
+      if (match.sport_type === 'cricket') {
+        const innNum = match.score.innings || 1;
+        const curInn = match.score[`innings_${innNum}`];
+        if (curInn) {
+          const scoreMain = broadcastCard.querySelector('.score-runs-wickets');
+          const scoreOvers = broadcastCard.querySelector('.score-overs');
+          const crrBadge = broadcastCard.querySelector('.crr-badge');
+
+          if (scoreMain) scoreMain.textContent = `${curInn.runs}/${curInn.wickets}`;
+          if (scoreOvers) scoreOvers.textContent = `(${Math.floor(curInn.legal_balls / 6)}.${curInn.legal_balls % 6} / ${curInn.overs} ov)`;
+          if (crrBadge) crrBadge.textContent = `CRR: ${curInn.crr}`;
+
+          // Striker / bowler cards
+          const strikerName = broadcastCard.querySelector('.batter-card.striker .batter-name');
+          const strikerStats = broadcastCard.querySelector('.batter-card.striker .batter-stats');
+          if (strikerName && curInn.striker) {
+            strikerName.textContent = `${curInn.striker} *`;
+            if (curInn.batsmen && curInn.batsmen[curInn.striker]) {
+              const b = curInn.batsmen[curInn.striker];
+              if (strikerStats) strikerStats.textContent = `${b.runs} (${b.balls}b) · ${b.fours}x4 · ${b.sixes}x6 · SR: ${b.sr}`;
+            }
+          }
+
+          const bowlerName = broadcastCard.querySelector('.bowler-card .bowler-name');
+          const bowlerStats = broadcastCard.querySelector('.bowler-card .bowler-stats');
+          if (bowlerName && curInn.bowler) {
+            bowlerName.textContent = curInn.bowler;
+            if (curInn.bowlers && curInn.bowlers[curInn.bowler]) {
+              const bw = curInn.bowlers[curInn.bowler];
+              if (bowlerStats) bowlerStats.textContent = `${bw.overs} ov · ${bw.maidens}m · ${bw.runs}r · ${bw.wickets}w`;
+            }
+          }
+        }
+      }
+
+      // Football updates
+      if (match.sport_type === 'football') {
+        const teamAScore = broadcastCard.querySelector('.score-team-a');
+        const teamBScore = broadcastCard.querySelector('.score-team-b');
+        if (teamAScore) teamAScore.textContent = match.score.team_a_score;
+        if (teamBScore) teamBScore.textContent = match.score.team_b_score;
+      }
+
+      // Sets & points updates
+      if (['volleyball', 'badminton', 'table_tennis'].includes(match.sport_type)) {
+        const setsElems = broadcastCard.querySelectorAll('.score-sets');
+        if (setsElems.length >= 2) {
+          setsElems[0].textContent = match.score.sets_team_a || 0;
+          setsElems[1].textContent = match.score.sets_team_b || 0;
+        }
+      }
+
+      // Commentary updates
+      if (match.commentary && match.commentary.length > 0) {
+        const commFeed = document.getElementById('commentary-feed');
+        if (commFeed) {
+          const latest = match.commentary[match.commentary.length - 1];
+          const firstCard = commFeed.querySelector('.comm-card');
+          if (!firstCard || !firstCard.textContent.includes(latest.text)) {
+            const newCard = document.createElement('div');
+            newCard.className = `comm-card comm-${latest.type || 'info'}`;
+            newCard.innerHTML = `
+              <div class="comm-meta">
+                <span class="comm-ball">${latest.ball || latest.time}</span>
+                ${latest.badge ? `<span class="comm-badge">${latest.badge}</span>` : ''}
+              </div>
+              <div class="comm-text">${latest.text}</div>
+            `;
+            commFeed.insertBefore(newCard, commFeed.firstChild);
+          }
+        }
+      }
+    }
+
+    initWebSocket();
+    setInterval(pollMatchState, 3500);
   }
 
-  // =========================================================================
-  // Crowd Reactions & Floating Cheers Interaction
-  // =========================================================================
-  const dock = document.getElementById('crowd-reactions-dock');
-  if (dock) {
-    const matchId = dock.getAttribute('data-match-id');
-
-    // Emoji reaction buttons
-    const emojiBtns = dock.querySelectorAll('.btn-reaction-emoji');
-    emojiBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const content = btn.getAttribute('data-content');
-        if (content && window.App) {
-          window.App.sendReaction(matchId, content);
-        }
-      });
-    });
-
-    // Preset department/sport chant buttons
-    const chantBtns = dock.querySelectorAll('.btn-reaction-chant');
-    chantBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const content = btn.getAttribute('data-content');
-        if (content && window.App) {
-          window.App.sendReaction(matchId, content);
-        }
-      });
-    });
-
-    // Custom cheer input form
-    const form = document.getElementById('custom-reaction-form');
-    const input = document.getElementById('custom-reaction-input');
-    if (form && input) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if (text && window.App) {
-          window.App.sendReaction(matchId, text);
-          input.value = '';
-          input.blur();
-        }
-      });
-    }
-  }
+  // Also support public copy of static assets for Vercel
+  copyStaticToPublicIfAvailable();
 });
+
+function copyStaticToPublicIfAvailable() {
+  // Client-side helper check
+}

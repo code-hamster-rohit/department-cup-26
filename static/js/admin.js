@@ -767,6 +767,74 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // -------------------------------------------------------------
+  // CONCLUDE MATCH & DECLARE WINNER (Stream Ends & Match Disappears)
+  // -------------------------------------------------------------
+  const modalConclude = document.getElementById('conclude-match-modal');
+  const btnCloseConclude = document.getElementById('btn-close-conclude-modal');
+  const btnCancelConclude = document.getElementById('btn-cancel-conclude');
+  const formConclude = document.getElementById('form-conclude-match');
+
+  document.querySelectorAll('.btn-trigger-conclude, #btn-open-conclude, #btn-top-conclude').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (modalConclude) {
+        modalConclude.classList.add('open');
+        modalConclude.classList.remove('d-none');
+      }
+    });
+  });
+
+  if (btnCloseConclude) {
+    btnCloseConclude.addEventListener('click', () => {
+      if (modalConclude) modalConclude.classList.remove('open');
+    });
+  }
+
+  if (btnCancelConclude) {
+    btnCancelConclude.addEventListener('click', () => {
+      if (modalConclude) modalConclude.classList.remove('open');
+    });
+  }
+
+  if (formConclude) {
+    formConclude.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const winnerVal = document.getElementById('conclude-winner').value;
+      const summaryVal = document.getElementById('conclude-summary').value;
+      const motmVal = document.getElementById('conclude-motm') ? document.getElementById('conclude-motm').value : '';
+
+      const submitBtn = formConclude.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Concluding & Ending Stream...';
+      }
+
+      try {
+        const res = await fetch(`/api/match/${matchId}/end`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            winner: winnerVal,
+            result_summary: summaryVal,
+            player_of_the_match: motmVal
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('🏆 Match Concluded! Winner declared and live stream ended. The match has disappeared from the live arena.');
+          window.location.href = '/admin';
+        } else {
+          alert('Failed to end match: ' + (data.detail || 'Error'));
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
+
   // Admin Directory Modal
   const btnOpenAdmins = document.getElementById('btn-open-admins-modal');
   const modalAdmins = document.getElementById('admins-directory-modal');

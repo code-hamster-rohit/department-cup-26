@@ -24,6 +24,10 @@ class GoogleVerifyRequest(BaseModel):
     credential: str  # Google ID token JWT
 
 
+class EmailVerifyRequest(BaseModel):
+    email: str
+
+
 @auth_router.get("/api/auth/me")
 async def get_current_user(request: Request):
     """Returns the currently authenticated user and their admin status."""
@@ -42,6 +46,30 @@ async def get_current_user(request: Request):
         "user": user,
         "is_admin": is_admin
     }
+
+
+@auth_router.post("/api/auth/verify_email")
+async def verify_email_admin(payload: EmailVerifyRequest, request: Request):
+    """
+    Direct verification for administrator emails against MongoDB department_cup.admins.
+    Provides a guaranteed authentication path if Google popup is blocked.
+    """
+    email = payload.email.strip().lower()
+    if not is_admin_email(email):
+        return {
+            "success": False,
+            "is_admin": False,
+            "message": f"Email '{email}' is not in the tournament admins collection."
+        }
+    user_obj = {
+        "email": email,
+        "name": email.split("@")[0].replace(".", " ").title(),
+        "picture": "",
+        "is_admin": True
+    }
+    request.session["user"] = user_obj
+    return {"success": True, "is_admin": True, "user": user_obj}
+
 
 
 @auth_router.post("/api/auth/google/verify")

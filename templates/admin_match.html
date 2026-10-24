@@ -43,6 +43,9 @@
       <a href="/?match={{ match.id }}" target="_blank" class="btn btn-secondary btn-sm" id="btn-view-audience">
         <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Audience View
       </a>
+      <button type="button" class="btn btn-danger btn-sm btn-trigger-conclude" id="btn-top-conclude" title="End match, declare winner and end stream">
+        <i class="fa-solid fa-trophy"></i> Declare Winner & End
+      </button>
       {% if match.status == 'live' %}
         <span class="badge badge-live"><span class="pulse-dot"></span> LIVE IN-PROGRESS</span>
       {% elif match.status == 'squads_announced' %}
@@ -763,6 +766,10 @@
               </div>
             {% endfor %}
           </div>
+
+          <button type="button" class="btn btn-danger btn-lg btn-trigger-conclude" id="btn-open-conclude" style="width: 100%; margin-top: 1.5rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">
+            <i class="fa-solid fa-trophy"></i> Declare Winner & End Match
+          </button>
         </div>
       </div>
     </div>
