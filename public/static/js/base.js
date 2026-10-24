@@ -248,7 +248,7 @@ window.App = {
 
     const doPoll = async () => {
       try {
-        const res = await fetch(`/api/match/${matchId}/poll?since=${encodeURIComponent(this.lastPollUpdateAt)}`);
+        const res = await fetch(`/api/match/${matchId}/poll?since=${encodeURIComponent(this.lastPollUpdateAt)}&_t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -287,7 +287,7 @@ window.App = {
     };
 
     doPoll();
-    this.pollInterval = setInterval(doPoll, 3000);
+    this.pollInterval = setInterval(doPoll, 1500);
   },
 
   startActiveMatchesPolling() {

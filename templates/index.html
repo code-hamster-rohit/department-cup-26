@@ -192,12 +192,12 @@
                 <div class="live-score-display">
                   <div class="score-main-line">
                     <span class="score-runs-wickets">{{ cur_inn.runs }}/{{ cur_inn.wickets }}</span>
-                    <span class="score-overs">({{ (cur_inn.legal_balls // 6) }}.{{ (cur_inn.legal_balls % 6) }} / {{ cur_inn.overs }} ov)</span>
+                    <span class="score-overs">({{ (cur_inn.legal_balls // 6) }}.{{ (cur_inn.legal_balls % 6) }} / {{ active_match.score.max_overs }} ov)</span>
                   </div>
                   <div class="score-sub-line">
                     <span class="crr-badge">CRR: {{ cur_inn.crr }}</span>
                     {% if inn_num == 2 and cur_inn.target %}
-                      <span class="target-badge">Target: {{ cur_inn.target }} (Need {{ cur_inn.target - cur_inn.runs }} in {{ (cur_inn.overs * 6) - cur_inn.legal_balls }} balls)</span>
+                      <span class="target-badge">Target: {{ cur_inn.target }} (Need {{ [cur_inn.target - cur_inn.runs, 0] | max }} in {{ [(active_match.score.max_overs * 6) - cur_inn.legal_balls, 0] | max }} balls)</span>
                     {% endif %}
                   </div>
                 </div>

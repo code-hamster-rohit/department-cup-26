@@ -119,7 +119,28 @@ def _normalize_match_squad_and_sport(match: dict[str, Any] | None) -> dict[str, 
     return match
 
 
-def get_match(match_id: str) -> dict[str, Any] | None:
+def get_match(match_id: str, force_mongo: bool = False) -> dict[str, Any] | None:
+    if force_mongo:
+        try:
+            from database.mongo import get_db, SPORT_COLLECTIONS
+            db = get_db()
+            if db is not None:
+                for col in SPORT_COLLECTIONS:
+                    doc = db[col].find_one({"id": match_id})
+                    if doc:
+                        doc.pop("_id", None)
+                        _matches_cache[match_id] = doc
+                        return _normalize_match_squad_and_sport(doc)
+                existing_cols = db.list_collection_names()
+                if "matches" in existing_cols:
+                    doc = db["matches"].find_one({"id": match_id})
+                    if doc:
+                        doc.pop("_id", None)
+                        _matches_cache[match_id] = doc
+                        return _normalize_match_squad_and_sport(doc)
+        except Exception:
+            pass
+
     m = _matches_cache.get(match_id)
     if m:
         return _normalize_match_squad_and_sport(m)
@@ -166,8 +187,8 @@ def list_matches(limit: int = 50, include_hidden: bool = False) -> list[dict[str
     return matches[:limit]
 
 
-def get_active_matches() -> list[dict[str, Any]]:
-    if not _matches_cache:
+def get_active_matches(force_mongo: bool = False) -> list[dict[str, Any]]:
+    if force_mongo or not _matches_cache:
         try:
             from database.mongo import load_matches_from_mongo
             mongo_matches = load_matches_from_mongo()
@@ -604,9 +625,13 @@ async def update_score_action(match_id: str, action: dict[str, Any]) -> dict[str
     Executes a sport-specific score update action.
     """
     async with _lock:
-        match = get_match(match_id)
+        match = get_match(match_id, force_mongo=True)
         if not match:
             raise ValueError(f"Match {match_id} not found")
+
+        # Automatically transition match to live if it was upcoming or squads_announced
+        if match.get("status") in ["upcoming", "squads_announced"]:
+            match["status"] = "live"
 
         # Snapshot for undo
         prev_snapshot = json.loads(json.dumps(match["score"]))
@@ -641,20 +666,73 @@ async def update_score_action(match_id: str, action: dict[str, Any]) -> dict[str
 
 def _handle_cricket_action(match: dict[str, Any], action: dict[str, Any]):
     score = match["score"]
-    inn_key = f"innings_{score['innings']}"
-    inn = score[inn_key]
     act_type = action.get("type")  # run, boundary, wicket, extra, dead_ball, swap_strike, change_bowler, switch_innings
 
-    striker = action.get("striker") or inn.get("striker") or "Striker"
-    non_striker = action.get("non_striker") or inn.get("non_striker") or "Non-Striker"
-    bowler = action.get("bowler") or inn.get("bowler") or "Bowler"
+    if act_type == "switch_innings":
+        score["innings"] = 2
+        score["batting_team"], score["bowling_team"] = score["bowling_team"], score["batting_team"]
+        score["innings_2"]["target"] = score["innings_1"]["runs"] + 1
+
+        # Initialize default batters and bowler for 2nd innings from the new batting/bowling squads
+        bat_playing = match.get("squads", {}).get(score["batting_team"], {}).get("playing", [])
+        bowl_playing = match.get("squads", {}).get(score["bowling_team"], {}).get("playing", [])
+
+        inn2 = score["innings_2"]
+        p1 = bat_playing[0].get("name") if len(bat_playing) > 0 else "Striker"
+        p2 = bat_playing[1].get("name") if len(bat_playing) > 1 else "Non-Striker"
+        b1 = bowl_playing[0].get("name") if len(bowl_playing) > 0 else "Bowler"
+
+        inn2["striker"] = p1
+        inn2["non_striker"] = p2
+        inn2["bowler"] = b1
+        inn2.setdefault("batsmen", {})[p1] = {"runs": 0, "balls": 0, "fours": 0, "sixes": 0, "sr": "0.0", "status": "not out"}
+        inn2.setdefault("batsmen", {})[p2] = {"runs": 0, "balls": 0, "fours": 0, "sixes": 0, "sr": "0.0", "status": "not out"}
+        inn2.setdefault("bowlers", {})[b1] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0, "econ": "0.0", "dots": 0, "fours": 0, "sixes": 0}
+
+        match["commentary"].append({
+            "time": datetime.utcnow().strftime("%H:%M"),
+            "ball": "0.0",
+            "text": f"Innings Break! Target for {match[score['batting_team']]['abbr']} is {score['innings_2']['target']} runs.",
+            "badge": "INNINGS BREAK",
+            "type": "innings_break"
+        })
+        return
+
+    inn_key = f"innings_{score['innings']}"
+    inn = score[inn_key]
+
+    # Squad defaults if not set
+    bat_team_key = score.get("batting_team", "team_a")
+    bowl_team_key = score.get("bowling_team", "team_b")
+    bat_playing = match.get("squads", {}).get(bat_team_key, {}).get("playing", [])
+    bowl_playing = match.get("squads", {}).get(bowl_team_key, {}).get("playing", [])
+
+    default_striker = bat_playing[0].get("name") if len(bat_playing) > 0 else "Striker"
+    default_non_striker = bat_playing[1].get("name") if len(bat_playing) > 1 else "Non-Striker"
+    default_bowler = bowl_playing[0].get("name") if len(bowl_playing) > 0 else "Bowler"
+
+    striker = action.get("striker") or inn.get("striker") or default_striker
+    non_striker = action.get("non_striker") or inn.get("non_striker") or default_non_striker
+    bowler = action.get("bowler") or inn.get("bowler") or default_bowler
+
+    if act_type == "swap_strike":
+        inn["striker"], inn["non_striker"] = non_striker, striker
+        return
+
+    if act_type == "change_bowler":
+        new_b = action.get("bowler") or bowler
+        inn["bowler"] = new_b
+        if new_b not in inn["bowlers"]:
+            inn["bowlers"][new_b] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0, "dots": 0, "fours": 0, "sixes": 0, "econ": "0.0"}
+        return
+
     inn["striker"] = striker
     inn["non_striker"] = non_striker
     inn["bowler"] = bowler
 
     # Ensure bowler record
     if bowler not in inn["bowlers"]:
-        inn["bowlers"][bowler] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0, "dots": 0, "fours": 0, "sixes": 0}
+        inn["bowlers"][bowler] = {"overs": 0.0, "maidens": 0, "runs": 0, "wickets": 0, "legal_balls": 0, "dots": 0, "fours": 0, "sixes": 0, "econ": "0.0"}
     b_stat = inn["bowlers"][bowler]
 
     # Ensure striker record
@@ -1374,7 +1452,7 @@ def _handle_basketball_action(match: dict[str, Any], action: dict[str, Any]):
 
 async def undo_last_action(match_id: str) -> dict[str, Any]:
     async with _lock:
-        match = get_match(match_id)
+        match = get_match(match_id, force_mongo=True)
         if not match:
             raise ValueError(f"Match {match_id} not found")
         if not match.get("history"):
@@ -1392,7 +1470,7 @@ async def undo_last_action(match_id: str) -> dict[str, Any]:
 
 async def end_match(match_id: str, winner: str, result_summary: str, motm: str = "") -> dict[str, Any]:
     async with _lock:
-        match = get_match(match_id)
+        match = get_match(match_id, force_mongo=True)
         if not match:
             raise ValueError(f"Match {match_id} not found")
 

@@ -3,6 +3,22 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  function getAdminHeaders() {
+    const adminEmail = window.CURRENT_USER_EMAIL || localStorage.getItem('deptcup_admin_email') || '';
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+    return headers;
+  }
+
+  async function apiPost(url, data) {
+    return fetch(url, {
+      method: 'POST',
+      headers: getAdminHeaders(),
+      credentials: 'same-origin',
+      body: JSON.stringify(data || {})
+    });
+  }
+
   // -------------------------------------------------------------
   // 1. ADMIN DASHBOARD: CREATE MATCH MODAL
   // -------------------------------------------------------------
@@ -271,15 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         btnAnnounceSquads.disabled = true;
-        const res = await fetch(`/api/match/${matchId}/squads`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            squad_a: squadA || {},
-            squad_b: squadB || {},
-            toss_winner: tossWinner,
-            toss_decision: tossDecision
-          })
+        const res = await apiPost(`/api/match/${matchId}/squads`, {
+          squad_a: squadA || {},
+          squad_b: squadB || {},
+          toss_winner: tossWinner,
+          toss_decision: tossDecision
         });
         const data = await res.json();
         if (data.success) {
@@ -309,33 +321,25 @@ document.addEventListener('DOMContentLoaded', () => {
           // Team sport: save whole squad info altogether + toss
           const squadA = extractSquadFromTextarea('squad-team-a-input');
           const squadB = extractSquadFromTextarea('squad-team-b-input');
-          await fetch(`/api/match/${matchId}/squads`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              squad_a: squadA || {},
-              squad_b: squadB || {},
-              toss_winner: tossWinner,
-              toss_decision: tossDecision
-            })
+          await apiPost(`/api/match/${matchId}/squads`, {
+            squad_a: squadA || {},
+            squad_b: squadB || {},
+            toss_winner: tossWinner,
+            toss_decision: tossDecision
           });
         } else {
           // Single / doubles sport: save player(s) playing + toss
           const playersA = document.getElementById('input-players-a')?.value.trim() || '';
           const playersB = document.getElementById('input-players-b')?.value.trim() || '';
-          await fetch(`/api/match/${matchId}/players`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              players_a: playersA,
-              players_b: playersB,
-              toss_winner: tossWinner,
-              toss_decision: tossDecision
-            })
+          await apiPost(`/api/match/${matchId}/players`, {
+            players_a: playersA,
+            players_b: playersB,
+            toss_winner: tossWinner,
+            toss_decision: tossDecision
           });
         }
 
-        const res = await fetch(`/api/match/${matchId}/start`, { method: 'POST' });
+        const res = await apiPost(`/api/match/${matchId}/start`, {});
         const data = await res.json();
         if (data.success) {
           window.App.showToast('Match is now LIVE! Scorer unlocked.', 'live');
@@ -393,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Rotate Strike button
+  // Rotate Strike button (swaps striker & non-striker on both client and backend)
   const btnRotateStrike = document.getElementById('btn-rotate-strike');
   if (btnRotateStrike) {
     btnRotateStrike.addEventListener('click', () => {
@@ -403,9 +407,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const temp = s1.value;
         s1.value = s2.value;
         s2.value = temp;
-        if (window.App && window.App.showToast) {
-          window.App.showToast(`Strike rotated: ${s1.value} now facing`, 'info');
+      }
+      sendScoreAction({ type: 'swap_strike', ...getCricketContext() });
+    });
+  }
+
+  // Bowler change listener
+  const selectBowlerEl = document.getElementById('select-bowler');
+  if (selectBowlerEl) {
+    selectBowlerEl.addEventListener('change', () => {
+      sendScoreAction({ type: 'change_bowler', bowler: selectBowlerEl.value, ...getCricketContext() });
+    });
+  }
+
+  // Undo Last Ball button
+  const btnUndoAction = document.getElementById('btn-undo-action');
+  if (btnUndoAction) {
+    btnUndoAction.addEventListener('click', async () => {
+      try {
+        btnUndoAction.disabled = true;
+        const res = await apiPost(`/api/match/${matchId}/undo`, {});
+        const data = await res.json();
+        if (data.success) {
+          updateControlRoomUI(data.match);
+          if (window.App && window.App.showToast) {
+            window.App.showToast('Last action undone successfully', 'info');
+          }
+        } else {
+          alert('Undo failed: ' + (data.detail || 'No actions to undo'));
         }
+      } catch (err) {
+        alert('Undo error: ' + err.message);
+      } finally {
+        btnUndoAction.disabled = false;
       }
     });
   }
@@ -415,19 +449,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // -------------------------------------------------------------
   async function sendScoreAction(action) {
     try {
-      const res = await fetch(`/api/match/${matchId}/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(action)
-      });
+      const res = await apiPost(`/api/match/${matchId}/score`, action);
       const data = await res.json();
       if (data.success) {
         updateControlRoomUI(data.match);
       } else {
-        alert('Error: ' + (data.detail || 'Action rejected'));
+        alert('Action error: ' + (data.detail || 'Action rejected'));
       }
     } catch (err) {
       console.error('Score action error:', err);
+      alert('Score action network error: ' + err.message);
     }
   }
 
@@ -707,14 +738,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const res = await fetch(`/api/match/${matchId}/end`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            winner: winner,
-            result_summary: summary,
-            player_of_the_match: motm
-          })
+        const res = await apiPost(`/api/match/${matchId}/end`, {
+          winner: winner,
+          result_summary: summary,
+          player_of_the_match: motm
         });
         const data = await res.json();
         if (data.success) {
@@ -732,12 +759,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateControlRoomUI(match) {
-    // Fast update of live score banner
+    if (!match || !match.score) return;
+
+    // 1. Update live badge in header
+    const liveBadgeWrap = document.querySelector('.admin-live-badge-wrap');
+    if (liveBadgeWrap) {
+      const badge = liveBadgeWrap.querySelector('.badge');
+      if (badge) {
+        if (match.status === 'live') {
+          badge.className = 'badge badge-live';
+          badge.style.fontSize = '0.75rem';
+          badge.innerHTML = '<span class="pulse-dot"></span> LIVE IN-PROGRESS';
+        } else if (match.status === 'completed') {
+          badge.className = 'badge badge-completed';
+          badge.style.fontSize = '0.75rem';
+          badge.textContent = 'OFFICIAL RESULT';
+        } else if (match.status === 'squads_announced') {
+          badge.className = 'badge badge-squads';
+          badge.style.fontSize = '0.75rem';
+          badge.textContent = 'SQUADS ANNOUNCED';
+        }
+      }
+    }
+
+    // 2. Fast update of live score banner
     const scoreText = document.getElementById('admin-current-score-text');
     if (scoreText) {
       if (match.sport_type === 'cricket') {
         const inn = match.score.innings === 1 ? match.score.innings_1 : match.score.innings_2;
-        scoreText.textContent = `${match[inn.team].abbr} ${inn.runs}/${inn.wickets} (${inn.overs} ov)`;
+        const bTeam = match[inn.team] || (inn.team === 'team_a' ? match.team_a : match.team_b);
+        scoreText.textContent = `${bTeam ? bTeam.abbr : ''} ${inn.runs}/${inn.wickets} (${inn.overs} ov)`;
       } else if (match.sport_type === 'football') {
         scoreText.textContent = `${match.team_a.abbr} ${match.score.team_a_score} : ${match.score.team_b_score} ${match.team_b.abbr}`;
       } else if (match.sport_type === 'penalty_shootout') {
@@ -781,6 +832,41 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // 3. Cricket specific selectors and cards
+    if (match.sport_type === 'cricket') {
+      const curInn = match.score.innings === 1 ? match.score.innings_1 : match.score.innings_2;
+      const s1 = document.getElementById('select-striker');
+      const s2 = document.getElementById('select-non-striker');
+      const sb = document.getElementById('select-bowler');
+
+      const batSquad = match.squads ? (match.score.batting_team === 'team_a' ? match.squads.team_a : match.squads.team_b) : null;
+      const bowlSquad = match.squads ? (match.score.batting_team === 'team_a' ? match.squads.team_b : match.squads.team_a) : null;
+
+      if (s1 && batSquad && batSquad.playing) {
+        const curOpts = Array.from(s1.options).map(o => o.value);
+        const expOpts = batSquad.playing.map(p => p.name);
+        if (expOpts.some(n => !curOpts.includes(n))) {
+          s1.innerHTML = batSquad.playing.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+          if (s2) s2.innerHTML = batSquad.playing.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        }
+        if (curInn.striker) s1.value = curInn.striker;
+      }
+      if (s2 && curInn.non_striker) {
+        s2.value = curInn.non_striker;
+      }
+      if (sb && bowlSquad && bowlSquad.playing) {
+        const curBowlOpts = Array.from(sb.options).map(o => o.value);
+        const expBowlOpts = bowlSquad.playing.map(p => p.name);
+        if (expBowlOpts.some(n => !curBowlOpts.includes(n))) {
+          sb.innerHTML = bowlSquad.playing.map(p => {
+            const bstat = curInn.bowlers && curInn.bowlers[p.name] ? curInn.bowlers[p.name] : null;
+            return `<option value="${p.name}">${p.name} (${bstat ? bstat.overs : '0.0'} ov)</option>`;
+          }).join('');
+        }
+        if (curInn.bowler) sb.value = curInn.bowler;
+      }
+    }
+
     // Period display for football
     const periodDisplay = document.getElementById('admin-current-period-display');
     if (periodDisplay && match.score && match.score.period_label) {
@@ -793,7 +879,6 @@ document.addEventListener('DOMContentLoaded', () => {
       freeHitBanner.classList.toggle('d-none', !match.score.is_free_hit);
       freeHitBanner.style.display = match.score.is_free_hit ? 'flex' : 'none';
     }
-
   }
 
   // Admin Directory Modal
@@ -807,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!adminsListContainer) return;
     adminsListContainer.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
     try {
-      const res = await fetch('/api/admins');
+      const res = await fetch('/api/admins', { headers: getAdminHeaders(), credentials: 'same-origin' });
       const data = await res.json();
       if (data.admins && data.admins.length > 0) {
         adminsListContainer.innerHTML = data.admins.map((adm, i) => `
@@ -845,11 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!email) return;
 
       try {
-        const res = await fetch('/api/admins/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email })
-        });
+        const res = await apiPost('/api/admins/add', { email: email });
         const data = await res.json();
         if (data.success) {
           window.App.showToast(`Admin '${email}' added to MongoDB!`, 'success');

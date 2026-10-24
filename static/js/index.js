@@ -285,10 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Polling fallback every 3.5 seconds
+    // Polling fallback every 1.5 seconds with cache-busting
     async function pollMatchState() {
       try {
-        const res = await fetch(`/api/match/${matchId}`);
+        const res = await fetch(`/api/match/${matchId}?_t=${Date.now()}`, { cache: 'no-store' });
         if (res.status === 404) {
           // Match was deleted or completed -> reload to clear view
           window.location.href = '/';
@@ -305,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
           // If status transitioned from upcoming -> squads_announced or live, reload to render accurate UI
-          const currentStatus = broadcastCard.querySelector('.status-live-badge, .status-announced-badge, .status-upcoming-badge');
           const isLiveUI = broadcastCard.querySelector('.live-score-display') !== null;
           if (data.match.status === 'live' && !isLiveUI) {
             window.location.reload();
@@ -329,10 +328,28 @@ document.addEventListener('DOMContentLoaded', () => {
           const crrBadge = broadcastCard.querySelector('.crr-badge');
 
           if (scoreMain) scoreMain.textContent = `${curInn.runs}/${curInn.wickets}`;
-          if (scoreOvers) scoreOvers.textContent = `(${Math.floor(curInn.legal_balls / 6)}.${curInn.legal_balls % 6} / ${curInn.overs} ov)`;
+          if (scoreOvers) scoreOvers.textContent = `(${Math.floor(curInn.legal_balls / 6)}.${curInn.legal_balls % 6} / ${match.score.max_overs || curInn.overs} ov)`;
           if (crrBadge) crrBadge.textContent = `CRR: ${curInn.crr}`;
 
-          // Striker / bowler cards
+          const targetBadge = broadcastCard.querySelector('.target-badge');
+          if (innNum === 2 && curInn.target) {
+            const needRuns = Math.max(curInn.target - curInn.runs, 0);
+            const needBalls = Math.max(((match.score.max_overs || 10) * 6) - curInn.legal_balls, 0);
+            const targetText = `Target: ${curInn.target} (Need ${needRuns} in ${needBalls} balls)`;
+            if (targetBadge) {
+              targetBadge.textContent = targetText;
+            } else {
+              const subLine = broadcastCard.querySelector('.score-sub-line');
+              if (subLine) {
+                const sp = document.createElement('span');
+                sp.className = 'target-badge';
+                sp.textContent = targetText;
+                subLine.appendChild(sp);
+              }
+            }
+          }
+
+          // Striker / non-striker / bowler cards
           const strikerName = broadcastCard.querySelector('.batter-card.striker .batter-name');
           const strikerStats = broadcastCard.querySelector('.batter-card.striker .batter-stats');
           if (strikerName && curInn.striker) {
@@ -343,13 +360,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
+          const nonStrikerCard = broadcastCard.querySelector('.batter-card:not(.striker)');
+          if (nonStrikerCard && curInn.non_striker) {
+            const nsName = nonStrikerCard.querySelector('.batter-name');
+            const nsStats = nonStrikerCard.querySelector('.batter-stats');
+            if (nsName) nsName.textContent = curInn.non_striker;
+            if (nsStats && curInn.batsmen && curInn.batsmen[curInn.non_striker]) {
+              const nb = curInn.batsmen[curInn.non_striker];
+              nsStats.textContent = `${nb.runs} (${nb.balls}b) · ${nb.fours}x4 · ${nb.sixes}x6 · SR: ${nb.sr}`;
+            }
+          }
+
           const bowlerName = broadcastCard.querySelector('.bowler-card .bowler-name');
           const bowlerStats = broadcastCard.querySelector('.bowler-card .bowler-stats');
           if (bowlerName && curInn.bowler) {
             bowlerName.textContent = curInn.bowler;
             if (curInn.bowlers && curInn.bowlers[curInn.bowler]) {
               const bw = curInn.bowlers[curInn.bowler];
-              if (bowlerStats) bowlerStats.textContent = `${bw.overs} ov · ${bw.maidens}m · ${bw.runs}r · ${bw.wickets}w`;
+              if (bowlerStats) bowlerStats.textContent = `${bw.overs} ov · ${bw.maidens}m · ${bw.runs}r · ${bw.wickets}w · Econ: ${bw.econ || '0.0'}`;
             }
           }
         }
@@ -476,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initWebSocket();
-    setInterval(pollMatchState, 3500);
+    setInterval(pollMatchState, 1500);
   }
 
   // Also support public copy of static assets for Vercel

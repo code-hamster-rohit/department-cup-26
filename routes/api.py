@@ -5,7 +5,7 @@ Every state mutation triggers instantaneous WebSocket broadcasting.
 
 import time
 from typing import Any
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
 from database.rules import get_all_sports, get_sport_rule
@@ -196,8 +196,9 @@ async def get_all_matches():
 
 
 @api_router.get("/match/{match_id}")
-async def get_match_detail(match_id: str):
-    m = get_match(match_id)
+async def get_match_detail(match_id: str, response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    m = get_match(match_id, force_mongo=True)
     if not m:
         raise HTTPException(status_code=404, detail="Match not found")
     return {"match": m}
@@ -420,13 +421,14 @@ async def api_send_reaction(match_id: str, payload: ReactionRequest):
 
 
 @api_router.get("/match/{match_id}/poll")
-async def api_poll_match(match_id: str, since: float = 0):
+async def api_poll_match(match_id: str, response: Response, since: str | float | None = None):
     """
     HTTP polling fallback for serverless environments (Vercel) where
     WebSockets are not available. Returns current match state so the
     frontend can diff and update the DOM.
     """
-    m = get_match(match_id)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    m = get_match(match_id, force_mongo=True)
     if not m:
         raise HTTPException(status_code=404, detail="Match not found")
 
@@ -444,13 +446,14 @@ async def api_poll_match(match_id: str, since: float = 0):
 
 
 @api_router.get("/matches/active/poll")
-async def api_poll_active_matches():
+async def api_poll_active_matches(response: Response):
     """
     HTTP polling fallback that returns a summary of all active (live) matches.
     Used by the audience arena when WebSockets are unavailable.
     """
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     from database.storage import get_active_matches
-    active = get_active_matches()
+    active = get_active_matches(force_mongo=True)
     summaries = []
     for m in active:
         summaries.append({

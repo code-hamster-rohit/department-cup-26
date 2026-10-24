@@ -335,8 +335,12 @@
             <div class="admin-live-badge-wrap">
               {% if match.status == 'live' %}
                 <span class="badge badge-live" style="font-size: 0.75rem;"><span class="pulse-dot"></span> LIVE IN-PROGRESS</span>
-              {% else %}
+              {% elif match.status == 'completed' %}
                 <span class="badge badge-completed" style="font-size: 0.75rem;">OFFICIAL RESULT</span>
+              {% elif match.status == 'squads_announced' %}
+                <span class="badge badge-squads" style="font-size: 0.75rem;">SQUADS ANNOUNCED</span>
+              {% else %}
+                <span class="badge badge-upcoming" style="font-size: 0.75rem;">PRE-MATCH READY</span>
               {% endif %}
               <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">{{ match.sport_name }} · {{ match.venue }}</span>
             </div>
@@ -394,7 +398,7 @@
               <select class="form-control" id="select-striker" style="font-weight: 700;">
                 {% if bat_squad and bat_squad.playing %}
                   {% for p in bat_squad.playing %}
-                    <option value="{{ p.name }}" {% if cur_inn.striker == p.name %}selected{% endif %}>{{ p.name }}</option>
+                    <option value="{{ p.name }}" {% if (cur_inn.striker == p.name) or (not cur_inn.striker and loop.first) %}selected{% endif %}>{{ p.name }}</option>
                   {% endfor %}
                 {% endif %}
               </select>
@@ -408,7 +412,7 @@
               <select class="form-control" id="select-non-striker" style="font-weight: 700;">
                 {% if bat_squad and bat_squad.playing %}
                   {% for p in bat_squad.playing %}
-                    <option value="{{ p.name }}" {% if cur_inn.non_striker == p.name %}selected{% endif %}>{{ p.name }}</option>
+                    <option value="{{ p.name }}" {% if (cur_inn.non_striker == p.name) or (not cur_inn.non_striker and loop.index == 2) %}selected{% endif %}>{{ p.name }}</option>
                   {% endfor %}
                 {% endif %}
               </select>
@@ -423,7 +427,7 @@
                 {% if bowl_squad and bowl_squad.playing %}
                   {% for p in bowl_squad.playing %}
                     {% set bstat = cur_inn.bowlers[p.name] if (cur_inn.bowlers and p.name in cur_inn.bowlers) else none %}
-                    <option value="{{ p.name }}" {% if cur_inn.bowler == p.name %}selected{% endif %}>
+                    <option value="{{ p.name }}" {% if (cur_inn.bowler == p.name) or (not cur_inn.bowler and loop.first) %}selected{% endif %}>
                       {{ p.name }} ({{ bstat.overs if bstat else '0.0' }} ov)
                     </option>
                   {% endfor %}

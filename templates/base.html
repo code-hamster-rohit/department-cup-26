@@ -19,6 +19,13 @@
 
   <!-- Core Design System CSS -->
   <link rel="stylesheet" href="/static/css/base.css">
+  <!-- Global User Auth State -->
+  <script>
+    window.CURRENT_USER_EMAIL = "{{ current_user.email if current_user else '' }}";
+    if (window.CURRENT_USER_EMAIL) {
+      try { localStorage.setItem('deptcup_admin_email', window.CURRENT_USER_EMAIL); } catch (e) {}
+    }
+  </script>
   {% block extra_css %}{% endblock %}
 </head>
 <body class="theme-light" data-google-client-id="{{ google_client_id or '' }}">
