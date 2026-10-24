@@ -215,6 +215,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Interactive View Tabs (Lineups & Toss vs Scorer Cockpit)
+  const tabSquads = document.getElementById('tab-btn-squads');
+  const tabScorer = document.getElementById('tab-btn-scorer');
+  const squadsSection = document.getElementById('squads-section');
+  const scorerSection = document.getElementById('live-scorer-section');
+
+  if (tabSquads && tabScorer) {
+    tabSquads.addEventListener('click', () => {
+      tabSquads.classList.add('active');
+      tabScorer.classList.remove('active');
+      if (squadsSection) squadsSection.classList.remove('d-none');
+      if (scorerSection) scorerSection.classList.add('d-none');
+    });
+    tabScorer.addEventListener('click', () => {
+      tabScorer.classList.add('active');
+      tabSquads.classList.remove('active');
+      if (squadsSection) squadsSection.classList.add('d-none');
+      if (scorerSection) scorerSection.classList.remove('d-none');
+    });
+  }
+
+  // Visual Toss Cards synchronization
+  document.querySelectorAll('.toss-choice-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const val = card.getAttribute('data-value');
+      const select = document.getElementById('toss-winner-select');
+      if (select) select.value = val;
+      document.querySelectorAll('.toss-choice-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  document.querySelectorAll('.toss-dec-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-value');
+      const select = document.getElementById('toss-decision-select');
+      if (select) select.value = val;
+      document.querySelectorAll('.toss-dec-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Rotate Strike button
+  const btnRotateStrike = document.getElementById('btn-rotate-strike');
+  if (btnRotateStrike) {
+    btnRotateStrike.addEventListener('click', () => {
+      const s1 = document.getElementById('select-striker');
+      const s2 = document.getElementById('select-non-striker');
+      if (s1 && s2) {
+        const temp = s1.value;
+        s1.value = s2.value;
+        s2.value = temp;
+        if (window.App && window.App.showToast) {
+          window.App.showToast(`Strike rotated: ${s1.value} now facing`, 'info');
+        }
+      }
+    });
+  }
+
   // -------------------------------------------------------------
   // 3. LIVE SCORER KEYPAD ACTIONS
   // -------------------------------------------------------------
