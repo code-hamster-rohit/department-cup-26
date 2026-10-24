@@ -409,84 +409,84 @@
 
         <!-- SQUADS & PLAYING LINEUP DISPLAY (TEAM SPORTS ONLY) -->
         {% if active_match.is_team_sport and active_match.squads and active_match.squads.team_a and active_match.squads.team_a.playing %}
-          <div class="squads-display-section" style="margin-top: 1.5rem; background: var(--bg-card); border: 1.5px solid var(--border-medium); border-radius: 14px; padding: 1.25rem 1.5rem;">
-            <div class="section-title-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
-              <h3 style="font-size: 1.1rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-users" style="color: #2563eb;"></i> Department Playing Squads
+          <div class="squads-display-section">
+            <div class="section-title-bar">
+              <h3>
+                <i class="fa-solid fa-users"></i> Department Playing Squads
               </h3>
-              <span class="squad-verified-tag" style="font-size: 0.78rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.65rem; border-radius: 9999px;">
+              <span class="squad-verified-tag">
                 <i class="fa-solid fa-circle-check"></i> Official Team Lineups
               </span>
             </div>
 
-            <div class="squads-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="squads-grid">
               <!-- Team A Roster -->
-              <div class="squad-column team-a-column" style="background: var(--bg-surface); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 1.15rem;">
-                <div class="squad-team-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; border-bottom: 1px solid #bfdbfe; padding-bottom: 0.6rem;">
-                  <span class="dept-badge dept-badge-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}" style="font-weight: 800; font-size: 0.95rem;">
+              <div class="squad-column team-a-column">
+                <div class="squad-team-header dept-border-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
                     {{ active_match.team_a.abbr if (active_match.team_a is mapping and active_match.team_a.abbr) else (active_match.team_a | upper) }}
                   </span>
-                  <span class="squad-count" style="font-size: 0.8rem; font-weight: 700; color: #2563eb;">
+                  <span class="squad-count">
                     {{ active_match.squads.team_a.playing | length }} Playing
                   </span>
                 </div>
 
-                <div class="players-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <div class="players-list">
                   {% for p in active_match.squads.team_a.playing %}
-                    <div class="player-item {% if p.is_captain or p.role == 'Captain' %}captain-item{% endif %}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.55rem; border-radius: 6px; font-size: 0.88rem; {% if p.is_captain or p.role == 'Captain' %}background: rgba(234, 179, 8, 0.12); font-weight: 700;{% else %}background: var(--bg-card);{% endif %}">
-                      <span class="player-num" style="color: var(--text-dim); font-size: 0.76rem; width: 1.25rem;">{{ loop.index }}</span>
-                      <span class="player-name" style="color: var(--text-main); font-weight: 600;">{{ p.name }}</span>
+                    <div class="player-item {% if p.is_captain or p.role == 'Captain' %}captain-item{% endif %}">
+                      <span class="player-num">{{ loop.index }}</span>
+                      <span class="player-name">{{ p.name }}</span>
                       {% if p.is_captain or p.role == 'Captain' %}
-                        <span class="captain-badge-pill" style="margin-left: auto; font-size: 0.68rem; background: #eab308; color: #000; font-weight: 800; padding: 0.1rem 0.45rem; border-radius: 9999px;"><i class="fa-solid fa-crown"></i> C</span>
+                        <span class="captain-badge-pill"><i class="fa-solid fa-crown"></i> C</span>
                       {% endif %}
                       {% if p.role and p.role != 'Captain' and p.role != 'Player' %}
-                        <span class="player-role-sub" style="margin-left: auto; font-size: 0.72rem; color: var(--text-dim);">{{ p.role }}</span>
+                        <span class="player-role-sub">{{ p.role }}</span>
                       {% endif %}
                     </div>
                   {% endfor %}
                 </div>
 
                 {% if active_match.squads.team_a.substitutes %}
-                  <div class="subs-header" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-top: 0.85rem; margin-bottom: 0.35rem;">Substitutes (Bench):</div>
-                  <div class="subs-list" style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                  <div class="subs-header">Substitutes (Bench):</div>
+                  <div class="subs-list">
                     {% for s in active_match.squads.team_a.substitutes %}
-                      <span class="sub-chip" style="font-size: 0.75rem; background: rgba(0,0,0,0.06); padding: 0.2rem 0.55rem; border-radius: 9999px; color: var(--text-main);">{{ s.name }}</span>
+                      <span class="sub-chip">{{ s.name }}</span>
                     {% endfor %}
                   </div>
                 {% endif %}
               </div>
 
               <!-- Team B Roster -->
-              <div class="squad-column team-b-column" style="background: var(--bg-surface); border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 1.15rem;">
-                <div class="squad-team-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; border-bottom: 1px solid #a7f3d0; padding-bottom: 0.6rem;">
-                  <span class="dept-badge dept-badge-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}" style="font-weight: 800; font-size: 0.95rem;">
+              <div class="squad-column team-b-column">
+                <div class="squad-team-header dept-border-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
                     {{ active_match.team_b.abbr if (active_match.team_b is mapping and active_match.team_b.abbr) else (active_match.team_b | upper) }}
                   </span>
-                  <span class="squad-count" style="font-size: 0.8rem; font-weight: 700; color: #059669;">
+                  <span class="squad-count">
                     {{ active_match.squads.team_b.playing | length }} Playing
                   </span>
                 </div>
 
-                <div class="players-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <div class="players-list">
                   {% for p in active_match.squads.team_b.playing %}
-                    <div class="player-item {% if p.is_captain or p.role == 'Captain' %}captain-item{% endif %}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.55rem; border-radius: 6px; font-size: 0.88rem; {% if p.is_captain or p.role == 'Captain' %}background: rgba(234, 179, 8, 0.12); font-weight: 700;{% else %}background: var(--bg-card);{% endif %}">
-                      <span class="player-num" style="color: var(--text-dim); font-size: 0.76rem; width: 1.25rem;">{{ loop.index }}</span>
-                      <span class="player-name" style="color: var(--text-main); font-weight: 600;">{{ p.name }}</span>
+                    <div class="player-item {% if p.is_captain or p.role == 'Captain' %}captain-item{% endif %}">
+                      <span class="player-num">{{ loop.index }}</span>
+                      <span class="player-name">{{ p.name }}</span>
                       {% if p.is_captain or p.role == 'Captain' %}
-                        <span class="captain-badge-pill" style="margin-left: auto; font-size: 0.68rem; background: #eab308; color: #000; font-weight: 800; padding: 0.1rem 0.45rem; border-radius: 9999px;"><i class="fa-solid fa-crown"></i> C</span>
+                        <span class="captain-badge-pill"><i class="fa-solid fa-crown"></i> C</span>
                       {% endif %}
                       {% if p.role and p.role != 'Captain' and p.role != 'Player' %}
-                        <span class="player-role-sub" style="margin-left: auto; font-size: 0.72rem; color: var(--text-dim);">{{ p.role }}</span>
+                        <span class="player-role-sub">{{ p.role }}</span>
                       {% endif %}
                     </div>
                   {% endfor %}
                 </div>
 
                 {% if active_match.squads.team_b.substitutes %}
-                  <div class="subs-header" style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim); margin-top: 0.85rem; margin-bottom: 0.35rem;">Substitutes (Bench):</div>
-                  <div class="subs-list" style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                  <div class="subs-header">Substitutes (Bench):</div>
+                  <div class="subs-list">
                     {% for s in active_match.squads.team_b.substitutes %}
-                      <span class="sub-chip" style="font-size: 0.75rem; background: rgba(0,0,0,0.06); padding: 0.2rem 0.55rem; border-radius: 9999px; color: var(--text-main);">{{ s.name }}</span>
+                      <span class="sub-chip">{{ s.name }}</span>
                     {% endfor %}
                   </div>
                 {% endif %}
