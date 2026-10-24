@@ -273,6 +273,19 @@
 .dept-chip.ppe { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); }
 .dept-chip.ppt { background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
 
+/* Department Color Utilities */
+.dept-color-amsc { color: #3b82f6 !important; }
+.dept-color-ppe { color: #10b981 !important; }
+.dept-color-ppt { color: #f59e0b !important; }
+
+.dept-border-amsc { border-color: #3b82f6 !important; }
+.dept-border-ppe { border-color: #10b981 !important; }
+.dept-border-ppt { border-color: #f59e0b !important; }
+
+.dept-badge-amsc { background: #3b82f6 !important; color: #ffffff !important; }
+.dept-badge-ppe { background: #10b981 !important; color: #ffffff !important; }
+.dept-badge-ppt { background: #f59e0b !important; color: #ffffff !important; }
+
 .clash-vs {
   font-size: 0.75rem;
   font-weight: 800;

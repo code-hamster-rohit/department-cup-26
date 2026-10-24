@@ -159,7 +159,7 @@
         <div class="clash-banner">
           <!-- Team A -->
           <div class="team-side team-a-side">
-            <div class="team-dept-code" style="color: {{ active_match.team_a.color }};">
+            <div class="team-dept-code dept-color-{{ active_match.team_a.code }}">
               {{ active_match.team_a.abbr }}
             </div>
             <div class="team-dept-name">{{ active_match.team_a.name }}</div>
@@ -271,7 +271,7 @@
 
           <!-- Team B -->
           <div class="team-side team-b-side">
-            <div class="team-dept-code" style="color: {{ active_match.team_b.color }};">
+            <div class="team-dept-code dept-color-{{ active_match.team_b.code }}">
               {{ active_match.team_b.abbr }}
             </div>
             <div class="team-dept-name">{{ active_match.team_b.name }}</div>
@@ -368,8 +368,8 @@
             <div class="squads-grid">
               <!-- Team A Roster -->
               <div class="squad-column team-a-column">
-                <div class="squad-team-header" style="border-color: {{ active_match.team_a.color }};">
-                  <span class="dept-badge" style="background: {{ active_match.team_a.color }}; color: white;">
+                <div class="squad-team-header dept-border-{{ active_match.team_a.code }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_a.code }}">
                     {{ active_match.team_a.abbr }}
                   </span>
                   <span class="squad-count">
@@ -404,8 +404,8 @@
 
               <!-- Team B Roster -->
               <div class="squad-column team-b-column">
-                <div class="squad-team-header" style="border-color: {{ active_match.team_b.color }};">
-                  <span class="dept-badge" style="background: {{ active_match.team_b.color }}; color: white;">
+                <div class="squad-team-header dept-border-{{ active_match.team_b.code }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_b.code }}">
                     {{ active_match.team_b.abbr }}
                   </span>
                   <span class="squad-count">

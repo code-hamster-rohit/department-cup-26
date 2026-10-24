@@ -673,23 +673,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Conclude match modal
-  const btnConcludeModal = document.getElementById('btn-conclude-match-modal');
+  // Conclude match modal & declare winner
   const concludeModal = document.getElementById('conclude-match-modal');
   const btnCloseConclude = document.getElementById('btn-close-conclude-modal');
   const btnCancelConclude = document.getElementById('btn-cancel-conclude');
   const concludeForm = document.getElementById('form-conclude-match');
 
-  if (btnConcludeModal) btnConcludeModal.addEventListener('click', () => concludeModal.classList.add('open'));
-  if (btnCloseConclude) btnCloseConclude.addEventListener('click', () => concludeModal.classList.remove('open'));
-  if (btnCancelConclude) btnCancelConclude.addEventListener('click', () => concludeModal.classList.remove('open'));
+  document.querySelectorAll('.btn-trigger-conclude, #btn-open-conclude, #btn-top-conclude, #btn-conclude-match-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (concludeModal) {
+        concludeModal.classList.add('open');
+        concludeModal.classList.remove('d-none');
+      }
+    });
+  });
+
+  if (btnCloseConclude) {
+    btnCloseConclude.addEventListener('click', () => {
+      if (concludeModal) concludeModal.classList.remove('open');
+    });
+  }
+  if (btnCancelConclude) {
+    btnCancelConclude.addEventListener('click', () => {
+      if (concludeModal) concludeModal.classList.remove('open');
+    });
+  }
 
   if (concludeForm) {
     concludeForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const winner = document.getElementById('conclude-winner').value;
       const summary = document.getElementById('conclude-summary').value;
-      const motm = document.getElementById('conclude-motm').value;
+      const motm = document.getElementById('conclude-motm') ? document.getElementById('conclude-motm').value : '';
+
+      const submitBtn = concludeForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Result...';
+      }
 
       try {
         const res = await fetch(`/api/match/${matchId}/end`, {
@@ -703,11 +724,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json();
         if (data.success) {
-          window.App.showToast('Match officially concluded!', 'success');
-          setTimeout(() => window.location.reload(), 500);
+          alert('🏆 Match Concluded! Winner declared and live stream ended. The match has disappeared from the live arena.');
+          window.location.href = '/admin';
+        } else {
+          alert('Failed to end match: ' + (data.detail || 'Error'));
+          if (submitBtn) submitBtn.disabled = false;
         }
       } catch (err) {
-        alert('Error concluding match: ' + err.message);
+        alert('Network error: ' + err.message);
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
   }
@@ -765,74 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
         feed.insertBefore(item, feed.firstChild);
       }
     }
-  }
-
-  // -------------------------------------------------------------
-  // CONCLUDE MATCH & DECLARE WINNER (Stream Ends & Match Disappears)
-  // -------------------------------------------------------------
-  const modalConclude = document.getElementById('conclude-match-modal');
-  const btnCloseConclude = document.getElementById('btn-close-conclude-modal');
-  const btnCancelConclude = document.getElementById('btn-cancel-conclude');
-  const formConclude = document.getElementById('form-conclude-match');
-
-  document.querySelectorAll('.btn-trigger-conclude, #btn-open-conclude, #btn-top-conclude').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (modalConclude) {
-        modalConclude.classList.add('open');
-        modalConclude.classList.remove('d-none');
-      }
-    });
-  });
-
-  if (btnCloseConclude) {
-    btnCloseConclude.addEventListener('click', () => {
-      if (modalConclude) modalConclude.classList.remove('open');
-    });
-  }
-
-  if (btnCancelConclude) {
-    btnCancelConclude.addEventListener('click', () => {
-      if (modalConclude) modalConclude.classList.remove('open');
-    });
-  }
-
-  if (formConclude) {
-    formConclude.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const winnerVal = document.getElementById('conclude-winner').value;
-      const summaryVal = document.getElementById('conclude-summary').value;
-      const motmVal = document.getElementById('conclude-motm') ? document.getElementById('conclude-motm').value : '';
-
-      const submitBtn = formConclude.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Concluding & Ending Stream...';
-      }
-
-      try {
-        const res = await fetch(`/api/match/${matchId}/end`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            winner: winnerVal,
-            result_summary: summaryVal,
-            player_of_the_match: motmVal
-          })
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          alert('🏆 Match Concluded! Winner declared and live stream ended. The match has disappeared from the live arena.');
-          window.location.href = '/admin';
-        } else {
-          alert('Failed to end match: ' + (data.detail || 'Error'));
-          if (submitBtn) submitBtn.disabled = false;
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    });
   }
 
   // Admin Directory Modal
