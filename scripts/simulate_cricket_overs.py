@@ -50,7 +50,7 @@ def print_scorecard_summary(match: dict, title: str):
     print(f"{'='*65}\n")
 
 
-async def run_two_overs_simulation(sport_id: str, sport_label: str, team_a: str, team_b: str, batters: list, bowlers: list):
+async def run_two_overs_simulation(sport_id: str, sport_label: str, team_a: str, team_b: str, batters: list, bowlers: list, cleanup: bool = False):
     print(f"\n\n{'#'*70}")
     print(f"🚀 INITIATING 2-OVER FULL SIMULATION: {sport_label.upper()}")
     print(f"{'#'*70}")
@@ -276,9 +276,17 @@ async def run_two_overs_simulation(sport_id: str, sport_label: str, team_a: str,
     assert score["wickets"] == 1, f"Expected 1 wicket, got {score['wickets']}"
     print(f"✅ VERIFICATION PASSED: Exactly 2.0 overs (12 legal deliveries) completed with 1 wicket!")
 
-    # Cleanup simulation match
-    await delete_match(mid)
-    print(f"✓ Cleaned up test simulation match {mid}.")
+    # Optionally cleanup simulation match
+    if cleanup:
+        await delete_match(mid)
+        print(f"✓ Cleaned up test simulation match {mid}.")
+    else:
+        print(f"💾 MATCH PRESERVED IN DATABASE: {mid}")
+        print(f"   MongoDB Collection: '{match.get('collection_name', sport_id)}'")
+        print(f"   Control Room URL:   /admin/match/{mid}")
+        print(f"   Audience View URL:  /?match={mid}")
+
+    return mid, match
 
 
 async def main():
