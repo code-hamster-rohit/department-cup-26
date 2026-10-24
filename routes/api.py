@@ -345,12 +345,20 @@ async def api_end_match(match_id: str, payload: EndMatchRequest, request: Reques
 
 @api_router.post("/match/{match_id}/delete")
 @api_router.delete("/match/{match_id}")
-async def api_delete_match(match_id: str, request: Request):
+async def api_delete_match(match_id: str, request: Request, permanent: bool = False):
     verify_admin_access(request)
     try:
-        result = await delete_match(match_id)
+        is_permanent = permanent or (request.query_params.get("permanent") in ["true", "1"])
+        try:
+            body = await request.json()
+            if isinstance(body, dict) and body.get("permanent"):
+                is_permanent = True
+        except Exception:
+            pass
+
+        result = await delete_match(match_id, permanent=is_permanent)
         if result.get("deleted_from_db"):
-            await manager.broadcast_match(match_id, "MATCH_DELETED", {"match_id": match_id, "action": "deleted"})
+            await manager.broadcast_match(match_id, "MATCH_DELETED", {"match_id": match_id, "action": "deleted", "permanent": is_permanent})
         else:
             await manager.broadcast_match(match_id, "MATCH_CLEARED_SCREEN", {"match_id": match_id, "action": "cleared_from_screen"})
         return result

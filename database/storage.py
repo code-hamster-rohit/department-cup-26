@@ -579,11 +579,11 @@ async def end_match(match_id: str, winner: str, result_summary: str, motm: str =
         return match
 
 
-async def delete_match(match_id: str) -> dict[str, Any]:
+async def delete_match(match_id: str, permanent: bool = False) -> dict[str, Any]:
     """
-    Deletes or clears a match based on conclusion status:
-    - If match is NOT concluded: Clears from BOTH screen AND database (permanently erased).
-    - If match IS concluded: Clears ONLY from screen (marked hidden_from_screen), preserving historical records in database.
+    Deletes or clears a match based on conclusion status and permanent flag:
+    - If permanent is True or match is NOT concluded: Permanently erases from BOTH screen AND database (purged from Mongo Atlas & disk).
+    - If match IS concluded and permanent is False: Clears ONLY from screen (marked hidden_from_screen), preserving historical records in database archive.
     """
     async with _lock:
         # 1. Fetch match from memory cache or MongoDB
@@ -602,6 +602,7 @@ async def delete_match(match_id: str) -> dict[str, Any]:
                 "status": "not_found_purged",
                 "concluded": False,
                 "deleted_from_db": True,
+                "permanent": True,
                 "message": "Match removed from screen and database."
             }
 
@@ -609,10 +610,10 @@ async def delete_match(match_id: str) -> dict[str, Any]:
         status = match.get("status")
         is_concluded = (status in ["completed", "archived_completed"])
 
-        if not is_concluded:
+        if not is_concluded or permanent:
             # ---------------------------------------------------------
-            # 1. UNCONCLUDED MATCH:
-            # Delete from BOTH user's screen AND database
+            # 1. UNCONCLUDED OR EXPLICITLY PERMANENT PURGE:
+            # Delete from BOTH user's screen AND database (MongoDB & disk)
             # ---------------------------------------------------------
             _matches_cache.pop(match_id, None)
             _save_matches_to_disk()
@@ -625,13 +626,14 @@ async def delete_match(match_id: str) -> dict[str, Any]:
             return {
                 "success": True,
                 "status": "deleted_everywhere",
-                "concluded": False,
+                "concluded": is_concluded,
                 "deleted_from_db": True,
-                "message": "Unconcluded match permanently deleted from screen and database."
+                "permanent": True,
+                "message": "Match permanently deleted from screen and database archive."
             }
         else:
             # ---------------------------------------------------------
-            # 2. CONCLUDED MATCH:
+            # 2. CONCLUDED MATCH (SOFT-HIDE TO ARCHIVE):
             # Clear ONLY from screen, and KEEP in database
             # ---------------------------------------------------------
             match["hidden_from_screen"] = True
@@ -643,6 +645,7 @@ async def delete_match(match_id: str) -> dict[str, Any]:
                 "status": "cleared_from_screen",
                 "concluded": True,
                 "deleted_from_db": False,
+                "permanent": False,
                 "message": "Concluded match cleared from screen. Historical data preserved in database."
             }
 

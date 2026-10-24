@@ -248,6 +248,155 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // -------------------------------------------------------------
+  // SECURE PERMANENT DELETE (PURGE) FOR ARCHIVED MATCHES
+  // Requires user to explicitly type "DELETE" before enabling delete button
+  // -------------------------------------------------------------
+  let pendingPurgeMatchId = null;
+  let pendingPurgeCardEl = null;
+
+  const modalPurge = document.getElementById('modal-purge-match');
+  const inputConfirmDelete = document.getElementById('input-confirm-delete');
+  const btnConfirmPurge = document.getElementById('btn-confirm-purge-execute');
+  const btnClosePurge = document.getElementById('btn-close-purge-modal');
+  const btnCancelPurge = document.getElementById('btn-cancel-purge-modal');
+  const titlePurgeEl = document.getElementById('purge-match-title');
+
+  function closePurgeModal() {
+    if (modalPurge) modalPurge.classList.add('d-none');
+    pendingPurgeMatchId = null;
+    pendingPurgeCardEl = null;
+    if (inputConfirmDelete) inputConfirmDelete.value = '';
+    if (btnConfirmPurge) {
+      btnConfirmPurge.disabled = true;
+      btnConfirmPurge.style.opacity = '0.45';
+      btnConfirmPurge.style.cursor = 'not-allowed';
+      btnConfirmPurge.innerHTML = '<i class="fa-solid fa-trash-can"></i> Permanently Delete';
+    }
+  }
+
+  if (btnClosePurge) btnClosePurge.addEventListener('click', closePurgeModal);
+  if (btnCancelPurge) btnCancelPurge.addEventListener('click', closePurgeModal);
+
+  if (modalPurge) {
+    modalPurge.addEventListener('click', (e) => {
+      if (e.target === modalPurge) closePurgeModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalPurge && !modalPurge.classList.contains('d-none')) {
+      closePurgeModal();
+    }
+  });
+
+  if (inputConfirmDelete && btnConfirmPurge) {
+    inputConfirmDelete.addEventListener('input', () => {
+      const isMatch = (inputConfirmDelete.value.trim().toUpperCase() === 'DELETE');
+      btnConfirmPurge.disabled = !isMatch;
+      btnConfirmPurge.style.opacity = isMatch ? '1' : '0.45';
+      btnConfirmPurge.style.cursor = isMatch ? 'pointer' : 'not-allowed';
+    });
+
+    inputConfirmDelete.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (inputConfirmDelete.value.trim().toUpperCase() === 'DELETE' && !btnConfirmPurge.disabled) {
+          btnConfirmPurge.click();
+        }
+      }
+    });
+  }
+
+  document.querySelectorAll('.btn-purge-archived-match').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pendingPurgeMatchId = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title') || `Match ${pendingPurgeMatchId}`;
+      pendingPurgeCardEl = document.getElementById(`archived-card-${pendingPurgeMatchId}`);
+
+      if (titlePurgeEl) titlePurgeEl.textContent = `"${title}"`;
+      if (inputConfirmDelete) {
+        inputConfirmDelete.value = '';
+      }
+      if (btnConfirmPurge) {
+        btnConfirmPurge.disabled = true;
+        btnConfirmPurge.style.opacity = '0.45';
+        btnConfirmPurge.style.cursor = 'not-allowed';
+        btnConfirmPurge.innerHTML = '<i class="fa-solid fa-trash-can"></i> Permanently Delete';
+      }
+
+      if (modalPurge) {
+        modalPurge.classList.remove('d-none');
+        setTimeout(() => {
+          if (inputConfirmDelete) inputConfirmDelete.focus();
+        }, 100);
+      }
+    });
+  });
+
+  if (btnConfirmPurge) {
+    btnConfirmPurge.addEventListener('click', async () => {
+      if (!pendingPurgeMatchId) return;
+      if (inputConfirmDelete && inputConfirmDelete.value.trim().toUpperCase() !== 'DELETE') return;
+
+      btnConfirmPurge.disabled = true;
+      btnConfirmPurge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Erasing from Database...';
+
+      try {
+        const adminEmail = localStorage.getItem('deptcup_admin_email') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (adminEmail) headers['X-Admin-Email'] = adminEmail;
+
+        const res = await fetch(`/api/match/${pendingPurgeMatchId}/delete`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ permanent: true })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.success) {
+          if (pendingPurgeCardEl) {
+            pendingPurgeCardEl.style.transition = 'all 0.3s ease';
+            pendingPurgeCardEl.style.opacity = '0';
+            pendingPurgeCardEl.style.transform = 'scale(0.95)';
+            setTimeout(() => pendingPurgeCardEl.remove(), 300);
+          }
+
+          const countEl = document.getElementById('archived-count-num');
+          if (countEl) {
+            const currentNum = parseInt(countEl.textContent, 10) || 1;
+            const newNum = Math.max(0, currentNum - 1);
+            countEl.textContent = newNum;
+            if (newNum === 0) {
+              const archiveSection = document.getElementById('database-archive-section');
+              if (archiveSection) {
+                archiveSection.style.transition = 'opacity 0.4s ease';
+                archiveSection.style.opacity = '0';
+                setTimeout(() => archiveSection.remove(), 400);
+              }
+            }
+          }
+
+          if (window.App && window.App.showToast) {
+            window.App.showToast('Archived match permanently deleted from MongoDB Atlas!', 'success');
+          } else {
+            alert('Archived match permanently deleted from MongoDB Atlas.');
+          }
+          closePurgeModal();
+        } else {
+          alert('Failed to delete archived match: ' + (data.detail || data.message || 'Server error'));
+          btnConfirmPurge.disabled = false;
+          btnConfirmPurge.innerHTML = '<i class="fa-solid fa-trash-can"></i> Permanently Delete';
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+        btnConfirmPurge.disabled = false;
+        btnConfirmPurge.innerHTML = '<i class="fa-solid fa-trash-can"></i> Permanently Delete';
+      }
+    });
+  }
+
+  // -------------------------------------------------------------
   // 2. MATCH CONTROL ROOM (STEP 2: SQUADS & TOSS)
   // -------------------------------------------------------------
   const root = document.querySelector('.control-room-root');
