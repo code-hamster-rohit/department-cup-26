@@ -105,16 +105,75 @@ def load_registered_department_rosters() -> dict[str, dict[str, Any]]:
     return rosters
 
 
-def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any]) -> dict[str, Any]:
+def get_default_squad(dept_code: str, sport_id: str, sport_cfg: dict[str, Any], category: str | None = None) -> dict[str, Any]:
     """
     Returns the real registered squad if available from json,
-    otherwise generates an organized placeholder roster following the exact squad counts.
+    matching the sport and gender category (Boys, Girls, Mixed).
     """
     all_rosters = load_registered_department_rosters()
     dept_rosters = all_rosters.get(dept_code.lower(), {})
     
-    if sport_id in dept_rosters:
-        saved = dept_rosters[sport_id]
+    cat_lower = (category or "").lower().strip()
+    sid_lower = sport_id.lower().strip()
+    
+    candidates = []
+    
+    # 1. Target gender-specific keys first if category is provided
+    if "girl" in cat_lower or cat_lower == "girls":
+        gender_keys = {
+            "shotput": ["shotput_girls"],
+            "discuss_throw": ["discus_girls"],
+            "long_jump": ["long_jump_girls"],
+            "tug_of_war": ["tow_girls"],
+            "box_cricket": ["box_cricket_girls"],
+            "football": ["football_girls"],
+            "cricket": ["cricket_girls", "box_cricket_girls"],
+        }
+        candidates.extend(gender_keys.get(sid_lower, [f"{sid_lower}_girls"]))
+    elif "boy" in cat_lower or cat_lower == "boys":
+        gender_keys = {
+            "cricket": ["cricket_boys"],
+            "football": ["football_boys"],
+            "volleyball": ["volleyball_boys"],
+            "table_tennis": ["tt_boys"],
+            "tug_of_war": ["tow_boys"],
+            "shotput": ["shotput_boys"],
+            "discuss_throw": ["discus_boys"],
+            "long_jump": ["long_jump_boys"],
+        }
+        candidates.extend(gender_keys.get(sid_lower, [f"{sid_lower}_boys"]))
+    elif "mix" in cat_lower or cat_lower == "mixed":
+        mixed_keys = {
+            "badminton": ["badminton_mix"],
+            "carrom": ["carrom_mix"],
+            "basketball": ["basketball_shootout"],
+        }
+        candidates.extend(mixed_keys.get(sid_lower, [f"{sid_lower}_mix"]))
+
+    # 2. General aliases
+    candidates.append(sid_lower)
+    alias_map = {
+        "badminton": ["badminton_mix"],
+        "cricket": ["cricket_boys", "box_cricket_girls"],
+        "box_cricket": ["box_cricket_girls"],
+        "football": ["football_boys", "football_girls"],
+        "volleyball": ["volleyball_boys"],
+        "table_tennis": ["tt_boys"],
+        "carrom": ["carrom_mix"],
+        "tug_of_war": ["tow_boys", "tow_girls"],
+        "shotput": ["shotput_boys", "shotput_girls"],
+        "discuss_throw": ["discus_boys", "discus_girls", "discus_throw"],
+        "long_jump": ["long_jump_boys", "long_jump_girls"],
+        "basketball": ["basketball_shootout"]
+    }
+    for a in alias_map.get(sid_lower, []):
+        if a not in candidates:
+            candidates.append(a)
+
+    matched_key = next((c for c in candidates if c in dept_rosters), None)
+    
+    if matched_key:
+        saved = dept_rosters[matched_key]
         playing_list = []
         if saved.get("captain"):
             cap = dict(saved["captain"])

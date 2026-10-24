@@ -20,8 +20,12 @@
         <h1 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 800; color: var(--text-main);">
           {{ match.sport_icon }} {{ match.team_a.abbr }} vs {{ match.team_b.abbr }}
         </h1>
-        <div style="font-size: 0.8rem; color: var(--text-dim);">
-          {{ match.sport_name }} · {{ match.venue }} · Match ID: <code>{{ match.id }}</code>
+        <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.2rem;">
+          <span style="font-weight: 700; color: var(--text-main);">{{ match.sport_name }}</span>
+          {% if match.gender_badge %}
+            <span class="badge" style="background: rgba(255,255,255,0.08); font-size: 0.72rem; padding: 0.15rem 0.45rem;">{{ match.gender_badge }}</span>
+          {% endif %}
+          <span>· {{ match.venue }} · Match ID: <code>{{ match.id }}</code></span>
         </div>
       </div>
     </div>
@@ -294,28 +298,57 @@
 
         {% elif match.sport_type == 'football' %}
           <!-- FOOTBALL CONTROLS -->
-          <div class="keypad-section-title">Record Football Match Events</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: 10px;">
-              <h4 style="color: #2563eb; margin-bottom: 0.75rem;">{{ match.team_a.name }}</h4>
-              <button class="btn btn-success btn-fb-goal" data-team="team_a" style="width: 100%; margin-bottom: 0.5rem;">
+          <div class="keypad-section-title">Record Football Match Events & Goals</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div style="background: var(--bg-secondary); border: 1.5px solid #bfdbfe; padding: 1.25rem; border-radius: 10px;">
+              <h4 style="color: #2563eb; margin-bottom: 0.75rem;">{{ match.team_a.name }} ({{ match.team_a.abbr }})</h4>
+              <button class="btn btn-success btn-fb-goal" data-team="team_a" style="width: 100%; margin-bottom: 0.5rem; font-weight: 800;">
                 ⚽ Goal for {{ match.team_a.abbr }}
               </button>
-              <div style="display: flex; gap: 0.5rem;">
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
                 <button class="btn btn-warning btn-sm btn-fb-card" data-team="team_a" data-card="yellow" style="flex: 1;">🟨 Yellow Card</button>
                 <button class="btn btn-danger btn-sm btn-fb-card" data-team="team_a" data-card="red" style="flex: 1;">🟥 Red Card</button>
               </div>
+              <!-- Fast Match Stats +1 buttons (SofaScore / FlashScore style) -->
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); margin-bottom: 0.35rem; text-transform: uppercase;">Match Stats</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;">
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="shots">+1 Shot</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="shots_on_target">+1 On Target</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="corners">+1 Corner</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="fouls">+1 Foul</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_a" data-stat="offsides">+1 Offside</button>
+              </div>
             </div>
 
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: 10px;">
-              <h4 style="color: #059669; margin-bottom: 0.75rem;">{{ match.team_b.name }}</h4>
-              <button class="btn btn-success btn-fb-goal" data-team="team_b" style="width: 100%; margin-bottom: 0.5rem;">
+            <div style="background: var(--bg-secondary); border: 1.5px solid #a7f3d0; padding: 1.25rem; border-radius: 10px;">
+              <h4 style="color: #059669; margin-bottom: 0.75rem;">{{ match.team_b.name }} ({{ match.team_b.abbr }})</h4>
+              <button class="btn btn-success btn-fb-goal" data-team="team_b" style="width: 100%; margin-bottom: 0.5rem; font-weight: 800;">
                 ⚽ Goal for {{ match.team_b.abbr }}
               </button>
-              <div style="display: flex; gap: 0.5rem;">
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
                 <button class="btn btn-warning btn-sm btn-fb-card" data-team="team_b" data-card="yellow" style="flex: 1;">🟨 Yellow Card</button>
                 <button class="btn btn-danger btn-sm btn-fb-card" data-team="team_b" data-card="red" style="flex: 1;">🟥 Red Card</button>
               </div>
+              <!-- Fast Match Stats +1 buttons (SofaScore / FlashScore style) -->
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); margin-bottom: 0.35rem; text-transform: uppercase;">Match Stats</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;">
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="shots">+1 Shot</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="shots_on_target">+1 On Target</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="corners">+1 Corner</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="fouls">+1 Foul</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-fb-stat" data-team="team_b" data-stat="offsides">+1 Offside</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period / Half Selector -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="font-size: 0.85rem; font-weight: 700;">Current Period: <span style="color: #2563eb;" id="admin-current-period-display">{{ match.score.period_label or ('Half ' ~ match.score.half) }}</span></div>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="1">1st Half</button>
+              <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="2">2nd Half</button>
+              <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="3">Extra Time</button>
+              <button type="button" class="btn btn-secondary btn-sm btn-fb-period" data-half="4">Penalty Shootout</button>
             </div>
           </div>
 
@@ -344,31 +377,134 @@
 
         {% elif match.sport_type == 'volleyball' %}
           <!-- VOLLEYBALL CONTROLS -->
-          <div class="keypad-section-title">Rally Point Scoring</div>
+          <div class="keypad-section-title">FIVB Rally Point Scoring & Timeouts (Set {{ match.score.current_set }})</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <button class="btn btn-primary btn-lg btn-vb-point" data-team="team_a" style="height: 80px; font-size: 1.25rem;">
-              🏐 Point to {{ match.team_a.abbr }} (+1)
-            </button>
-            <button class="btn btn-success btn-lg btn-vb-point" data-team="team_b" style="height: 80px; font-size: 1.25rem;">
-              🏐 Point to {{ match.team_b.abbr }} (+1)
-            </button>
+            <div>
+              <button class="btn btn-primary btn-lg btn-vb-point" data-team="team_a" style="height: 75px; font-size: 1.25rem; width: 100%; margin-bottom: 0.5rem;">
+                🏐 Point to {{ match.team_a.abbr }} (+1)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm btn-vb-timeout" data-team="team_a" style="width: 100%;">
+                ⏱️ Timeout for {{ match.team_a.abbr }}
+              </button>
+            </div>
+            <div>
+              <button class="btn btn-success btn-lg btn-vb-point" data-team="team_b" style="height: 75px; font-size: 1.25rem; width: 100%; margin-bottom: 0.5rem;">
+                🏐 Point to {{ match.team_b.abbr }} (+1)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm btn-vb-timeout" data-team="team_b" style="width: 100%;">
+                ⏱️ Timeout for {{ match.team_b.abbr }}
+              </button>
+            </div>
           </div>
 
         {% elif match.sport_type in ['badminton', 'table_tennis', 'carrom'] %}
-          <!-- RACQUET & CARROM EVENT SCORING -->
-          <div class="keypad-section-title">Active Event Point Scoring</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <button class="btn btn-primary btn-lg btn-racquet-point" data-team="team_a" style="height: 80px; font-size: 1.25rem;">
-              Point to {{ match.team_a.abbr }} (+1)
-            </button>
-            <button class="btn btn-success btn-lg btn-racquet-point" data-team="team_b" style="height: 80px; font-size: 1.25rem;">
-              Point to {{ match.team_b.abbr }} (+1)
-            </button>
+          <!-- MULTI-DAY RUBBER SCORING & DAY SCHEDULER -->
+          <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(16, 185, 129, 0.08)); border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">🏆</span>
+                <strong style="font-size: 1.05rem; color: var(--text-main);">Current Tie Standing: {{ match.score.lead_summary or 'Tied 0 - 0' }}</strong>
+              </div>
+              <span class="badge" style="background: #2563eb; color: #fff; font-weight: 700;">First to {{ match.score.events_to_win }} Event Victories Wins</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              {{ match.score.lead_detail or 'Sub-events can be scheduled and played across different tournament days.' }}
+            </div>
+          </div>
+
+          <!-- Rubber List Matrix -->
+          <div class="keypad-section-title">Tournament Rubbers & Multi-Day Schedule</div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;" id="admin-sub-events-list">
+            {% for ev in match.score.events %}
+              <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; {% if loop.index0 == match.score.current_event_idx and ev.status == 'live' %}border: 2px solid #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15);{% endif %}">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Rubber {{ loop.index }}</span>
+                    <strong style="color: var(--text-main); font-size: 1rem;">{{ ev.name }}</strong>
+                    <span class="badge badge-sub-day" style="background: #f1f5f9; color: #475569; font-size: 0.75rem;">
+                      <i class="fa-regular fa-calendar"></i> {{ ev.day_label or 'Day 1' }}
+                    </span>
+                    {% if ev.status == 'completed' %}
+                      <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; font-size: 0.75rem;">
+                        <i class="fa-solid fa-circle-check"></i> {{ match[ev.winner].abbr if ev.winner in match else 'Final' }} Won
+                      </span>
+                    {% elif ev.status == 'live' %}
+                      <span class="badge badge-live" style="font-size: 0.75rem;"><span class="pulse-dot-sm"></span> LIVE ON COURT</span>
+                    {% elif ev.status == 'paused' %}
+                      <span class="badge" style="background: #fef3c7; color: #b45309; font-size: 0.75rem;"><i class="fa-solid fa-pause"></i> PAUSED</span>
+                    {% else %}
+                      <span class="badge" style="background: #f8fafc; color: #64748b; font-size: 0.75rem;">SCHEDULED</span>
+                    {% endif %}
+                  </div>
+                  
+                  <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem;">
+                    Athletes: <strong>{{ ev.players_a or match.team_a.abbr }}</strong> vs <strong>{{ ev.players_b or match.team_b.abbr }}</strong>
+                    {% if ev.result_text %}
+                      · <span style="color: #059669; font-weight: 700;">{{ ev.result_text }}</span>
+                    {% elif ev.set_history and ev.set_history|length > 0 %}
+                      · Sets: {% for sh in ev.set_history %}{{ sh.a }}-{{ sh.b }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Admin Action Buttons for this Rubber -->
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-primary btn-sm btn-activate-rubber" data-ev-idx="{{ loop.index0 }}" title="Set as live court event">
+                    <i class="fa-solid fa-play"></i> Score Live
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-quick-result-trigger" data-ev-idx="{{ loop.index0 }}" data-ev-name="{{ ev.name }}" title="Directly enter finished set scores">
+                    <i class="fa-solid fa-pen-to-square"></i> Log Result
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-edit-rubber-meta" data-ev-idx="{{ loop.index0 }}" data-ev-day="{{ ev.day_label or 'Day 1' }}" data-players-a="{{ ev.players_a or '' }}" data-players-b="{{ ev.players_b or '' }}" title="Edit scheduled day and player names">
+                    <i class="fa-regular fa-calendar-days"></i> Day & Players
+                  </button>
+                  {% if match.sport_type == 'carrom' or 'carrom' in match.sport_id %}
+                    <button type="button" class="btn btn-warning btn-sm btn-carrom-board-trigger" data-ev-idx="{{ loop.index0 }}" title="Log Carrom Board Details (AICF standard)">
+                      <i class="fa-solid fa-chess-board"></i> Record Board
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Active Rubber Keypad -->
+          {% set cur_idx = match.score.current_event_idx|default(0) %}
+          {% set cur_ev = match.score.events[cur_idx] if match.score.events and cur_idx < match.score.events|length else None %}
+          <div style="background: var(--bg-secondary); border: 1.5px solid var(--border-medium); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #2563eb;">ACTIVE SCORER KEYPAD</span>
+                <h4 style="margin: 0; font-family: var(--font-heading); font-size: 1.15rem; color: var(--text-main);">
+                  Rubber {{ cur_idx + 1 }}: {{ cur_ev.name if cur_ev else 'Event' }} 
+                  <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">({{ cur_ev.day_label if cur_ev else 'Day 1' }})</span>
+                </h4>
+              </div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">
+                Game Points: <span style="color: #2563eb;">{{ cur_ev.current_points_a if cur_ev else 0 }}</span> - <span style="color: #059669;">{{ cur_ev.current_points_b if cur_ev else 0 }}</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem;">
+              <button class="btn btn-primary btn-lg btn-racquet-point" data-team="team_a" data-ev-idx="{{ cur_idx }}" style="height: 75px; font-size: 1.25rem;">
+                Point to {{ match.team_a.abbr }} (+1)
+              </button>
+              <button class="btn btn-success btn-lg btn-racquet-point" data-team="team_b" data-ev-idx="{{ cur_idx }}" style="height: 75px; font-size: 1.25rem;">
+                Point to {{ match.team_b.abbr }} (+1)
+              </button>
+            </div>
+
+            <!-- Pause Tie for Later Day Action -->
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+              <button type="button" class="btn btn-warning btn-sm" id="btn-pause-tie-day">
+                <i class="fa-solid fa-pause"></i> Pause Tie (Resume on Next Scheduled Day)
+              </button>
+            </div>
           </div>
 
         {% elif match.sport_type == 'tug_of_war' %}
           <!-- TUG OF WAR CONTROLS -->
-          <div class="keypad-section-title">Record Pull Result (Best of 3)</div>
+          <div class="keypad-section-title">TWIF Official Pull Scoring (Best of 3)</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
             <button class="btn btn-primary btn-lg btn-tow-win" data-winner="team_a" style="height: 80px; font-size: 1.25rem;">
               🪢 Pull Won by {{ match.team_a.abbr }}
@@ -380,8 +516,12 @@
 
         {% elif match.sport_type == 'athletics_distance' %}
           <!-- ATHLETICS DISTANCE CONTROLS -->
-          <div class="keypad-section-title">Log Throw / Jump Distance</div>
-          <form id="form-athletics-attempt" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
+          <div class="keypad-section-title">World Athletics Field Scoring: Log Attempt (3 Trials)</div>
+          <form id="form-athletics-attempt" style="display: grid; grid-template-columns: 1fr 2fr 1.2fr 1.2fr 1.2fr auto auto; gap: 0.75rem; align-items: flex-end; background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: 10px;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">Bib #</label>
+              <input type="text" class="form-control" id="ath-bib" placeholder="101" style="font-weight: 700;">
+            </div>
             <div class="form-group" style="margin: 0;">
               <label class="form-label">Athlete Name</label>
               <input type="text" class="form-control" id="ath-name" placeholder="Student Athlete Name" required>
@@ -394,7 +534,7 @@
               </select>
             </div>
             <div class="form-group" style="margin: 0;">
-              <label class="form-label">Type</label>
+              <label class="form-label">Trial</label>
               <select class="form-control" id="ath-attempt-type">
                 <option value="official">Official (1 of 3)</option>
                 <option value="trial">Practice Trial</option>
@@ -402,34 +542,69 @@
             </div>
             <div class="form-group" style="margin: 0;">
               <label class="form-label">Distance (m)</label>
-              <input type="number" step="0.01" class="form-control" id="ath-dist" placeholder="e.g. 11.45" required>
+              <input type="number" step="0.01" class="form-control" id="ath-dist" placeholder="e.g. 11.45">
+            </div>
+            <div class="form-group" style="margin: 0; padding-bottom: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #ef4444; font-weight: 700; cursor: pointer;">
+                <input type="checkbox" id="ath-foul"> Foul (X)
+              </label>
             </div>
             <button type="submit" class="btn btn-primary" style="height: 42px;">Save Attempt</button>
           </form>
 
         {% elif match.sport_type == 'basketball_shootout' %}
           <!-- BASKETBALL SHOOTOUT CONTROLS -->
-          <div class="keypad-section-title">Record Shootout Shot</div>
+          <div class="keypad-section-title">Record Shootout Shot & Individual Shooter Tracking</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
             <!-- Team A -->
-            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 1.25rem; border-radius: 12px;">
-              <h4 style="color: #93c5fd; margin-bottom: 0.5rem;">{{ match.team_a.name }}</h4>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                <button class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="3" data-success="true">🏀 3-Pt Goal</button>
-                <button class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="2" data-success="true">2-Pt Goal</button>
-                <button class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="1" data-success="true">1-Pt Goal</button>
-                <button class="btn btn-secondary btn-sm btn-bb-shot" data-team="team_a" data-zone="1" data-success="false">Miss</button>
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1.5px solid rgba(59, 130, 246, 0.3); padding: 1.25rem; border-radius: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="color: #93c5fd; margin: 0;">{{ match.team_a.name }} ({{ match.team_a.abbr }})</h4>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" style="font-size: 0.75rem;">Shooter</label>
+                <select class="form-control form-control-sm" id="select-bb-shooter-a">
+                  {% if match.squads and match.squads.team_a and match.squads.team_a.playing %}
+                    {% for p in match.squads.team_a.playing %}
+                      <option value="{{ p.name }}">{{ p.name }}</option>
+                    {% endfor %}
+                  {% else %}
+                    <option value="Shooter 1">Shooter 1</option>
+                    <option value="Shooter 2">Shooter 2</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="3" data-success="true">🏀 3-Pt Goal</button>
+                <button type="button" class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="2" data-success="true">2-Pt Goal</button>
+                <button type="button" class="btn btn-primary btn-sm btn-bb-shot" data-team="team_a" data-zone="1" data-success="true">1-Pt Goal</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-bb-shot" data-team="team_a" data-zone="1" data-success="false">❌ Miss</button>
               </div>
             </div>
 
             <!-- Team B -->
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1.25rem; border-radius: 12px;">
-              <h4 style="color: #6ee7b7; margin-bottom: 0.5rem;">{{ match.team_b.name }}</h4>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                <button class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="3" data-success="true">🏀 3-Pt Goal</button>
-                <button class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="2" data-success="true">2-Pt Goal</button>
-                <button class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="1" data-success="true">1-Pt Goal</button>
-                <button class="btn btn-secondary btn-sm btn-bb-shot" data-team="team_b" data-zone="1" data-success="false">Miss</button>
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.3); padding: 1.25rem; border-radius: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="color: #6ee7b7; margin: 0;">{{ match.team_b.name }} ({{ match.team_b.abbr }})</h4>
+              </div>
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" style="font-size: 0.75rem;">Shooter</label>
+                <select class="form-control form-control-sm" id="select-bb-shooter-b">
+                  {% if match.squads and match.squads.team_b and match.squads.team_b.playing %}
+                    {% for p in match.squads.team_b.playing %}
+                      <option value="{{ p.name }}">{{ p.name }}</option>
+                    {% endfor %}
+                  {% else %}
+                    <option value="Shooter 1">Shooter 1</option>
+                    <option value="Shooter 2">Shooter 2</option>
+                  {% endif %}
+                </select>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="3" data-success="true">🏀 3-Pt Goal</button>
+                <button type="button" class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="2" data-success="true">2-Pt Goal</button>
+                <button type="button" class="btn btn-success btn-sm btn-bb-shot" data-team="team_b" data-zone="1" data-success="true">1-Pt Goal</button>
+                <button type="button" class="btn btn-secondary btn-sm btn-bb-shot" data-team="team_b" data-zone="1" data-success="false">❌ Miss</button>
               </div>
             </div>
           </div>
@@ -502,6 +677,166 @@
           <button type="button" class="btn btn-secondary" id="btn-cancel-conclude">Cancel</button>
           <button type="submit" class="btn btn-success">
             <i class="fa-solid fa-check-double"></i> Save Result & Conclude
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK DIRECT RESULT ENTRY FOR SUB-EVENTS -->
+  <div class="modal-overlay d-none" id="modal-quick-result">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-pen-to-square" style="color: #2563eb;"></i> Log Finished Rubber Result</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-quick-res" style="background: none; border: none; font-size: 1.25rem; cursor: pointer;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-quick-result">
+        <input type="hidden" id="quick-res-idx" value="0">
+        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;" id="quick-res-event-label">
+          Record finished score for this event directly.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Winner Department</label>
+          <select class="form-control" id="quick-res-winner" required>
+            <option value="team_a">{{ match.team_a.abbr }} ({{ match.team_a.name }})</option>
+            <option value="team_b">{{ match.team_b.abbr }} ({{ match.team_b.name }})</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">{{ match.team_a.abbr }} Sets Won</label>
+            <input type="number" class="form-control" id="quick-res-sets-a" min="0" max="3" value="2" required>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">{{ match.team_b.abbr }} Sets Won</label>
+            <input type="number" class="form-control" id="quick-res-sets-b" min="0" max="3" value="0" required>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-secondary); padding: 0.85rem; border-radius: 8px; margin-bottom: 1rem;">
+          <label class="form-label" style="margin-bottom: 0.4rem;">Individual Set Scores (Optional breakdown)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+            <input type="text" class="form-control form-control-sm" id="quick-res-set1" placeholder="Set 1 (15-12)">
+            <input type="text" class="form-control form-control-sm" id="quick-res-set2" placeholder="Set 2 (15-10)">
+            <input type="text" class="form-control form-control-sm" id="quick-res-set3" placeholder="Set 3 (15-13)">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.25rem;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-quick-res">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> Save Rubber & Update Lead
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT RUBBER DAY & ATHLETES -->
+  <div class="modal-overlay d-none" id="modal-rubber-meta">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-regular fa-calendar-days" style="color: #10b981;"></i> Set Rubber Day & Athletes</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-rubber-meta" style="background: none; border: none; font-size: 1.25rem; cursor: pointer;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-rubber-meta">
+        <input type="hidden" id="rubber-meta-idx" value="0">
+
+        <div class="form-group">
+          <label class="form-label">Scheduled Day</label>
+          <select class="form-control" id="rubber-meta-day">
+            <option value="Day 1">Day 1</option>
+            <option value="Day 2">Day 2</option>
+            <option value="Day 3">Day 3</option>
+            <option value="Day 4">Day 4</option>
+            <option value="Day 5">Day 5</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="rubber-meta-status">
+            <option value="scheduled">Scheduled</option>
+            <option value="live">Live on Court</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ match.team_a.abbr }} Athlete(s)</label>
+          <input type="text" class="form-control" id="rubber-meta-players-a" placeholder="e.g. Rahul Sharma">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ match.team_b.abbr }} Athlete(s)</label>
+          <input type="text" class="form-control" id="rubber-meta-players-b" placeholder="e.g. Amit Kumar">
+        </div>
+
+  <!-- MODAL: CARROM BOARD SCORING (AICF STANDARDS) -->
+  <div class="modal-overlay d-none" id="modal-carrom-board">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-chess-board" style="color: #f59e0b;"></i> Log Carrom Board (AICF Standard)</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-carrom-board" style="background: none; border: none; font-size: 1.25rem; cursor: pointer;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-carrom-board">
+        <input type="hidden" id="carrom-rubber-idx" value="0">
+
+        <div class="form-group">
+          <label class="form-label">Board #</label>
+          <input type="number" class="form-control" id="carrom-board-num" min="1" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Board Winner</label>
+          <select class="form-control" id="carrom-board-winner" required>
+            <option value="team_a">{{ match.team_a.abbr }} ({{ match.team_a.name }})</option>
+            <option value="team_b">{{ match.team_b.abbr }} ({{ match.team_b.name }})</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">White Points</label>
+            <input type="number" class="form-control" id="carrom-white-pts" min="0" value="0" required>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">Black Points</label>
+            <input type="number" class="form-control" id="carrom-black-pts" min="0" value="0" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Queen Covered</label>
+          <select class="form-control" id="carrom-queen-covered">
+            <option value="none">None</option>
+            <option value="team_a">{{ match.team_a.abbr }} (+3 Queen bonus points)</option>
+            <option value="team_b">{{ match.team_b.abbr }} (+3 Queen bonus points)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Net Points Awarded to Board Winner</label>
+          <input type="number" class="form-control" id="carrom-net-pts" min="1" max="25" value="1" required>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;">Rule: 1 point per remaining opponent carrom piece + 3 points for queen if covered.</div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.25rem;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-carrom-board">Cancel</button>
+          <button type="submit" class="btn btn-warning">
+            <i class="fa-solid fa-check"></i> Record Board & Update Score
           </button>
         </div>
       </form>

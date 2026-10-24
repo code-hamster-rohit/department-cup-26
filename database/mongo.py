@@ -165,43 +165,132 @@ def remove_admin_email(email: str) -> bool:
         return False
 
 
+# The 12 primary tournament sports mapped to their dedicated collections in department_cup
+SPORT_COLLECTIONS: list[str] = [
+    "badminton",
+    "basketball",
+    "box_cricket",
+    "carrom",
+    "cricket",
+    "discuss_throw",
+    "football",
+    "long_jump",
+    "shotput",
+    "table_tennis",
+    "tug_of_war",
+    "volleyball"
+]
+
+SPORT_COLLECTION_ALIASES: dict[str, str] = {
+    "cricket_boys": "cricket",
+    "box_cricket_girls": "box_cricket",
+    "football_boys": "football",
+    "football_girls": "football",
+    "volleyball_boys": "volleyball",
+    "badminton_mix": "badminton",
+    "tt_boys": "table_tennis",
+    "carrom_mix": "carrom",
+    "tow_boys": "tug_of_war",
+    "tow_girls": "tug_of_war",
+    "shotput_boys": "shotput",
+    "shotput_girls": "shotput",
+    "discus_boys": "discuss_throw",
+    "discus_girls": "discuss_throw",
+    "discus_throw": "discuss_throw",
+    "long_jump_boys": "long_jump",
+    "long_jump_girls": "long_jump",
+    "basketball_shootout": "basketball",
+}
+
+
+def get_sport_collection_name(sport_id: str | None) -> str:
+    """Returns the dedicated MongoDB collection name for any sport ID or alias."""
+    if not sport_id:
+        return "cricket"
+    sid = str(sport_id).lower().strip()
+    if sid in SPORT_COLLECTIONS:
+        return sid
+    return SPORT_COLLECTION_ALIASES.get(sid, "cricket")
+
+
+def get_sport_collection(sport_id: str | None) -> Collection | None:
+    """Returns the Collection instance for a given sport ID."""
+    db = get_db()
+    if db is None:
+        return None
+    col_name = get_sport_collection_name(sport_id)
+    return db[col_name]
+
+
 def sync_match_to_mongo(match: dict[str, Any]):
-    """Syncs a match document to MongoDB 'matches' collection."""
+    """
+    Syncs a match document comprehensively to its dedicated sport collection
+    in MongoDB department_cup (e.g. 'badminton', 'cricket', 'football', etc.).
+    Guarantees persistence of:
+      - Which departments played (team_a, team_b)
+      - Who were the players (squads, captain, playing XI/roster, substitutes)
+      - The complete scorecard (score)
+      - The final result & winner (winner, winner_code, winner_name, result)
+    """
     db = get_db()
     if db is None or not match or "id" not in match:
         return
     try:
-        # Create a copy and clean any non-serializable fields if needed
+        col_name = get_sport_collection_name(match.get("sport_id") or match.get("collection_name"))
         match_copy = dict(match)
         match_copy.pop("_id", None)
-        db["matches"].replace_one({"id": match["id"]}, match_copy, upsert=True)
+        match_copy["collection_name"] = col_name
+
+        # Persist comprehensively into the sport collection
+        db[col_name].replace_one({"id": match["id"]}, match_copy, upsert=True)
+        # Also maintain unified backup in 'matches' collection if it exists
+        existing_cols = db.list_collection_names()
+        if "matches" in existing_cols:
+            db["matches"].replace_one({"id": match["id"]}, match_copy, upsert=True)
     except Exception as e:
-        print(f"[MongoDB] Error syncing match {match.get('id')}: {e}")
+        print(f"[MongoDB] Error syncing match {match.get('id')} to {match.get('sport_id')}: {e}")
 
 
-def delete_match_from_mongo(match_id: str):
-    """Deletes a match from MongoDB 'matches' collection."""
+def delete_match_from_mongo(match_id: str, sport_id: str | None = None):
+    """Deletes a match from its sport collection and any backup collection."""
     db = get_db()
     if db is None:
         return
     try:
-        db["matches"].delete_one({"id": match_id})
+        if sport_id:
+            col_name = get_sport_collection_name(sport_id)
+            db[col_name].delete_one({"id": match_id})
+        for col in SPORT_COLLECTIONS:
+            db[col].delete_one({"id": match_id})
+        existing_cols = db.list_collection_names()
+        if "matches" in existing_cols:
+            db["matches"].delete_one({"id": match_id})
     except Exception as e:
         print(f"[MongoDB] Error deleting match {match_id}: {e}")
 
 
 def load_matches_from_mongo() -> dict[str, dict[str, Any]]:
-    """Loads all matches from MongoDB 'matches' collection."""
+    """
+    Loads all matches across the 12 primary sport collections in MongoDB department_cup.
+    """
     db = get_db()
     if db is None:
         return {}
     try:
         matches = {}
-        for doc in db["matches"].find():
-            doc.pop("_id", None)
-            if "id" in doc:
-                matches[doc["id"]] = doc
+        for col_name in SPORT_COLLECTIONS:
+            for doc in db[col_name].find():
+                doc.pop("_id", None)
+                if "id" in doc:
+                    matches[doc["id"]] = doc
+        # Also check unified 'matches' collection for any legacy records
+        existing_cols = db.list_collection_names()
+        if "matches" in existing_cols:
+            for doc in db["matches"].find():
+                doc.pop("_id", None)
+                if "id" in doc and doc["id"] not in matches:
+                    matches[doc["id"]] = doc
         return matches
     except Exception as e:
-        print(f"[MongoDB] Error loading matches: {e}")
+        print(f"[MongoDB] Error loading matches across sport collections: {e}")
         return {}

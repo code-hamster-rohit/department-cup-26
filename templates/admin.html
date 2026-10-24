@@ -84,7 +84,7 @@
     <div class="admin-dashboard-header">
       <div class="admin-title-group">
         <h1>Tournament Match Control Center</h1>
-        <p>Initiate matches, announce official lineups & toss, and stream live scores to audience view.</p>
+        <p>Flexible multi-day tournament scheduling, live scorekeeping, and department lead tracking.</p>
       </div>
 
       <div>
@@ -93,6 +93,8 @@
         </button>
       </div>
     </div>
+
+
 
     <!-- Matches Grid -->
     <section>
@@ -107,7 +109,12 @@
         <div class="admin-match-card" id="match-card-{{ m.id }}">
           <div>
             <div class="admin-card-top">
-              <span class="sport-tag">{{ m.sport_icon }} {{ m.sport_name }}</span>
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <span class="sport-tag">{{ m.sport_icon }} {{ m.sport_name }}</span>
+                {% if m.gender_badge %}
+                  <span class="badge" style="background: rgba(255,255,255,0.08); color: var(--text-muted); font-size: 0.72rem; padding: 0.2rem 0.5rem;">{{ m.gender_badge }}</span>
+                {% endif %}
+              </div>
               {% if m.status == 'live' %}
                 <span class="badge badge-live"><span class="pulse-dot"></span> LIVE</span>
               {% elif m.status == 'squads_announced' %}
@@ -203,16 +210,28 @@
         </div>
 
         <form id="create-match-form">
-          <!-- Sport Selection -->
-          <div class="form-group">
-            <label class="form-label">Sport Event (From Official Rulebook)</label>
-            <select class="form-control" id="form-sport" required>
-              {% for s in sports %}
-                <option value="{{ s.id }}">
-                  {{ s.icon }} {{ s.name }} ({{ s.category }})
-                </option>
-              {% endfor %}
-            </select>
+          <!-- Sport Selection & Division/Category -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Sport Event (Official Rulebook)</label>
+              <select class="form-control" id="form-sport" required>
+                {% for s in sports %}
+                  <option value="{{ s.id }}" data-default-gender="{{ s.default_gender }}">
+                    {{ s.icon }} {{ s.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Division / Category</label>
+              <select class="form-control" id="form-category" required>
+                <option value="Boys" selected>👦 Boys</option>
+                <option value="Girls">👧 Girls</option>
+                <option value="Mixed">👫 Mixed</option>
+                <option value="Open">⚡ Open</option>
+              </select>
+            </div>
           </div>
 
           <!-- Teams Selection -->
@@ -251,6 +270,25 @@
                 <option value="Grand Final">Grand Final</option>
                 <option value="Friendly Match">Friendly Match</option>
               </select>
+            </div>
+          </div>
+
+          <!-- Schedule Day & Time -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Tournament Day</label>
+              <select class="form-control" id="form-day">
+                <option value="Day 1" selected>Day 1</option>
+                <option value="Day 2">Day 2</option>
+                <option value="Day 3">Day 3</option>
+                <option value="Day 4">Day 4</option>
+                <option value="Day 5">Day 5</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Scheduled Time / Date (Optional)</label>
+              <input type="text" class="form-control" id="form-sched-date" placeholder="e.g. 15:30 IST / Day 1 Morning">
             </div>
           </div>
 

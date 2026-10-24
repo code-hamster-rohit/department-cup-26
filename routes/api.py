@@ -55,6 +55,9 @@ class CreateMatchRequest(BaseModel):
     venue: str = "Main Sports Ground"
     stage: str = "League Match"
     custom_overs: int | None = None
+    day_label: str = "Day 1"
+    scheduled_date: str = ""
+    category: str | None = None
 
 
 class SquadsTossRequest(BaseModel):
@@ -65,7 +68,7 @@ class SquadsTossRequest(BaseModel):
 
 
 class ScoreActionRequest(BaseModel):
-    type: str  # run, boundary, wicket, extra, dead_ball, goal, point, attempt, etc.
+    type: str  # run, boundary, wicket, extra, dead_ball, goal, point, attempt, activate_event, update_event_meta, record_event_result, pause_tie, etc.
     runs: int | None = 0
     extra_type: str | None = None
     dismissal: str | None = None
@@ -80,16 +83,42 @@ class ScoreActionRequest(BaseModel):
     department: str | None = None
     team: str | None = None
     player: str | None = None
+    assist: str | None = None
     minute: str | None = None
     card_color: str | None = None
+    stat_key: str | None = None
+    delta: int | None = 1
+    half: int | None = None
     result: str | None = None
     event_index: int | None = None
     winner: str | None = None
     distance: float | None = None
     is_foul: bool | None = False
     attempt_type: str | None = "official"
+    bib: str | None = None
     zone: int | None = 1
     success: bool | None = False
+    # Multi-event sub-event scheduling and result recording
+    day_label: str | None = None
+    scheduled_date: str | None = None
+    players_a: str | None = None
+    players_b: str | None = None
+    status: str | None = None
+    sets_a: int | None = None
+    sets_b: int | None = None
+    set_history: list[dict[str, Any]] | None = None
+    note: str | None = None
+    # Tug of War and Carrom specific fields
+    duration: str | None = None
+    lane_a: str | None = None
+    lane_b: str | None = None
+    cautions_a: int | None = None
+    cautions_b: int | None = None
+    board_num: int | None = None
+    white_pts: int | None = None
+    black_pts: int | None = None
+    queen: str | None = None
+    net_points: int | None = None
 
 
 class EndMatchRequest(BaseModel):
@@ -163,6 +192,12 @@ async def get_match_detail(match_id: str):
     return {"match": m}
 
 
+@api_router.get("/standings")
+async def get_standings():
+    """Endpoint deprecated as application focuses strictly on live scorecard viewing and scoring."""
+    return {"status": "inactive", "message": "Leaderboard not included in live scorecard management application."}
+
+
 @api_router.post("/match/create")
 async def api_create_match(payload: CreateMatchRequest, request: Request):
     verify_admin_access(request)
@@ -188,7 +223,10 @@ async def api_create_match(payload: CreateMatchRequest, request: Request):
             team_b_code=payload.team_b,
             venue=payload.venue,
             stage=payload.stage,
-            custom_overs=payload.custom_overs
+            custom_overs=payload.custom_overs,
+            day_label=payload.day_label,
+            scheduled_date=payload.scheduled_date,
+            category=payload.category
         )
         await manager.broadcast_match(match["id"], "MATCH_CREATED", match)
         return {"success": True, "match": match}
