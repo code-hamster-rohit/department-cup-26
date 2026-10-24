@@ -1,105 +1,354 @@
-<!-- ADMIN BADMINTON SCORING COCKPIT -->
-{% set cur_set = (match.score.set_scores | default([])) | last %}
+<!-- ADMIN BADMINTON SCORING COCKPIT (OFFICIAL 5-EVENTS MIXED TEAM TOURNAMENT) -->
+{% set score = match.score %}
+{% set active_ev_id = score.active_event_id or 'bs' %}
+{% set events_list = score.events | default([]) %}
+{% set cur_event = (events_list | selectattr("id", "equalto", active_ev_id) | first) | default(events_list | first) %}
+{% set cur_set = (cur_event.set_scores | default([])) | last %}
 
 <div class="sport-admin-badminton" id="admin-badminton-controls">
-  <div class="racquet-scorer-cockpit" style="background: var(--bg-card); border: 2px solid var(--border-medium); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-md);">
-    <!-- Summary Strip -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
-      <div>
-        <span class="badge" style="background: #2563eb; color: #fff; font-size: 0.85rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px;">
-          SET <span id="badge-current-set">{{ match.score.current_set }}</span> (BEST OF 3)
+
+  <!-- =========================================================================
+       1. TOURNAMENT MIXED TEAM TIE OVERVIEW (5 EVENTS · FIRST TO 3 WINS)
+       ========================================================================= -->
+  <div class="badminton-tie-header-card">
+    <div class="tie-header-top">
+      <div class="tie-title-group">
+        <span class="badge badge-tie-pill">
+          <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i> MIXED TEAM MATCH (BEST OF 5 EVENTS)
         </span>
-        <span style="font-size: 0.85rem; color: var(--text-dim); margin-left: 0.5rem;">
-          Target: {{ match.score.points_to_win_set or 21 }} pts (Win by 2)
-        </span>
+        <span class="tie-subtitle">First department to win 3 events wins overall match</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 0.6rem;">
-        <span class="badge" id="badge-server" style="background: #fef3c7; color: #b45309; font-weight: 700; font-size: 0.85rem; padding: 0.35rem 0.75rem; border: 1px solid #fde68a;">
-          🏸 Serving: {{ match.team_a.abbr if match.score.server != 'team_b' else match.team_b.abbr }}
-        </span>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-swap-server" title="Switch Server" style="font-size: 0.82rem;">
+      <div class="tie-score-display">
+        <span class="tie-dept-abbr dept-amsc">{{ match.team_a.abbr }}</span>
+        <span class="tie-score-num" id="admin-events-a">{{ score.events_team_a or 0 }}</span>
+        <span class="tie-colon">-</span>
+        <span class="tie-score-num" id="admin-events-b">{{ score.events_team_b or 0 }}</span>
+        <span class="tie-dept-abbr dept-ppe">{{ match.team_b.abbr }}</span>
+      </div>
+    </div>
+
+    <!-- 5 Events Tab Strip -->
+    <div class="badminton-events-nav" id="badminton-events-nav">
+      {% for ev in events_list %}
+        <button type="button" 
+                class="event-nav-btn {% if ev.id == active_ev_id %}active{% endif %} {% if ev.status == 'completed' %}completed{% endif %}"
+                data-event-id="{{ ev.id }}"
+                id="btn-event-nav-{{ ev.id }}">
+          <div class="event-nav-top">
+            <span class="event-short-tag">{{ ev.short_name }}</span>
+            {% if ev.status == 'completed' %}
+              <span class="event-status-tag done">
+                <i class="fa-solid fa-check"></i> 
+                {{ match.team_a.abbr if ev.winner == 'team_a' else match.team_b.abbr }} ({{ ev.sets_a }}-{{ ev.sets_b }})
+              </span>
+            {% elif ev.id == active_ev_id and ev.status == 'in_progress' %}
+              <span class="event-status-tag live"><span class="pulse-dot"></span> LIVE</span>
+            {% else %}
+              <span class="event-status-tag upcoming">Upcoming</span>
+            {% endif %}
+          </div>
+          <div class="event-nav-title">{{ ev.name }}</div>
+          <div class="event-nav-score">
+            {% if ev.status == 'completed' %}
+              {{ ev.sets_a }} - {{ ev.sets_b }} sets
+            {% elif ev.set_scores and ev.set_scores|length > 0 %}
+              Set {{ ev.current_set }}: {{ (ev.set_scores|last).team_a }}-{{ (ev.set_scores|last).team_b }}
+            {% else %}
+              Best of 3 Sets
+            {% endif %}
+          </div>
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       2. ACTIVE EVENT SCORER COCKPIT
+       ========================================================================= -->
+  <div class="badminton-active-cockpit">
+    <!-- Active Event Meta Bar -->
+    <div class="active-event-meta-bar">
+      <div class="event-heading-box">
+        <h3 class="active-ev-name" id="active-ev-title">
+          <i class="fa-solid fa-shuttlecock"></i> <span id="display-ev-name">{{ cur_event.name }}</span> (<span id="display-ev-short">{{ cur_event.short_name }}</span>)
+        </h3>
+        <div class="active-ev-rules-tag">
+          <span>Best of 3 Sets · 15 pts/set · Win by 2 at 14-all · Cap at 21</span>
+        </div>
+      </div>
+
+      <!-- Lineup & Server Status -->
+      <div class="active-meta-right">
+        <div class="server-badge-box" id="badge-server">
+          🏸 Serving: <strong>{{ match.team_a.abbr if cur_event.server != 'team_b' else match.team_b.abbr }}</strong>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-swap-server" title="Switch Service to Opponent">
           <i class="fa-solid fa-repeat"></i> Switch Server
         </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-open-lineup-modal" title="View or Edit Players for this Event">
+          <i class="fa-solid fa-user-pen"></i> Event Players
+        </button>
       </div>
     </div>
 
-    <!-- Big Digital Board -->
-    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; text-align: center; margin-bottom: 1.5rem; background: var(--bg-secondary); padding: 1.25rem; border-radius: 12px;">
-      <div>
-        <div style="font-size: 0.95rem; font-weight: 800; color: #2563eb; text-transform: uppercase; margin-bottom: 0.25rem;">
-          {{ match.team_a.name }} ({{ match.team_a.abbr }})
+    <!-- Playing Athletes Strip -->
+    <div class="active-players-strip">
+      <div class="player-col col-a">
+        <span class="dept-dot dot-a"></span>
+        <span class="team-tag">{{ match.team_a.abbr }}:</span>
+        <strong id="display-players-a">{{ cur_event.players_a or 'Athlete(s) Pending' }}</strong>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="player-col col-b">
+        <strong id="display-players-b">{{ cur_event.players_b or 'Athlete(s) Pending' }}</strong>
+        <span class="team-tag">:{{ match.team_b.abbr }}</span>
+        <span class="dept-dot dot-b"></span>
+      </div>
+    </div>
+
+    <!-- Deuce / Golden Point Alert Banner -->
+    <div class="deuce-alert-banner {% if not cur_event.in_deuce %}d-none{% endif %}" id="badminton-deuce-banner">
+      <i class="fa-solid fa-fire"></i>
+      <span id="deuce-banner-text">
+        {% if cur_set and cur_set.team_a == 20 and cur_set.team_b == 20 %}
+          ⚡ 20–20 REACHED: GOLDEN POINT CAP! First team to 21 points wins the set immediately!
+        {% else %}
+          🔥 DEUCE AT 14–14 ACTIVE: Must win by a margin of 2 points! (Cap at 21)
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Active Event Status Banners (Set Won / Event Won / Match Won) -->
+    <div class="event-alert-box {% if not cur_set or not cur_set.completed %}d-none{% endif %}" id="set-completed-banner">
+      <div class="alert-content">
+        <span class="alert-icon">🏆</span>
+        <div class="alert-text">
+          <strong id="set-won-title">SET COMPLETED!</strong>
+          <span id="set-won-desc">Leading team won the set.</span>
         </div>
-        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-          Sets Won: <strong id="admin-sets-a" style="color: var(--text-main); font-size: 1.2rem;">{{ match.score.sets_team_a or 0 }}</strong>
+      </div>
+      <div class="alert-actions">
+        <button type="button" class="btn btn-primary" id="btn-start-next-set">
+          <i class="fa-solid fa-forward"></i> Start Set <span id="btn-next-set-num">{{ (cur_event.current_set or 1) + 1 }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="event-alert-box event-won-box {% if cur_event.status != 'completed' %}d-none{% endif %}" id="event-completed-banner">
+      <div class="alert-content">
+        <span class="alert-icon">🎉</span>
+        <div class="alert-text">
+          <strong id="event-won-title">{{ cur_event.name }} WON!</strong>
+          <span id="event-won-desc">2 Sets Won by {{ match.team_a.abbr if cur_event.winner == 'team_a' else match.team_b.abbr }}.</span>
         </div>
-        <div id="display-pts-a" style="font-family: var(--font-heading); font-size: 3.8rem; font-weight: 900; line-height: 1; color: #2563eb;">
+      </div>
+      <div class="alert-actions">
+        {% if score.events_team_a >= 3 or score.events_team_b >= 3 %}
+          <button type="button" class="btn btn-success" id="btn-finalize-tie">
+            <i class="fa-solid fa-flag-checkered"></i> Conclude Tournament Match
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-primary" id="btn-start-next-event">
+            <i class="fa-solid fa-arrow-right"></i> Proceed to Next Event
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Digital Score Display Card -->
+    <div class="badminton-digital-board">
+      <!-- Team A Box -->
+      <div class="team-score-pod team-a-pod">
+        <div class="pod-dept-name">{{ match.team_a.name }} ({{ match.team_a.abbr }})</div>
+        <div class="pod-sets-counter">
+          Sets Won: <strong id="admin-sets-a">{{ cur_event.sets_a or 0 }}</strong> / 2
+        </div>
+        <div class="pod-big-pts" id="display-pts-a">
           {{ cur_set.team_a if cur_set else 0 }}
         </div>
-        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; font-weight: 600;">Current Set Points</div>
+        <div class="pod-pts-caption">Set <span id="caption-set-num-a">{{ cur_event.current_set or 1 }}</span> Points</div>
       </div>
 
-      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-dim); opacity: 0.4;">
-        VS
+      <!-- Center Divider & Target -->
+      <div class="pod-center-divider">
+        <span class="set-round-pill">
+          SET <span id="badge-current-set">{{ cur_event.current_set or 1 }}</span>
+        </span>
+        <div class="target-rule-pill">
+          Target: <strong>15 pts</strong>
+          <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">(Cap at 21)</div>
+        </div>
+        <div class="match-mode-tag">BEST OF 3</div>
       </div>
 
-      <div>
-        <div style="font-size: 0.95rem; font-weight: 800; color: #059669; text-transform: uppercase; margin-bottom: 0.25rem;">
-          {{ match.team_b.name }} ({{ match.team_b.abbr }})
+      <!-- Team B Box -->
+      <div class="team-score-pod team-b-pod">
+        <div class="pod-dept-name">{{ match.team_b.name }} ({{ match.team_b.abbr }})</div>
+        <div class="pod-sets-counter">
+          Sets Won: <strong id="admin-sets-b">{{ cur_event.sets_b or 0 }}</strong> / 2
         </div>
-        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-          Sets Won: <strong id="admin-sets-b" style="color: var(--text-main); font-size: 1.2rem;">{{ match.score.sets_team_b or 0 }}</strong>
-        </div>
-        <div id="display-pts-b" style="font-family: var(--font-heading); font-size: 3.8rem; font-weight: 900; line-height: 1; color: #059669;">
+        <div class="pod-big-pts" id="display-pts-b">
           {{ cur_set.team_b if cur_set else 0 }}
         </div>
-        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; font-weight: 600;">Current Set Points</div>
+        <div class="pod-pts-caption">Set <span id="caption-set-num-b">{{ cur_event.current_set or 1 }}</span> Points</div>
       </div>
     </div>
 
-    <!-- Giant Touch Controls -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+    <!-- Touch Scoring Controls -->
+    <div class="badminton-touch-controls">
       <!-- Team A Controls -->
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <button type="button" class="btn btn-primary btn-point-action" data-team="team_a" data-delta="1" style="height: 85px; font-size: 1.35rem; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;">
-          <span>+1 Point</span>
-          <span style="font-size: 0.85rem; opacity: 0.9;">{{ match.team_a.abbr }}</span>
+      <div class="touch-col col-a">
+        <button type="button" 
+                class="btn-point-action btn-point-add btn-team-a" 
+                data-team="team_a" 
+                data-delta="1"
+                id="btn-point-a">
+          <div class="add-icon">+1 POINT</div>
+          <div class="btn-subtext">{{ match.team_a.abbr }} RALLY WON</div>
         </button>
-        <div style="display: flex; gap: 0.5rem;">
-          <button type="button" class="btn btn-secondary btn-sm btn-point-action" data-team="team_a" data-delta="-1" style="flex: 1; border-radius: 8px;">
-            <i class="fa-solid fa-minus"></i> -1 Deduct
-          </button>
-        </div>
+        <button type="button" 
+                class="btn-point-action btn-point-minus" 
+                data-team="team_a" 
+                data-delta="-1"
+                id="btn-deduct-a">
+          <i class="fa-solid fa-minus"></i> -1 Deduct Point (Correction)
+        </button>
       </div>
 
       <!-- Team B Controls -->
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <button type="button" class="btn btn-success btn-point-action" data-team="team_b" data-delta="1" style="height: 85px; font-size: 1.35rem; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;">
-          <span>+1 Point</span>
-          <span style="font-size: 0.85rem; opacity: 0.9;">{{ match.team_b.abbr }}</span>
+      <div class="touch-col col-b">
+        <button type="button" 
+                class="btn-point-action btn-point-add btn-team-b" 
+                data-team="team_b" 
+                data-delta="1"
+                id="btn-point-b">
+          <div class="add-icon">+1 POINT</div>
+          <div class="btn-subtext">{{ match.team_b.abbr }} RALLY WON</div>
         </button>
-        <div style="display: flex; gap: 0.5rem;">
-          <button type="button" class="btn btn-secondary btn-sm btn-point-action" data-team="team_b" data-delta="-1" style="flex: 1; border-radius: 8px;">
-            <i class="fa-solid fa-minus"></i> -1 Deduct
-          </button>
-        </div>
+        <button type="button" 
+                class="btn-point-action btn-point-minus" 
+                data-team="team_b" 
+                data-delta="-1"
+                id="btn-deduct-b">
+          <i class="fa-solid fa-minus"></i> -1 Deduct Point (Correction)
+        </button>
       </div>
     </div>
 
-    <!-- Set Management & Finish Set Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
-      <div style="font-size: 0.85rem; color: var(--text-dim);" id="set-history-container">
-        <span style="font-weight: 700;">Set Breakdown: </span>
-        {% for s in match.score.set_scores %}
-          <span class="badge" style="background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 700; margin-left: 0.35rem;">
-            Set {{ s.set }}: {{ s.team_a }}-{{ s.team_b }}{% if s.winner %} ({{ match[s.winner].abbr if s.winner in match else s.winner|upper }}){% endif %}
-          </span>
-        {% endfor %}
+    <!-- Set Breakdown & Quick Tool Strip -->
+    <div class="badminton-breakdown-bar">
+      <div class="breakdown-left">
+        <span class="breakdown-label"><i class="fa-solid fa-list-check"></i> Set History:</span>
+        <div class="breakdown-chips" id="set-history-container">
+          {% for s in cur_event.set_scores %}
+            <span class="set-history-chip {% if s.completed %}done{% endif %}">
+              Set {{ s.set }}: {{ s.team_a }} - {{ s.team_b }}
+              {% if s.completed and s.winner %}
+                <strong>({{ match.team_a.abbr if s.winner == 'team_a' else match.team_b.abbr }})</strong>
+              {% endif %}
+            </span>
+          {% endfor %}
+        </div>
       </div>
-      <div style="display: flex; gap: 0.5rem;">
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-conclude-set" title="Award Set and Move to Next Set">
-          <i class="fa-solid fa-flag"></i> Finish Set {{ match.score.current_set }}
+
+      <div class="breakdown-right">
+        <!-- Rule 5: Late Arrival Advantage Button -->
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-late-arrival-tool" title="Rule 5: Award 2-point advantage for late arrival">
+          <i class="fa-solid fa-clock"></i> Late Arrival (+2 Pts)
+        </button>
+        <!-- Finish Set Button -->
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-conclude-set" title="Award Set to Leading Team">
+          <i class="fa-solid fa-flag"></i> Finish Set
         </button>
       </div>
     </div>
   </div>
+
+
+  <!-- =========================================================================
+       3. MODAL: EVENT LINEUP & PARTICIPATION DECLARATION (RULES 1.3 & 4.2)
+       ========================================================================= -->
+  <div class="badminton-modal-overlay d-none" id="modal-event-lineup">
+    <div class="badminton-modal-card">
+      <div class="modal-header-bar">
+        <div>
+          <h4><i class="fa-solid fa-users-gear"></i> Declare Event Participating Athletes</h4>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 2px;">
+            Rule 1.3: Each player may participate in at most 2 events. Mixed Doubles must be 1 Boy & 1 Girl.
+          </p>
+        </div>
+        <button type="button" class="modal-close-x" id="btn-close-lineup-modal">&times;</button>
+      </div>
+
+      <form id="form-event-lineup" style="padding: 1rem 1.25rem;">
+        <div style="font-weight: 800; font-size: 0.88rem; color: #2563eb; margin-bottom: 0.75rem;">
+          Event: <span id="modal-ev-name-title">{{ cur_event.name }}</span> (<span id="modal-ev-short-title">{{ cur_event.short_name }}</span>)
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 0.35rem;">
+              {{ match.team_a.abbr }} Playing Athlete(s)
+            </label>
+            <input type="text" 
+                   id="input-ev-players-a" 
+                   class="form-control" 
+                   style="font-size: 0.95rem; font-weight: 600;" 
+                   placeholder="e.g. Awanish Singh (or Rohit / Sam)" 
+                   value="{{ cur_event.players_a or '' }}">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #059669; margin-bottom: 0.35rem;">
+              {{ match.team_b.abbr }} Playing Athlete(s)
+            </label>
+            <input type="text" 
+                   id="input-ev-players-b" 
+                   class="form-control" 
+                   style="font-size: 0.95rem; font-weight: 600;" 
+                   placeholder="e.g. Rahul Sharma (or Rahul / Alex)" 
+                   value="{{ cur_event.players_b or '' }}">
+          </div>
+        </div>
+
+        <div id="lineup-validation-msg" style="font-size: 0.82rem; margin-bottom: 1rem;"></div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-lineup">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="btn-save-lineup">
+            <i class="fa-solid fa-check"></i> Save Event Lineup
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       4. MODAL: LATE ARRIVAL PENALTY (RULE 5)
+       ========================================================================= -->
+  <div class="badminton-modal-overlay d-none" id="modal-late-arrival">
+    <div class="badminton-modal-card" style="max-width: 480px;">
+      <div class="modal-header-bar">
+        <h4><i class="fa-solid fa-clock"></i> Apply Late Arrival Rule (Rule 5)</h4>
+        <button type="button" class="modal-close-x" id="btn-close-late-modal">&times;</button>
+      </div>
+      <div style="padding: 1.25rem;">
+        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
+          Under <strong>Rule 5.2</strong>, if one team fails to report to the court on time, the opposing team receives an <strong>advantage of 2 points</strong> in the opening set.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+          <button type="button" class="btn btn-secondary btn-late-action" data-team="team_a" style="text-align: left; padding: 0.75rem 1rem;">
+            <strong>Award +2 Points to {{ match.team_a.abbr }}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">Opponent ({{ match.team_b.abbr }}) reported late</div>
+          </button>
+          <button type="button" class="btn btn-secondary btn-late-action" data-team="team_b" style="text-align: left; padding: 0.75rem 1rem;">
+            <strong>Award +2 Points to {{ match.team_b.abbr }}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">Opponent ({{ match.team_a.abbr }}) reported late</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>

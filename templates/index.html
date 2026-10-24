@@ -313,6 +313,8 @@
             {% include "audience/sports/football.html" %}
           {% elif active_match.sport_type == 'athletics_distance' %}
             {% include "audience/sports/athletics.html" %}
+          {% elif active_match.sport_type == 'badminton' %}
+            {% include "audience/sports/badminton_events.html" %}
           {% endif %}
         {% endif %}
 

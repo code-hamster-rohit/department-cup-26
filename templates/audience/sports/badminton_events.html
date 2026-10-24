@@ -1,0 +1,36 @@
+<!-- AUDIENCE BADMINTON 5-EVENTS EXTENDED ARENA BREAKDOWN -->
+{% set score = active_match.score %}
+{% set events_list = score.events | default([]) %}
+{% set active_ev_id = score.active_event_id or 'bs' %}
+
+{% if events_list and events_list|length > 0 %}
+  <div class="aud-badminton-events-grid" id="aud-badminton-events-grid">
+    <div class="events-grid-heading">
+      <i class="fa-solid fa-list-ol"></i> 5-Event Mixed Team Match Breakdown (First to 3 Wins Overall Tie)
+    </div>
+    <div class="events-cards-row">
+      {% for ev in events_list %}
+        <div class="aud-event-card {% if ev.id == active_ev_id %}active-card{% endif %} {% if ev.status == 'completed' %}completed-card{% endif %}" id="aud-ev-card-{{ ev.id }}">
+          <div class="card-ev-short">{{ ev.short_name }}</div>
+          <div class="card-ev-name">{{ ev.name }}</div>
+          <div class="card-ev-status">
+            {% if ev.status == 'completed' %}
+              <span class="status-done">
+                {{ active_match[ev.winner].abbr if (ev.winner in active_match and active_match[ev.winner] is mapping) else ev.winner|upper }} Won ({{ ev.sets_a }}-{{ ev.sets_b }})
+              </span>
+            {% elif ev.id == active_ev_id %}
+              <span class="status-live">🔴 LIVE ({{ ev.sets_a }}-{{ ev.sets_b }})</span>
+            {% else %}
+              <span class="status-upcoming">Upcoming</span>
+            {% endif %}
+          </div>
+          {% if ev.players_a or ev.players_b %}
+            <div class="card-ev-players">
+              {{ ev.players_a or 'TBD' }} vs {{ ev.players_b or 'TBD' }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

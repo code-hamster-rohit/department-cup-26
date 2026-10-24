@@ -341,18 +341,19 @@ SPORTS_CONFIG: dict[str, dict[str, Any]] = {
     "badminton": {
         "id": "badminton",
         "collection_name": "badminton",
-        "name": "Badminton",
+        "name": "Badminton (Mixed Team)",
         "category": "Racquet",
         "icon": "🏸",
-        "main_count": 2,
+        "main_count": 4,
         "sub_max": 2,
-        "formula": "1-2 Players",
-        "squad_notation": "Singles (1) or Doubles (2)",
-        "squad_badge": "Singles / Doubles",
-        "gender_badge": "🏸 Badminton Match",
-        "gender_rule_desc": "Admin enters playing athletes on the spot (Singles: 1 player, Doubles: 2 players).",
-        "description": "Best of 3 sets to 21 points (or 15 points per agreement). First to win 2 sets wins the match.",
-        "default_gender": "Open",
+        "formula": "5 Events (BS, GS, XD, GD, BD)",
+        "squad_notation": "2 Boys, 2 Girls + 2 Substitutes (1B, 1G)",
+        "squad_badge": "Mixed Team (5 Events)",
+        "gender_badge": "👫 Mixed Team (2B + 2G + 2 Subs)",
+        "gender_rule_desc": "Mixed team match of 5 events: Boys' Singles, Girls' Singles, Mixed Doubles, Girls' Doubles, Boys' Doubles. Max 2 events per player.",
+        "description": "Mixed team match: 5 events (BS, GS, XD, GD, BD). First to win 3 events wins. Best of 3 sets to 15 points (cap 21).",
+        "default_gender": "Mixed",
+        "is_team_sport": True,
     },
     "basketball": {
         "id": "basketball",
@@ -538,34 +539,51 @@ RULES_DATA: dict[str, dict[str, Any]] = {
         "id": "badminton",
         "collection_name": "badminton",
         "sport_type": "badminton",
-        "name": "Badminton",
+        "name": "Badminton (Mixed Team)",
         "category": "Racquet",
         "icon": "🏸",
         "squad": {
-            "playing_count": 2,
+            "playing_count": 4,
             "max_substitutes": 2,
-            "notation": "1-2 Players (Singles or Doubles)",
+            "notation": "2 Boys, 2 Girls + 2 Substitutes (1 Boy, 1 Girl)",
             "rules": [
-                "Singles: 1 player per side. Doubles: 2 players per side.",
-                "Admin enters player names during match setup."
+                "Each team must consist of 2 boys, 2 girls, and 2 substitutes (1 boy and 1 girl).",
+                "The 5 events in each team match: Boys' Singles, Girls' Singles, Mixed Doubles, Girls' Doubles, Boys' Doubles.",
+                "Each player may participate in a maximum of 2 events out of the 5.",
+                "Mixed doubles event must consist of one boy and one girl from the same team.",
+                "Participating players for each event must be declared before the match begins."
             ]
         },
         "match_format": {
-            "sets_to_win": 2,
+            "events_to_win": 3,
+            "total_events": 5,
+            "sets_to_win_event": 2,
             "max_sets": 3,
-            "points_per_set": 21,
-            "cap_points": 30
+            "points_per_set": 15,
+            "deuce_at": 14,
+            "cap_points": 21,
+            "late_arrival_advantage": 2
         },
         "specific_regulations": [
             {
-                "title": "Match Format",
-                "badge": "🏸 BEST OF 3 SETS",
-                "desc": "Single match: Best of 3 sets to 21 points (or 15 points by agreement). First to win 2 sets wins the match."
+                "title": "Match Format & Team Victory",
+                "badge": "🏸 5 EVENTS · FIRST TO 3",
+                "desc": "Team match consists of 5 events (BS, GS, XD, GD, BD). First team to win 3 events wins the overall match."
             },
             {
-                "title": "Scoring & Deuce",
-                "badge": "21 PTS (DEUCE +2)",
-                "desc": "At 20-all, side leading by 2 wins; golden point cap at 30."
+                "title": "Scoring Rules (Per Set)",
+                "badge": "15 PTS (DEUCE +2 · CAP 21)",
+                "desc": "Sets played to 15 points. At 14-all, must lead by 2 points. At 20-all, golden point applies: first to 21 wins."
+            },
+            {
+                "title": "Player Limit",
+                "badge": "👥 MAX 2 EVENTS / PLAYER",
+                "desc": "Each player may participate in a maximum of 2 events. Mixed doubles must have 1 boy and 1 girl."
+            },
+            {
+                "title": "Late Arrival Rule",
+                "badge": "⏰ 2-PT ADVANTAGE",
+                "desc": "If a team fails to report on time, the opposing team receives an advantage of 2 points in the opening set."
             }
         ]
     },

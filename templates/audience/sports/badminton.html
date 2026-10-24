@@ -1,41 +1,88 @@
-<!-- AUDIENCE BADMINTON LIVE SCORECARD -->
-{% set cur_set = (active_match.score.set_scores | default([])) | last %}
+<!-- AUDIENCE BADMINTON LIVE SCORECARD (5-EVENTS MIXED TEAM MATCH) -->
+{% set score = active_match.score %}
+{% set events_list = score.events | default([]) %}
+{% set active_ev_id = score.active_event_id or 'bs' %}
+{% set cur_event = (events_list | selectattr("id", "equalto", active_ev_id) | first) | default(events_list | first) %}
+{% set cur_set = (cur_event.set_scores | default([])) | last %}
 
 <div class="sport-audience-badminton" id="audience-badminton-container">
-  <div class="live-score-display set-sport-display">
+  
+  <!-- 1. Overall Team Tie Banner -->
+  <div class="aud-badminton-tie-strip">
+    <div class="tie-strip-label">
+      <i class="fa-solid fa-trophy" style="color: #f59e0b;"></i>
+      <span>MIXED TEAM TIE (BEST OF 5 EVENTS)</span>
+    </div>
+    <div class="tie-strip-scores">
+      <span class="aud-dept-code">{{ active_match.team_a.abbr if (active_match.team_a is mapping and active_match.team_a.abbr) else (active_match.team_a | upper) }}</span>
+      <span class="aud-tie-num" id="aud-badminton-events-a">{{ score.events_team_a or 0 }}</span>
+      <span class="aud-tie-colon">-</span>
+      <span class="aud-tie-num" id="aud-badminton-events-b">{{ score.events_team_b or 0 }}</span>
+      <span class="aud-dept-code">{{ active_match.team_b.abbr if (active_match.team_b is mapping and active_match.team_b.abbr) else (active_match.team_b | upper) }}</span>
+    </div>
+    <div class="tie-strip-sub">
+      Target: 3 Event Victories to Win Overall Match
+    </div>
+  </div>
+
+  <!-- 2. Active Event Scoreboard -->
+  <div class="live-score-display badminton-active-display">
+    <div class="active-ev-header-pill">
+      <span class="badge" style="background: rgba(37,99,235,0.12); color: #2563eb; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.85rem; border-radius: 9999px;">
+        🏸 <span id="aud-badminton-ev-name">{{ cur_event.name }}</span> (<span id="aud-badminton-ev-short">{{ cur_event.short_name }}</span>)
+      </span>
+      {% if cur_event.players_a or cur_event.players_b %}
+        <div class="aud-ev-players" id="aud-badminton-players">
+          {{ cur_event.players_a or 'TBD' }} vs {{ cur_event.players_b or 'TBD' }}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Sets Counter in this Event -->
     <div class="sets-header-bar">
       <span class="sets-label">SETS:</span>
-      <span class="score-sets-big" id="aud-badminton-sets-a">{{ active_match.score.sets_team_a or 0 }}</span>
+      <span class="score-sets-big" id="aud-badminton-sets-a">{{ cur_event.sets_a or 0 }}</span>
       <span class="score-dash">-</span>
-      <span class="score-sets-big" id="aud-badminton-sets-b">{{ active_match.score.sets_team_b or 0 }}</span>
+      <span class="score-sets-big" id="aud-badminton-sets-b">{{ cur_event.sets_b or 0 }}</span>
       <span style="font-size: 0.72rem; color: var(--text-dim); margin-left: 0.3rem;">(Best of 3)</span>
     </div>
 
+    <!-- Current Set Live Points -->
     <div class="cur-set-points-row">
       <span class="live-points-val team-a-pts" id="aud-badminton-pts-a">
         {{ cur_set.team_a if cur_set else 0 }}
-        {% if active_match.score.server != 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-a">🏸</span>{% endif %}
+        {% if cur_event.server != 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-a">🏸</span>{% endif %}
       </span>
       <span class="points-colon" style="color: var(--text-dim); opacity: 0.4;">:</span>
       <span class="live-points-val team-b-pts" id="aud-badminton-pts-b">
-        {% if active_match.score.server == 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-b">🏸</span>{% endif %}
+        {% if cur_event.server == 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-badminton-server-b">🏸</span>{% endif %}
         {{ cur_set.team_b if cur_set else 0 }}
       </span>
     </div>
 
+    <!-- Set Pill & Deuce Alert -->
     <div class="score-sub-line">
-      <span class="badge badge-set-pill" id="aud-badminton-set-info">Set {{ active_match.score.current_set }} (Target: {{ active_match.score.points_to_win_set or 21 }} pts)</span>
-      {% if active_match.score.in_deuce %}
-        <span class="badge badge-deuce" id="aud-badminton-deuce-badge">🔥 DEUCE (Win by 2)</span>
-      {% endif %}
+      <span class="badge badge-set-pill" id="aud-badminton-set-info">
+        Set <span id="aud-badminton-cur-set-num">{{ cur_event.current_set or 1 }}</span> (Target: 15 pts · Cap: 21)
+      </span>
+      <span class="badge badge-deuce {% if not cur_event.in_deuce %}d-none{% endif %}" id="aud-badminton-deuce-badge">
+        🔥 DEUCE (Win by 2)
+      </span>
     </div>
 
-    {% if active_match.score.set_scores and active_match.score.set_scores|length > 0 %}
+    <!-- Set History Breakdown -->
+    {% if cur_event.set_scores and cur_event.set_scores|length > 0 %}
       <div class="set-history-chips" id="aud-badminton-set-history">
-        {% for s in active_match.score.set_scores %}
-          <span class="set-chip">Set {{ s.set }}: {{ s.team_a }}-{{ s.team_b }}{% if s.winner %} ({{ active_match[s.winner].abbr if s.winner in active_match else s.winner|upper }}){% endif %}</span>
+        {% for s in cur_event.set_scores %}
+          <span class="set-chip">
+            Set {{ s.set }}: {{ s.team_a }}-{{ s.team_b }}
+            {% if s.completed and s.winner %}
+              <strong>({{ active_match[s.winner].abbr if (active_match[s.winner] is mapping and active_match[s.winner].abbr) else s.winner|upper }})</strong>
+            {% endif %}
+          </span>
         {% endfor %}
       </div>
     {% endif %}
   </div>
 </div>
+

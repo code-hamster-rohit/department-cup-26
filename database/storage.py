@@ -145,6 +145,16 @@ def get_match(match_id: str, force_mongo: bool = False) -> dict[str, Any] | None
     m = _matches_cache.get(match_id)
     if m:
         return _normalize_match_squad_and_sport(m)
+
+    # Fallback to local disk file if not in cache
+    try:
+        disk_matches = _load_matches_from_disk()
+        if match_id in disk_matches:
+            _matches_cache[match_id] = disk_matches[match_id]
+            return _normalize_match_squad_and_sport(_matches_cache[match_id])
+    except Exception:
+        pass
+
     # Fallback to MongoDB sport collections if not in memory
     try:
         from database.mongo import get_db, SPORT_COLLECTIONS
