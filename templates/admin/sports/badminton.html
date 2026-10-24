@@ -253,10 +253,6 @@
       </div>
 
       <div class="breakdown-right">
-        <!-- Rule 5: Late Arrival Advantage Button -->
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-late-arrival-tool" title="Rule 5: Award 2-point advantage for late arrival">
-          <i class="fa-solid fa-clock"></i> Late Arrival (+2 Pts)
-        </button>
         <!-- Finish Set Button -->
         <button type="button" class="btn btn-secondary btn-sm" id="btn-conclude-set" title="Award Set to Leading Team">
           <i class="fa-solid fa-flag"></i> Finish Set
@@ -324,37 +320,5 @@
   </div>
 
 
-  <!-- =========================================================================
-       4. MODAL: LATE ARRIVAL PENALTY (RULE 5)
-       ========================================================================= -->
-  <div class="badminton-modal-overlay d-none" id="modal-late-arrival">
-    <div class="badminton-modal-card" style="max-width: 480px;">
-      <div class="modal-header-bar">
-        <h4><i class="fa-solid fa-clock"></i> Apply Late Arrival Rule (Rule 5)</h4>
-        <button type="button" class="modal-close-x" id="btn-close-late-modal">&times;</button>
-      </div>
-      <div style="padding: 1.25rem;">
-        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem;">
-          Under <strong>Rule 5.2</strong>, if one team fails to report to the court on time, the opposing team receives an <strong>advantage of 2 points</strong> in the opening set.
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-          <button type="button" class="btn btn-secondary btn-late-action" data-team="team_a" style="text-align: left; padding: 0.75rem 1rem;">
-            <strong>Award +2 Points to {{ match.team_a.abbr }}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">Opponent ({{ match.team_b.abbr }}) reported late</div>
-          </button>
-          <button type="button" class="btn btn-secondary btn-late-action" data-team="team_b" style="text-align: left; padding: 0.75rem 1rem;">
-            <strong>Award +2 Points to {{ match.team_b.abbr }}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-dim);">Opponent ({{ match.team_a.abbr }}) reported late</div>
-          </button>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle);">
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-late-modal">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
+

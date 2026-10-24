@@ -565,6 +565,11 @@
   padding: 1rem;
 }
 
+.badminton-modal-overlay.d-none,
+.d-none {
+  display: none !important;
+}
+
 .badminton-modal-card {
   background: #ffffff;
   border-radius: 16px;

@@ -78,39 +78,7 @@ window.AdminBadminton = (function() {
       });
     }
 
-    // 8. Late Arrival Penalty Modal
-    const modalLate = document.getElementById('modal-late-arrival');
-    const btnOpenLate = document.getElementById('btn-late-arrival-tool');
-    const btnCloseLate = document.getElementById('btn-close-late-modal');
-    const btnCancelLate = document.getElementById('btn-cancel-late-modal');
-
-    function closeLateModal() {
-      if (modalLate) modalLate.classList.add('d-none');
-    }
-
-    if (btnOpenLate && modalLate) {
-      btnOpenLate.addEventListener('click', () => modalLate.classList.remove('d-none'));
-    }
-    if (btnCloseLate) btnCloseLate.addEventListener('click', closeLateModal);
-    if (btnCancelLate) btnCancelLate.addEventListener('click', closeLateModal);
-
-    if (modalLate) {
-      modalLate.addEventListener('click', function(e) {
-        if (e.target === modalLate) closeLateModal();
-      });
-    }
-
-    document.querySelectorAll('.btn-late-action').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const advTeam = btn.dataset.team;
-        if (confirm(`Apply Rule 5: Award 2-point opening set advantage to ${advTeam.toUpperCase()}?`)) {
-          _sendAction({ type: 'late_arrival_penalty', advantaged_team: advTeam });
-          closeLateModal();
-        }
-      });
-    });
-
-    // 9. Event Lineup Declaration Modal
+    // 8. Event Lineup Declaration Modal
     const modalLineup = document.getElementById('modal-event-lineup');
     const btnOpenLineup = document.getElementById('btn-open-lineup-modal');
     const btnCloseLineup = document.getElementById('btn-close-lineup-modal');
@@ -136,7 +104,6 @@ window.AdminBadminton = (function() {
     // Universal Escape key listener for modals
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        closeLateModal();
         closeLineupModal();
       }
     });
