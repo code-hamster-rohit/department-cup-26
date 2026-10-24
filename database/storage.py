@@ -354,57 +354,31 @@ def _init_sport_score(sport_rule: dict[str, Any], max_overs: int) -> dict[str, A
             "sudden_death": False
         }
 
-    elif stype == "volleyball":
+    elif stype in ["volleyball", "badminton", "table_tennis"]:
+        pts = 21 if stype == "badminton" else (11 if stype == "table_tennis" else 25)
         return {
             "sets_team_a": 0,
             "sets_team_b": 0,
             "current_set": 1,
-            "points_to_win_set": 25,
-            "set_scores": [{"set": 1, "team_a": 0, "team_b": 0, "winner": None, "timeouts_a": 0, "timeouts_b": 0, "duration": ""}],
+            "points_to_win_set": pts,
+            "set_scores": [{"set": 1, "team_a": 0, "team_b": 0, "winner": None}],
             "server": "team_a",
             "in_deuce": False,
             "total_points_a": 0,
-            "total_points_b": 0
+            "total_points_b": 0,
+            "players_a": "",
+            "players_b": ""
         }
 
-    elif stype in ["badminton", "table_tennis", "carrom"]:
-        events_list = sport_rule.get("match_format", {}).get("events_list", [])
-        pts_set = sport_rule.get("match_format", {}).get("points_per_set") or sport_rule.get("match_format", {}).get("points_per_game") or 15
-        
-        events_init = []
-        for i, ev in enumerate(events_list):
-            events_init.append({
-                "id": ev["id"],
-                "name": ev["name"],
-                "type": ev.get("type", "singles"),
-                "day_label": f"Day {1 + (i // 2)}",
-                "scheduled_date": "",
-                "status": "scheduled",
-                "players_a": "",
-                "players_b": "",
-                "sets_a": 0,
-                "sets_b": 0,
-                "current_points_a": 0,
-                "current_points_b": 0,
-                "set_history": [],
-                "winner": None,
-                "result_text": ""
-            })
-            
-        res_racquet: dict[str, Any] = {
-            "events_won_a": 0,
-            "events_won_b": 0,
-            "events_to_win": sport_rule.get("match_format", {}).get("events_to_win", 3),
-            "points_target": pts_set,
-            "current_event_idx": 0,
-            "events": events_init,
-            "lead_summary": "Tied 0 - 0 (Scheduled)",
-            "lead_detail": f"Multi-day tie ({len(events_init)} sub-events scheduled across days)"
+    elif stype == "carrom":
+        return {
+            "score_team_a": 0,
+            "score_team_b": 0,
+            "current_board": 1,
+            "boards": [],
+            "players_a": "",
+            "players_b": ""
         }
-        if stype == "carrom":
-            res_racquet["boards"] = []
-            res_racquet["current_board"] = 1
-        return res_racquet
 
     elif stype == "tug_of_war":
         return {
@@ -453,6 +427,15 @@ async def update_squads_and_toss(
             match["squads"]["team_b"] = squad_b
         match["squads"]["squads_confirmed"] = True
 
+        # Auto-extract athlete names for single-match sports (Badminton, Table Tennis, Carrom, Volleyball)
+        if match.get("sport_type") in ["badminton", "table_tennis", "volleyball", "carrom"]:
+            p_a = [p.get("name") for p in match["squads"]["team_a"].get("playing", []) if p.get("name")]
+            p_b = [p.get("name") for p in match["squads"]["team_b"].get("playing", []) if p.get("name")]
+            if p_a:
+                match["score"]["players_a"] = " / ".join(p_a)
+            if p_b:
+                match["score"]["players_b"] = " / ".join(p_b)
+
         if toss_winner and toss_decision:
             toss_team_name = match["team_a"]["abbr"] if toss_winner == "team_a" else match["team_b"]["abbr"]
             summary = f"{toss_team_name} won the toss and elected to {toss_decision} first."
@@ -462,6 +445,11 @@ async def update_squads_and_toss(
                 "decision": toss_decision,
                 "summary": summary
             }
+            if match.get("sport_type") in ["volleyball", "badminton", "table_tennis"]:
+                if (toss_winner == "team_a" and toss_decision == "serve") or (toss_winner == "team_b" and toss_decision == "receive"):
+                    match["score"]["server"] = "team_a"
+                else:
+                    match["score"]["server"] = "team_b"
             # Set batting team for cricket based on toss
             if match["sport_type"] == "cricket":
                 if (toss_winner == "team_a" and toss_decision == "bat") or (toss_winner == "team_b" and toss_decision == "bowl"):
@@ -553,10 +541,10 @@ async def update_score_action(match_id: str, action: dict[str, Any]) -> dict[str
             _handle_football_action(match, action)
         elif stype == "penalty_shootout":
             _handle_shootout_action(match, action)
-        elif stype == "volleyball":
-            _handle_volleyball_action(match, action)
-        elif stype in ["badminton", "table_tennis", "carrom"]:
-            _handle_racquet_action(match, action)
+        elif stype in ["volleyball", "badminton", "table_tennis"]:
+            _handle_set_sport_action(match, action)
+        elif stype == "carrom":
+            _handle_carrom_action(match, action)
         elif stype == "tug_of_war":
             _handle_tow_action(match, action)
         elif stype == "athletics_distance":
@@ -932,69 +920,151 @@ def _handle_shootout_action(match: dict[str, Any], action: dict[str, Any]):
     })
 
 
-def _handle_volleyball_action(match: dict[str, Any], action: dict[str, Any]):
+def _handle_set_sport_action(match: dict[str, Any], action: dict[str, Any]):
     score = match["score"]
     team = action.get("team", "team_a")
-    cur_set_idx = score["current_set"] - 1
-    
-    if cur_set_idx >= len(score["set_scores"]):
-        score["set_scores"].append({"set": score["current_set"], "team_a": 0, "team_b": 0, "winner": None, "timeouts_a": 0, "timeouts_b": 0, "duration": ""})
+    act = action.get("type")
+    stype = match.get("sport_type", "badminton")
+
+    # Match target points per set
+    if stype == "badminton":
+        target = score.get("points_to_win_set") or 21
+        cap = 30
+    elif stype == "table_tennis":
+        target = score.get("points_to_win_set") or 11
+        cap = 15
+    else:  # volleyball
+        target = 15 if score.get("current_set", 1) >= 3 else (score.get("points_to_win_set") or 25)
+        cap = 30
+
+    cur_set_idx = max(0, score.get("current_set", 1) - 1)
+    if "set_scores" not in score or not score["set_scores"]:
+        score["set_scores"] = [{"set": 1, "team_a": 0, "team_b": 0, "winner": None}]
+    while cur_set_idx >= len(score["set_scores"]):
+        score["set_scores"].append({"set": len(score["set_scores"]) + 1, "team_a": 0, "team_b": 0, "winner": None})
     set_obj = score["set_scores"][cur_set_idx]
 
-    act = action.get("type")
-
     if act == "point":
-        set_obj[team] += 1
-        score["server"] = team
-        pts_a = set_obj["team_a"]
-        pts_b = set_obj["team_b"]
-        
-        score["total_points_a"] = sum(s.get("team_a", 0) for s in score["set_scores"])
-        score["total_points_b"] = sum(s.get("team_b", 0) for s in score["set_scores"])
-
-        # Check Deuce (at 24-24)
-        if pts_a >= 24 and pts_b >= 24:
-            score["in_deuce"] = True
-            
-        # Target: 25 for sets 1 and 2, 15 for set 3 (decider)
-        target = 15 if score["current_set"] >= 3 else score["points_to_win_set"]
-        if (pts_a >= target or pts_b >= target) and abs(pts_a - pts_b) >= 2:
-            winner = "team_a" if pts_a > pts_b else "team_b"
-            set_obj["winner"] = winner
-            if winner == "team_a":
-                score["sets_team_a"] += 1
-            else:
-                score["sets_team_b"] += 1
-
-            match["commentary"].append({
-                "time": datetime.utcnow().strftime("%H:%M"),
-                "ball": f"Set {score['current_set']}",
-                "text": f"SET WON! {match[winner]['abbr']} wins Set {score['current_set']} ({pts_a} - {pts_b})!",
-                "badge": "🏆 SET WON",
-                "type": "set_won"
-            })
-
-            # Check if match completed (best of 3 sets: first to 2)
-            if score["sets_team_a"] >= 2 or score["sets_team_b"] >= 2:
-                match_winner = "team_a" if score["sets_team_a"] >= 2 else "team_b"
-                match["status"] = "completed"
-                match["winner"] = match_winner
-                match["winner_code"] = match[match_winner]["code"]
-                match["winner_name"] = match[match_winner]["abbr"]
-                match["result"] = f"{match[match_winner]['abbr']} won by {max(score['sets_team_a'], score['sets_team_b'])} - {min(score['sets_team_a'], score['sets_team_b'])} sets"
-                match["completed_at"] = datetime.utcnow().isoformat()
-            else:
-                score["current_set"] += 1
-                score["set_scores"].append({"set": score["current_set"], "team_a": 0, "team_b": 0, "winner": None, "timeouts_a": 0, "timeouts_b": 0, "duration": ""})
-                score["in_deuce"] = False
-        else:
+        delta = int(action.get("delta", 1))
+        if delta < 0:
+            set_obj[team] = max(0, set_obj.get(team, 0) - 1)
+            pts_a = set_obj["team_a"]
+            pts_b = set_obj["team_b"]
             match["commentary"].append({
                 "time": datetime.utcnow().strftime("%H:%M"),
                 "ball": f"S{score['current_set']}",
-                "text": f"Point to {match[team]['abbr']}! Current Set: {pts_a} - {pts_b}",
-                "badge": "POINT",
-                "type": "point"
+                "text": f"Point deducted (-1) from {match[team]['abbr']}. Score: {pts_a} - {pts_b}.",
+                "badge": "CORRECTION",
+                "type": "point_deduct"
             })
+        else:
+            set_obj[team] = set_obj.get(team, 0) + delta
+            score["server"] = team
+            pts_a = set_obj["team_a"]
+            pts_b = set_obj["team_b"]
+
+            # Deuce check
+            if pts_a >= (target - 1) and pts_b >= (target - 1):
+                score["in_deuce"] = True
+            else:
+                score["in_deuce"] = False
+
+            # Check set victory
+            if ((pts_a >= target or pts_b >= target) and abs(pts_a - pts_b) >= 2) or (pts_a >= cap or pts_b >= cap):
+                winner = "team_a" if pts_a > pts_b else "team_b"
+                set_obj["winner"] = winner
+                if winner == "team_a":
+                    score["sets_team_a"] = score.get("sets_team_a", 0) + 1
+                else:
+                    score["sets_team_b"] = score.get("sets_team_b", 0) + 1
+
+                w_name = match[winner]["abbr"] if winner in match else winner
+                match["commentary"].append({
+                    "time": datetime.utcnow().strftime("%H:%M"),
+                    "ball": f"Set {score['current_set']}",
+                    "text": f"SET {score['current_set']} WON! {w_name} wins Set {score['current_set']} ({pts_a} - {pts_b})!",
+                    "badge": "🏆 SET WON",
+                    "type": "set_won"
+                })
+
+                # Check match completion (first to 2 sets in best of 3)
+                if score.get("sets_team_a", 0) >= 2 or score.get("sets_team_b", 0) >= 2:
+                    m_win = "team_a" if score.get("sets_team_a", 0) >= 2 else "team_b"
+                    match["status"] = "completed"
+                    match["winner"] = m_win
+                    match["winner_code"] = match[m_win]["code"]
+                    match["winner_name"] = match[m_win]["abbr"]
+                    match["result"] = f"{match[m_win]['abbr']} won {score['sets_team_a']} - {score['sets_team_b']} sets"
+                    match["completed_at"] = datetime.utcnow().isoformat()
+                    match["commentary"].append({
+                        "time": datetime.utcnow().strftime("%H:%M"),
+                        "ball": "FINAL",
+                        "text": f"MATCH FINISHED! {match['result']}!",
+                        "badge": "🏆 MATCH WON",
+                        "type": "match_won"
+                    })
+                else:
+                    score["current_set"] = score.get("current_set", 1) + 1
+                    score["set_scores"].append({"set": score["current_set"], "team_a": 0, "team_b": 0, "winner": None})
+                    score["in_deuce"] = False
+            else:
+                match["commentary"].append({
+                    "time": datetime.utcnow().strftime("%H:%M"),
+                    "ball": f"S{score['current_set']}",
+                    "text": f"Point to {match[team]['abbr']}! Current Set: {pts_a} - {pts_b}" + (" (DEUCE)" if score["in_deuce"] else ""),
+                    "badge": "POINT",
+                    "type": "point"
+                })
+
+    elif act == "end_set":
+        pts_a = set_obj["team_a"]
+        pts_b = set_obj["team_b"]
+        winner = action.get("winner")
+        if not winner:
+            winner = "team_a" if pts_a >= pts_b else "team_b"
+        set_obj["winner"] = winner
+        if winner == "team_a":
+            score["sets_team_a"] = score.get("sets_team_a", 0) + 1
+        else:
+            score["sets_team_b"] = score.get("sets_team_b", 0) + 1
+
+        w_name = match[winner]["abbr"] if winner in match else winner
+        match["commentary"].append({
+            "time": datetime.utcnow().strftime("%H:%M"),
+            "ball": f"Set {score['current_set']}",
+            "text": f"SET FINISHED: {w_name} wins Set {score['current_set']} ({pts_a} - {pts_b})!",
+            "badge": "SET WON",
+            "type": "set_won"
+        })
+
+        if score.get("sets_team_a", 0) >= 2 or score.get("sets_team_b", 0) >= 2:
+            m_win = "team_a" if score.get("sets_team_a", 0) >= 2 else "team_b"
+            match["status"] = "completed"
+            match["winner"] = m_win
+            match["winner_code"] = match[m_win]["code"]
+            match["winner_name"] = match[m_win]["abbr"]
+            match["result"] = f"{match[m_win]['abbr']} won {score['sets_team_a']} - {score['sets_team_b']} sets"
+            match["completed_at"] = datetime.utcnow().isoformat()
+        else:
+            score["current_set"] = score.get("current_set", 1) + 1
+            score["set_scores"].append({"set": score["current_set"], "team_a": 0, "team_b": 0, "winner": None})
+            score["in_deuce"] = False
+
+    elif act == "swap_server":
+        score["server"] = "team_b" if score.get("server") == "team_a" else "team_a"
+        match["commentary"].append({
+            "time": datetime.utcnow().strftime("%H:%M"),
+            "ball": "SERVE",
+            "text": f"Server switched: {match[score['server']]['abbr']} now serving.",
+            "badge": "SERVICE",
+            "type": "serve"
+        })
+
+    elif act == "update_players":
+        if "players_a" in action:
+            score["players_a"] = action["players_a"]
+        if "players_b" in action:
+            score["players_b"] = action["players_b"]
 
     elif act == "timeout":
         t_key = f"timeouts_{team[-1]}"
@@ -1008,259 +1078,72 @@ def _handle_volleyball_action(match: dict[str, Any], action: dict[str, Any]):
         })
 
 
-def _update_tie_lead_summary(match: dict[str, Any]):
-    score = match.get("score", {})
-    if "events_won_a" not in score or "events_won_b" not in score:
-        return
-    wa = score.get("events_won_a", 0)
-    wb = score.get("events_won_b", 0)
-    team_a_abbr = match.get("team_a", {}).get("abbr", "Team A")
-    team_b_abbr = match.get("team_b", {}).get("abbr", "Team B")
-    events = score.get("events", [])
-    completed_events = [e for e in events if e.get("status") == "completed"]
-    remaining_events = [e for e in events if e.get("status") != "completed"]
-    
-    if wa > wb:
-        score["lead_summary"] = f"{team_a_abbr} leads {wa} - {wb}"
-        if remaining_events:
-            next_ev = remaining_events[0]
-            day_str = f" ({next_ev.get('day_label')})" if next_ev.get('day_label') else ""
-            score["lead_detail"] = f"{team_a_abbr} leads {wa} - {wb} · {len(completed_events)}/{len(events)} events played · Next: {next_ev['name']}{day_str}"
+def _handle_carrom_action(match: dict[str, Any], action: dict[str, Any]):
+    score = match["score"]
+    act = action.get("type")
+    team = action.get("team", "team_a")
+
+    if act == "points":
+        delta = int(action.get("delta", 1))
+        target_key = f"score_{team}"
+        curr = score.get(target_key, 0)
+        score[target_key] = max(0, curr + delta)
+        pa = score.get("score_team_a", 0)
+        pb = score.get("score_team_b", 0)
+        t_name = match[team]["abbr"] if team in match else team
+
+        match["commentary"].append({
+            "time": datetime.utcnow().strftime("%H:%M"),
+            "ball": f"B{score.get('current_board', 1)}",
+            "text": f"{'+' if delta > 0 else ''}{delta} pts to {t_name}! Total: {pa} - {pb}.",
+            "badge": "🎯 POINTS",
+            "type": "carrom_pts"
+        })
+
+        if score.get("score_team_a", 0) >= 29 or score.get("score_team_b", 0) >= 29:
+            winner = "team_a" if score.get("score_team_a", 0) >= 29 else "team_b"
+            match["status"] = "completed"
+            match["winner"] = winner
+            match["winner_code"] = match[winner]["code"]
+            match["winner_name"] = match[winner]["abbr"]
+            match["result"] = f"{match[winner]['abbr']} won the Carrom Match ({score.get('score_team_a')} - {score.get('score_team_b')})!"
+            match["completed_at"] = datetime.utcnow().isoformat()
+
+    elif act == "end_board":
+        b_num = score.get("current_board", 1)
+        score.setdefault("boards", []).append({
+            "board": b_num,
+            "score_a": score.get("score_team_a", 0),
+            "score_b": score.get("score_team_b", 0)
+        })
+        if b_num >= 8:
+            pa = score.get("score_team_a", 0)
+            pb = score.get("score_team_b", 0)
+            winner = "team_a" if pa > pb else ("team_b" if pb > pa else "draw")
+            match["status"] = "completed"
+            match["winner"] = winner
+            if winner != "draw":
+                match["winner_code"] = match[winner]["code"]
+                match["winner_name"] = match[winner]["abbr"]
+                match["result"] = f"{match[winner]['abbr']} won on 8 boards ({pa} - {pb})!"
+            else:
+                match["winner_code"] = "draw"
+                match["winner_name"] = "Draw"
+                match["result"] = f"Match drawn after 8 boards ({pa} - {pb})!"
+            match["completed_at"] = datetime.utcnow().isoformat()
         else:
-            score["lead_detail"] = f"{team_a_abbr} won the tie {wa} - {wb}"
-    elif wb > wa:
-        score["lead_summary"] = f"{team_b_abbr} leads {wb} - {wa}"
-        if remaining_events:
-            next_ev = remaining_events[0]
-            day_str = f" ({next_ev.get('day_label')})" if next_ev.get('day_label') else ""
-            score["lead_detail"] = f"{team_b_abbr} leads {wb} - {wa} · {len(completed_events)}/{len(events)} events played · Next: {next_ev['name']}{day_str}"
-        else:
-            score["lead_detail"] = f"{team_b_abbr} won the tie {wb} - {wa}"
-    else:
-        score["lead_summary"] = f"Tied {wa} - {wb}"
-        if completed_events and remaining_events:
-            next_ev = remaining_events[0]
-            day_str = f" ({next_ev.get('day_label')})" if next_ev.get('day_label') else ""
-            score["lead_detail"] = f"Tied {wa} - {wb} · {len(completed_events)}/{len(events)} events played · Next: {next_ev['name']}{day_str}"
-        elif not completed_events:
-            score["lead_detail"] = f"Tie scheduled across multiple days ({len(events)} events total)"
-        else:
-            score["lead_detail"] = f"Tie finished level: {wa} - {wb}"
+            score["current_board"] = b_num + 1
+            match["commentary"].append({
+                "time": datetime.utcnow().strftime("%H:%M"),
+                "ball": f"Board {b_num}",
+                "text": f"Board {b_num} completed. Moving to Board {b_num + 1}.",
+                "badge": "NEXT BOARD",
+                "type": "board_next"
+            })
 
 
 def _handle_racquet_action(match: dict[str, Any], action: dict[str, Any]):
-    score = match["score"]
-    act = action.get("type")
-    
-    # 0. Carrom Board Recording
-    if act == "record_board":
-        board_num = int(action.get("board_num", len(score.get("boards", [])) + 1))
-        winner = action.get("winner", "team_a")
-        white_pts = int(action.get("white_pts", 0))
-        black_pts = int(action.get("black_pts", 0))
-        queen = action.get("queen", "none")
-        net_pts = int(action.get("net_points", 1))
-        
-        prev_a = score.get("boards", [])[-1]["score_a"] if score.get("boards") else 0
-        prev_b = score.get("boards", [])[-1]["score_b"] if score.get("boards") else 0
-        new_a = prev_a + (net_pts if winner == "team_a" else 0)
-        new_b = prev_b + (net_pts if winner == "team_b" else 0)
-        
-        score.setdefault("boards", []).append({
-            "board": board_num,
-            "winner": winner,
-            "white_pts": white_pts,
-            "black_pts": black_pts,
-            "queen": queen,
-            "net_points": net_pts,
-            "score_a": new_a,
-            "score_b": new_b
-        })
-        score["current_board"] = board_num + 1
-        w_team = match[winner]["abbr"] if winner in match else winner
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": f"Board {board_num}",
-            "text": f"BOARD {board_num} FINISHED: Won by {w_team} (+{net_pts} pts)! Cumulative: {new_a} - {new_b}.",
-            "badge": "🎯 BOARD WON",
-            "type": "board_win"
-        })
-        return
-
-    ev_idx = int(action.get("event_index", score.get("current_event_idx", 0)))
-    if ev_idx >= len(score.get("events", [])):
-        ev_idx = 0
-    event = score["events"][ev_idx]
-
-    # 1. Activate a specific sub-event on any match day
-    if act == "activate_event":
-        score["current_event_idx"] = ev_idx
-        event["status"] = "live"
-        day_str = f" [{event.get('day_label', 'Today')}]" if event.get("day_label") else ""
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": event["name"],
-            "text": f"Now Active on Court: {event['name']}{day_str}! Point scoring is now live.",
-            "badge": "EVENT LIVE",
-            "type": "event_start"
-        })
-        _update_tie_lead_summary(match)
-        return
-
-    # 2. Update sub-event scheduling metadata or participating players
-    elif act == "update_event_meta":
-        if "day_label" in action:
-            event["day_label"] = action["day_label"]
-        if "scheduled_date" in action:
-            event["scheduled_date"] = action["scheduled_date"]
-        if "players_a" in action:
-            event["players_a"] = action["players_a"]
-        if "players_b" in action:
-            event["players_b"] = action["players_b"]
-        if "status" in action:
-            event["status"] = action["status"]
-        _update_tie_lead_summary(match)
-        return
-
-    # 3. Direct recording of an event result
-    elif act == "record_event_result":
-        winner = action.get("winner")  # "team_a" or "team_b"
-        sets_a = int(action.get("sets_a", 0))
-        sets_b = int(action.get("sets_b", 0))
-        set_history = action.get("set_history", [])
-        
-        event["winner"] = winner
-        event["sets_a"] = sets_a
-        event["sets_b"] = sets_b
-        event["set_history"] = set_history
-        event["status"] = "completed"
-        
-        sets_str = ", ".join(f"{s.get('a')}-{s.get('b')}" for s in set_history) if set_history else f"{sets_a}-{sets_b}"
-        w_team = match[winner]["abbr"] if winner in match else winner
-        event["result_text"] = f"{w_team} won ({sets_str})"
-        
-        score["events_won_a"] = sum(1 for e in score["events"] if e.get("winner") == "team_a")
-        score["events_won_b"] = sum(1 for e in score["events"] if e.get("winner") == "team_b")
-        _update_tie_lead_summary(match)
-        
-        day_str = f" on {event.get('day_label')}" if event.get("day_label") else ""
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": event["name"],
-            "text": f"EVENT RESULT RECORDED: {w_team} wins {event['name']}{day_str} ({sets_str})! Tie Standing: {score['lead_summary']}.",
-            "badge": "EVENT RESULT",
-            "type": "event_win"
-        })
-        
-        needed = score.get("events_to_win", 3)
-        if score["events_won_a"] >= needed or score["events_won_b"] >= needed:
-            m_winner = "team_a" if score["events_won_a"] >= needed else "team_b"
-            match["status"] = "completed"
-            match["winner"] = m_winner
-            match["winner_code"] = match[m_winner]["code"]
-            match["winner_name"] = match[m_winner]["abbr"]
-            match["result"] = f"{match[m_winner]['abbr']} won the team tie {max(score['events_won_a'], score['events_won_b'])} - {min(score['events_won_a'], score['events_won_b'])}!"
-            match["completed_at"] = datetime.utcnow().isoformat()
-        return
-
-    # 4. Pause tie until next day
-    elif act == "pause_tie":
-        pause_note = action.get("note", "Tie paused. Resuming on next scheduled day.")
-        event["status"] = "paused"
-        score["pause_notice"] = pause_note
-        _update_tie_lead_summary(match)
-        match["commentary"].append({
-            "time": datetime.utcnow().strftime("%H:%M"),
-            "ball": "PAUSE",
-            "text": f"TIE PAUSED: {pause_note} Standings: {score['lead_summary']}.",
-            "badge": "⏸️ PAUSED",
-            "type": "pause"
-        })
-        return
-
-    # 5. Live point-by-point scoring
-    elif act == "point":
-        team = action.get("team", "team_a")
-        if event["status"] != "live":
-            event["status"] = "live"
-
-        if team == "team_a":
-            event["current_points_a"] += 1
-        else:
-            event["current_points_b"] += 1
-            
-        pa = event["current_points_a"]
-        pb = event["current_points_b"]
-        target = score.get("points_target", 15)
-        
-        # Golden point cap
-        golden_cap = 21 if match["sport_id"] == "badminton" else 999
-        won_set = False
-        if (pa >= target or pb >= target) and abs(pa - pb) >= 2:
-            won_set = True
-        elif pa == golden_cap or pb == golden_cap:
-            won_set = True
-            
-        if won_set:
-            set_winner = "team_a" if pa > pb else "team_b"
-            event["set_history"].append({"a": pa, "b": pb})
-            if set_winner == "team_a":
-                event["sets_a"] += 1
-            else:
-                event["sets_b"] += 1
-            event["current_points_a"] = 0
-            event["current_points_b"] = 0
-
-            # Event winner if 2 sets won
-            if event["sets_a"] >= 2 or event["sets_b"] >= 2:
-                event["winner"] = "team_a" if event["sets_a"] >= 2 else "team_b"
-                event["status"] = "completed"
-                sets_str = ", ".join(f"{s.get('a')}-{s.get('b')}" for s in event["set_history"])
-                w_team = match[event["winner"]]["abbr"]
-                event["result_text"] = f"{w_team} won ({sets_str})"
-                
-                score["events_won_a"] = sum(1 for e in score["events"] if e.get("winner") == "team_a")
-                score["events_won_b"] = sum(1 for e in score["events"] if e.get("winner") == "team_b")
-                _update_tie_lead_summary(match)
-                
-                match["commentary"].append({
-                    "time": datetime.utcnow().strftime("%H:%M"),
-                    "ball": event["name"],
-                    "text": f"EVENT COMPLETED: {w_team} wins {event['name']} ({sets_str})! Standings: {score['lead_summary']}.",
-                    "badge": "EVENT VICTORY",
-                    "type": "event_win"
-                })
-
-                needed = score.get("events_to_win", 3)
-                if score["events_won_a"] >= needed or score["events_won_b"] >= needed:
-                    m_winner = "team_a" if score["events_won_a"] >= needed else "team_b"
-                    match["status"] = "completed"
-                    match["winner"] = m_winner
-                    match["winner_code"] = match[m_winner]["code"]
-                    match["winner_name"] = match[m_winner]["abbr"]
-                    match["result"] = f"{match[m_winner]['abbr']} won the team match by {max(score['events_won_a'], score['events_won_b'])} - {min(score['events_won_a'], score['events_won_b'])} events!"
-                    match["completed_at"] = datetime.utcnow().isoformat()
-                else:
-                    for next_idx, candidate in enumerate(score["events"]):
-                        if candidate.get("status") != "completed":
-                            score["current_event_idx"] = next_idx
-                            break
-            else:
-                match["commentary"].append({
-                    "time": datetime.utcnow().strftime("%H:%M"),
-                    "ball": event["name"],
-                    "text": f"Set {len(event['set_history'])} in {event['name']} won by {match[set_winner]['abbr']} ({pa} - {pb})!",
-                    "badge": "SET WON",
-                    "type": "set_won"
-                })
-        else:
-            match["commentary"].append({
-                "time": datetime.utcnow().strftime("%H:%M"),
-                "ball": event["name"],
-                "text": f"Point in {event['name']} to {match[team]['abbr']}! Current Game: {pa} - {pb}",
-                "badge": "POINT",
-                "type": "point"
-            })
+    _handle_set_sport_action(match, action)
 
 
 def _handle_tow_action(match: dict[str, Any], action: dict[str, Any]):
@@ -1519,48 +1402,32 @@ def calculate_department_standings() -> dict[str, Any]:
         sport_name = m.get("sport_name", "Sport")
         sport_icon = m.get("sport_icon", "🏅")
         
-        # 1. Multi-event sports (Badminton, TT, Carrom): tally individual sub-event wins
-        if sport_type in ["badminton", "table_tennis", "carrom"]:
-            evs = score.get("events", [])
-            for ev in evs:
-                if ev.get("status") == "completed" and ev.get("winner"):
-                    ev_win = ev["winner"]
-                    if ev_win == "team_a" and team_a_code in dept_stats:
-                        dept_stats[team_a_code]["sub_events_won"] += 1
-                        dept_stats[team_a_code]["points"] += 1  # 1 tournament pt per sub-event win
-                    elif ev_win == "team_b" and team_b_code in dept_stats:
-                        dept_stats[team_b_code]["sub_events_won"] += 1
-                        dept_stats[team_b_code]["points"] += 1
-                    if team_a_code in dept_stats:
-                        dept_stats[team_a_code]["sub_events_played"] += 1
-                    if team_b_code in dept_stats:
-                        dept_stats[team_b_code]["sub_events_played"] += 1
-
-            # In-progress lead tracking
-            wa = score.get("events_won_a", 0)
-            wb = score.get("events_won_b", 0)
+        # 1. In-progress lead tracking for set-based sports
+        if sport_type in ["badminton", "table_tennis", "volleyball"]:
+            wa = score.get("sets_team_a", 0)
+            wb = score.get("sets_team_b", 0)
             if status in ["live", "squads_announced", "upcoming"] and (wa > 0 or wb > 0):
                 if wa > wb and team_a_code in dept_stats:
                     dept_stats[team_a_code]["leading_in_active"] += 1
-                    lead_desc = f"{m['team_a']['abbr']} leads {wa} - {wb} vs {m['team_b']['abbr']}"
+                    lead_desc = f"{m['team_a']['abbr']} leads {wa} - {wb} in sets vs {m['team_b']['abbr']}"
                     dept_stats[team_a_code]["active_leads"].append({
                         "match_id": m["id"], "sport_name": sport_name, "sport_icon": sport_icon, "desc": lead_desc
                     })
                     active_ties_leads.append({
                         "match_id": m["id"], "sport_name": sport_name, "sport_icon": sport_icon,
                         "leader": m['team_a']['abbr'], "leader_code": team_a_code,
-                        "lead_text": lead_desc, "summary": score.get("lead_detail", lead_desc)
+                        "lead_text": lead_desc, "summary": lead_desc
                     })
                 elif wb > wa and team_b_code in dept_stats:
                     dept_stats[team_b_code]["leading_in_active"] += 1
-                    lead_desc = f"{m['team_b']['abbr']} leads {wb} - {wa} vs {m['team_a']['abbr']}"
+                    lead_desc = f"{m['team_b']['abbr']} leads {wb} - {wa} in sets vs {m['team_a']['abbr']}"
                     dept_stats[team_b_code]["active_leads"].append({
                         "match_id": m["id"], "sport_name": sport_name, "sport_icon": sport_icon, "desc": lead_desc
                     })
                     active_ties_leads.append({
                         "match_id": m["id"], "sport_name": sport_name, "sport_icon": sport_icon,
                         "leader": m['team_b']['abbr'], "leader_code": team_b_code,
-                        "lead_text": lead_desc, "summary": score.get("lead_detail", lead_desc)
+                        "lead_text": lead_desc, "summary": lead_desc
                     })
 
         # 2. Overall Match Status & Points

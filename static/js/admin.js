@@ -397,14 +397,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Volleyball Points & Timeouts
-  document.querySelectorAll('.btn-vb-point').forEach(btn => {
+  // Tactile Point Scoring (+1 / -1) for Set-Based Sports (Badminton, Table Tennis, Volleyball)
+  document.querySelectorAll('.btn-point-action').forEach(btn => {
     btn.addEventListener('click', () => {
       const team = btn.getAttribute('data-team');
-      sendScoreAction({ type: 'point', team: team });
+      const delta = parseInt(btn.getAttribute('data-delta') || '1', 10);
+      sendScoreAction({ type: 'point', team: team, delta: delta });
     });
   });
 
+  // Switch Server
+  const btnSwapServer = document.getElementById('btn-swap-server');
+  if (btnSwapServer) {
+    btnSwapServer.addEventListener('click', () => {
+      sendScoreAction({ type: 'swap_server' });
+    });
+  }
+
+  // Finish Set
+  const btnConcludeSet = document.getElementById('btn-conclude-set');
+  if (btnConcludeSet) {
+    btnConcludeSet.addEventListener('click', () => {
+      if (confirm('Conclude the current set and move to next set?')) {
+        sendScoreAction({ type: 'end_set' });
+      }
+    });
+  }
+
+  // Volleyball Timeout
   document.querySelectorAll('.btn-vb-timeout').forEach(btn => {
     btn.addEventListener('click', () => {
       const team = btn.getAttribute('data-team');
@@ -412,135 +432,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Racquet / Carrom Points
-  document.querySelectorAll('.btn-racquet-point').forEach(btn => {
+  // Carrom Points & Boards
+  document.querySelectorAll('.btn-carrom-add').forEach(btn => {
     btn.addEventListener('click', () => {
       const team = btn.getAttribute('data-team');
-      const evIdx = parseInt(btn.getAttribute('data-ev-idx') || '0', 10);
-      sendScoreAction({ type: 'point', team: team, event_index: evIdx });
+      const pts = parseInt(btn.getAttribute('data-pts') || '1', 10);
+      sendScoreAction({ type: 'points', team: team, delta: pts });
     });
   });
 
-  // Activate specific rubber to score live
-  document.querySelectorAll('.btn-activate-rubber').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const evIdx = parseInt(btn.getAttribute('data-ev-idx') || '0', 10);
-      sendScoreAction({ type: 'activate_event', event_index: evIdx });
-    });
-  });
-
-  // Pause tie until next scheduled day
-  const btnPauseTie = document.getElementById('btn-pause-tie-day');
-  if (btnPauseTie) {
-    btnPauseTie.addEventListener('click', () => {
-      const note = prompt('Enter note for pause (e.g. Day 1 complete. Tie resumes on Day 2 with Boys Doubles):', 'Day 1 rubbers completed. Tie resumes on scheduled day.') || 'Tie paused.';
-      sendScoreAction({ type: 'pause_tie', note: note });
-    });
-  }
-
-  // Quick direct result logger modal
-  const modalQuickRes = document.getElementById('modal-quick-result');
-  const btnCloseQuickRes = document.getElementById('btn-close-quick-res');
-  const btnCancelQuickRes = document.getElementById('btn-cancel-quick-res');
-  const formQuickRes = document.getElementById('form-quick-result');
-
-  function closeQuickResModal() {
-    if (modalQuickRes) modalQuickRes.classList.add('d-none');
-  }
-  if (btnCloseQuickRes) btnCloseQuickRes.addEventListener('click', closeQuickResModal);
-  if (btnCancelQuickRes) btnCancelQuickRes.addEventListener('click', closeQuickResModal);
-
-  document.querySelectorAll('.btn-quick-result-trigger').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const evIdx = btn.getAttribute('data-ev-idx');
-      const evName = btn.getAttribute('data-ev-name');
-      document.getElementById('quick-res-idx').value = evIdx;
-      const label = document.getElementById('quick-res-event-label');
-      if (label) label.textContent = `Logging official result for Rubber ${(parseInt(evIdx, 10) + 1)}: ${evName}`;
-      if (modalQuickRes) modalQuickRes.classList.remove('d-none');
-    });
-  });
-
-  if (formQuickRes) {
-    formQuickRes.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const evIdx = parseInt(document.getElementById('quick-res-idx').value, 10);
-      const winner = document.getElementById('quick-res-winner').value;
-      const setsA = parseInt(document.getElementById('quick-res-sets-a').value, 10);
-      const setsB = parseInt(document.getElementById('quick-res-sets-b').value, 10);
-      
-      const s1 = document.getElementById('quick-res-set1').value.trim();
-      const s2 = document.getElementById('quick-res-set2').value.trim();
-      const s3 = document.getElementById('quick-res-set3').value.trim();
-
-      const setHistory = [];
-      [s1, s2, s3].forEach(st => {
-        if (st && st.includes('-')) {
-          const parts = st.split('-');
-          setHistory.push({ a: parseInt(parts[0], 10) || 0, b: parseInt(parts[1], 10) || 0 });
-        }
-      });
-
-      sendScoreAction({
-        type: 'record_event_result',
-        event_index: evIdx,
-        winner: winner,
-        sets_a: setsA,
-        sets_b: setsB,
-        set_history: setHistory
-      });
-
-      closeQuickResModal();
-    });
-  }
-
-  // Edit rubber day and athletes metadata modal
-  const modalRubberMeta = document.getElementById('modal-rubber-meta');
-  const btnCloseRubberMeta = document.getElementById('btn-close-rubber-meta');
-  const btnCancelRubberMeta = document.getElementById('btn-cancel-rubber-meta');
-  const formRubberMeta = document.getElementById('form-rubber-meta');
-
-  function closeRubberMetaModal() {
-    if (modalRubberMeta) modalRubberMeta.classList.add('d-none');
-  }
-  if (btnCloseRubberMeta) btnCloseRubberMeta.addEventListener('click', closeRubberMetaModal);
-  if (btnCancelRubberMeta) btnCancelRubberMeta.addEventListener('click', closeRubberMetaModal);
-
-  document.querySelectorAll('.btn-edit-rubber-meta').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const evIdx = btn.getAttribute('data-ev-idx');
-      const evDay = btn.getAttribute('data-ev-day') || 'Day 1';
-      const pA = btn.getAttribute('data-players-a') || '';
-      const pB = btn.getAttribute('data-players-b') || '';
-
-      document.getElementById('rubber-meta-idx').value = evIdx;
-      document.getElementById('rubber-meta-day').value = evDay;
-      document.getElementById('rubber-meta-players-a').value = pA;
-      document.getElementById('rubber-meta-players-b').value = pB;
-
-      if (modalRubberMeta) modalRubberMeta.classList.remove('d-none');
-    });
-  });
-
-  if (formRubberMeta) {
-    formRubberMeta.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const evIdx = parseInt(document.getElementById('rubber-meta-idx').value, 10);
-      const dayVal = document.getElementById('rubber-meta-day').value;
-      const statusVal = document.getElementById('rubber-meta-status').value;
-      const pA = document.getElementById('rubber-meta-players-a').value.trim();
-      const pB = document.getElementById('rubber-meta-players-b').value.trim();
-
-      sendScoreAction({
-        type: 'update_event_meta',
-        event_index: evIdx,
-        day_label: dayVal,
-        status: statusVal,
-        players_a: pA,
-        players_b: pB
-      });
-
-      closeRubberMetaModal();
+  const btnNextCarromBoard = document.getElementById('btn-next-carrom-board');
+  if (btnNextCarromBoard) {
+    btnNextCarromBoard.addEventListener('click', () => {
+      if (confirm('Conclude this board and record cumulative score?')) {
+        sendScoreAction({ type: 'end_board' });
+      }
     });
   }
 
@@ -592,54 +498,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Carrom Board Modal Handlers (AICF Standard)
-  const modalCarrom = document.getElementById('modal-carrom-board');
-  const btnCloseCarrom = document.getElementById('btn-close-carrom-board');
-  const btnCancelCarrom = document.getElementById('btn-cancel-carrom-board');
-  const formCarrom = document.getElementById('form-carrom-board');
-
-  function closeCarromModal() {
-    if (modalCarrom) modalCarrom.classList.add('d-none');
-  }
-  if (btnCloseCarrom) btnCloseCarrom.addEventListener('click', closeCarromModal);
-  if (btnCancelCarrom) btnCancelCarrom.addEventListener('click', closeCarromModal);
-
-  document.querySelectorAll('.btn-carrom-board-trigger').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const evIdx = btn.getAttribute('data-ev-idx') || '0';
-      const rubIdxInput = document.getElementById('carrom-rubber-idx');
-      if (rubIdxInput) rubIdxInput.value = evIdx;
-      if (modalCarrom) modalCarrom.classList.remove('d-none');
-    });
-  });
-
-  if (formCarrom) {
-    formCarrom.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const evIdx = parseInt(document.getElementById('carrom-rubber-idx').value || '0', 10);
-      const boardNum = parseInt(document.getElementById('carrom-board-num').value || '1', 10);
-      const winner = document.getElementById('carrom-board-winner').value;
-      const whitePts = parseInt(document.getElementById('carrom-white-pts').value || '0', 10);
-      const blackPts = parseInt(document.getElementById('carrom-black-pts').value || '0', 10);
-      const queen = document.getElementById('carrom-queen-covered').value;
-      const netPts = parseInt(document.getElementById('carrom-net-pts').value || '1', 10);
-
-      sendScoreAction({
-        type: 'record_board',
-        event_index: evIdx,
-        board_num: boardNum,
-        winner: winner,
-        white_pts: whitePts,
-        black_pts: blackPts,
-        queen: queen,
-        net_points: netPts
-      });
-
-      closeCarromModal();
-      const nextBoardInput = document.getElementById('carrom-board-num');
-      if (nextBoardInput) nextBoardInput.value = boardNum + 1;
-    });
-  }
 
   // Undo button
   const btnUndo = document.getElementById('btn-undo-action');
@@ -748,14 +606,42 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreText.textContent = `${match.team_a.abbr} ${match.score.team_a_score} : ${match.score.team_b_score} ${match.team_b.abbr}`;
       } else if (match.sport_type === 'penalty_shootout') {
         scoreText.textContent = `${match.team_a.abbr} ${match.score.team_a_score} : ${match.score.team_b_score} ${match.team_b.abbr} (PK)`;
-      } else if (match.sport_type === 'volleyball') {
-        scoreText.textContent = `${match.team_a.abbr} ${match.score.sets_team_a} : ${match.score.sets_team_b} ${match.team_b.abbr} (Sets)`;
-      } else if (match.sport_type === 'tug_of_war') {
-        scoreText.textContent = `${match.team_a.abbr} ${match.score.pulls_team_a} : ${match.score.pulls_team_b} ${match.team_b.abbr} (Pulls)`;
-      } else if (match.sport_type === 'basketball_shootout') {
-        scoreText.textContent = `${match.team_a.abbr} ${match.score.score_team_a} : ${match.score.score_team_b} ${match.team_b.abbr} (Pts)`;
-      } else if (['badminton', 'table_tennis', 'carrom'].includes(match.sport_type)) {
-        scoreText.textContent = `${match.team_a.abbr} ${match.score.events_won_a} : ${match.score.events_won_b} ${match.team_b.abbr} (Events)`;
+      } else if (['volleyball', 'badminton', 'table_tennis'].includes(match.sport_type)) {
+        const curSet = (match.score.set_scores && match.score.set_scores.length > 0) ? match.score.set_scores[match.score.set_scores.length - 1] : { team_a: 0, team_b: 0 };
+        scoreText.textContent = `${match.team_a.abbr} ${match.score.sets_team_a || 0} : ${match.score.sets_team_b || 0} ${match.team_b.abbr} (Set ${match.score.current_set}: ${curSet.team_a}-${curSet.team_b})`;
+
+        const ptsA = document.getElementById('display-pts-a');
+        if (ptsA) ptsA.textContent = curSet.team_a;
+        const ptsB = document.getElementById('display-pts-b');
+        if (ptsB) ptsB.textContent = curSet.team_b;
+
+        const setsA = document.getElementById('admin-sets-a');
+        if (setsA) setsA.textContent = match.score.sets_team_a || 0;
+        const setsB = document.getElementById('admin-sets-b');
+        if (setsB) setsB.textContent = match.score.sets_team_b || 0;
+
+        const badgeSet = document.getElementById('badge-current-set');
+        if (badgeSet) badgeSet.textContent = match.score.current_set;
+
+        const badgeServer = document.getElementById('badge-server');
+        if (badgeServer) {
+          const sTeam = match.score.server === 'team_b' ? match.team_b.abbr : match.team_a.abbr;
+          badgeServer.textContent = `🏸 Serving: ${sTeam}`;
+        }
+
+        const histCont = document.getElementById('set-history-container');
+        if (histCont && match.score.set_scores) {
+          histCont.innerHTML = '<span style="font-weight: 700;">Set Breakdown: </span>' + 
+            match.score.set_scores.map(s => `<span class="badge" style="background: rgba(0,0,0,0.06); color: var(--text-main); font-weight: 700; margin-left: 0.35rem;">Set ${s.set}: ${s.team_a}-${s.team_b}${s.winner ? ' (' + match[s.winner].abbr + ')' : ''}</span>`).join('');
+        }
+      } else if (match.sport_type === 'carrom') {
+        scoreText.textContent = `${match.team_a.abbr} ${match.score.score_team_a || 0} : ${match.score.score_team_b || 0} ${match.team_b.abbr} (Board ${match.score.current_board || 1})`;
+        const carromA = document.getElementById('display-carrom-a');
+        if (carromA) carromA.textContent = match.score.score_team_a || 0;
+        const carromB = document.getElementById('display-carrom-b');
+        if (carromB) carromB.textContent = match.score.score_team_b || 0;
+        const boardEl = document.getElementById('admin-current-board');
+        if (boardEl) boardEl.textContent = match.score.current_board || 1;
       }
     }
 

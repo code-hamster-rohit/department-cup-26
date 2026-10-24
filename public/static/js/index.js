@@ -355,13 +355,55 @@ document.addEventListener('DOMContentLoaded', () => {
         if (teamBScore) teamBScore.textContent = match.score.team_b_score;
       }
 
-      // Sets & points updates
+      // Sets & points updates (Badminton, Table Tennis, Volleyball)
       if (['volleyball', 'badminton', 'table_tennis'].includes(match.sport_type)) {
-        const setsElems = broadcastCard.querySelectorAll('.score-sets');
-        if (setsElems.length >= 2) {
-          setsElems[0].textContent = match.score.sets_team_a || 0;
-          setsElems[1].textContent = match.score.sets_team_b || 0;
+        const curSet = (match.score.set_scores && match.score.set_scores.length > 0)
+          ? match.score.set_scores[match.score.set_scores.length - 1]
+          : { team_a: 0, team_b: 0 };
+
+        const audSetsA = document.getElementById('aud-sets-a');
+        if (audSetsA) audSetsA.textContent = match.score.sets_team_a || 0;
+        const audSetsB = document.getElementById('aud-sets-b');
+        if (audSetsB) audSetsB.textContent = match.score.sets_team_b || 0;
+
+        const audPtsA = document.getElementById('aud-pts-a');
+        if (audPtsA) {
+          const isServerA = match.score.server !== 'team_b';
+          audPtsA.innerHTML = `${curSet.team_a} ${isServerA ? '<span class="server-shuttle" title="Serving">🏸</span>' : ''}`;
         }
+
+        const audPtsB = document.getElementById('aud-pts-b');
+        if (audPtsB) {
+          const isServerB = match.score.server === 'team_b';
+          audPtsB.innerHTML = `${isServerB ? '<span class="server-shuttle" title="Serving">🏸</span> ' : ''}${curSet.team_b}`;
+        }
+
+        const audSetInfo = document.getElementById('aud-set-info');
+        if (audSetInfo) {
+          audSetInfo.textContent = `Set ${match.score.current_set} (Target: ${match.score.points_to_win_set} pts)`;
+        }
+
+        const deuceBadge = document.getElementById('aud-deuce-badge');
+        if (deuceBadge) {
+          deuceBadge.style.display = match.score.in_deuce ? 'inline-block' : 'none';
+        }
+
+        const histCont = document.getElementById('aud-set-history');
+        if (histCont && match.score.set_scores) {
+          histCont.innerHTML = match.score.set_scores.map(s => `
+            <span class="set-chip">Set ${s.set}: ${s.team_a}-${s.team_b}${s.winner ? ' (' + (match[s.winner]?.abbr || s.winner.toUpperCase()) + ')' : ''}</span>
+          `).join('');
+        }
+      }
+
+      // Carrom updates
+      if (match.sport_type === 'carrom') {
+        const audCarromA = document.getElementById('aud-carrom-a');
+        if (audCarromA) audCarromA.textContent = match.score.score_team_a || 0;
+        const audCarromB = document.getElementById('aud-carrom-b');
+        if (audCarromB) audCarromB.textContent = match.score.score_team_b || 0;
+        const audCarromBoard = document.getElementById('aud-carrom-board');
+        if (audCarromBoard) audCarromBoard.textContent = `🎯 Board ${match.score.current_board || 1} of 8`;
       }
 
       // Commentary updates

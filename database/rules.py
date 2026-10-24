@@ -27,15 +27,15 @@ SPORTS_CONFIG: dict[str, dict[str, Any]] = {
         "name": "Badminton",
         "category": "Racquet",
         "icon": "🏸",
-        "main_count": 4,
+        "main_count": 2,
         "sub_max": 2,
-        "formula": "4 + 2",
-        "squad_notation": "4 Playing + up to 2 Substitutes",
-        "squad_badge": "4 Playing + up to 2 Subs",
-        "gender_badge": "👫 Team Rubber Tie",
-        "gender_rule_desc": "Squad includes players for singles and doubles rubbers.",
-        "description": "4 Playing Players + up to 2 Substitutes. 5-rubber team tie: Boys' Singles, Girls' Singles, Boys' Doubles, Girls' Doubles, Mixed Doubles.",
-        "default_gender": "Mixed",
+        "formula": "1-2 Players",
+        "squad_notation": "Singles (1) or Doubles (2)",
+        "squad_badge": "Singles / Doubles",
+        "gender_badge": "🏸 Badminton Match",
+        "gender_rule_desc": "Admin enters playing athletes on the spot (Singles: 1 player, Doubles: 2 players).",
+        "description": "Best of 3 sets to 21 points (or 15 points per agreement). First to win 2 sets wins the match.",
+        "default_gender": "Open",
     },
     "basketball": {
         "id": "basketball",
@@ -77,13 +77,13 @@ SPORTS_CONFIG: dict[str, dict[str, Any]] = {
         "icon": "🎯",
         "main_count": 2,
         "sub_max": 2,
-        "formula": "2 + 2",
-        "squad_notation": "2 Playing + up to 2 Substitutes",
-        "squad_badge": "2 Playing + up to 2 Subs",
-        "gender_badge": "🎯 Board Tie",
-        "gender_rule_desc": "Squad members compete in Singles 1, Doubles, and Singles 2 rubbers.",
-        "description": "Best of 3 rubbers (Singles 1, Doubles, Singles 2). Target: 29 points or 8 boards.",
-        "default_gender": "Mixed",
+        "formula": "1-2 Players",
+        "squad_notation": "Singles (1) or Doubles (2)",
+        "squad_badge": "Singles / Doubles",
+        "gender_badge": "🎯 Carrom Match",
+        "gender_rule_desc": "Admin enters playing athletes on the spot (Singles: 1 player, Doubles: 2 players).",
+        "description": "Single match played up to 29 points or 8 boards. First side to 29 points wins.",
+        "default_gender": "Open",
     },
     "cricket": {
         "id": "cricket",
@@ -171,14 +171,14 @@ SPORTS_CONFIG: dict[str, dict[str, Any]] = {
         "name": "Table Tennis",
         "category": "Racquet",
         "icon": "🏓",
-        "main_count": 3,
+        "main_count": 2,
         "sub_max": 2,
-        "formula": "3 + 2",
-        "squad_notation": "3 Playing + up to 2 Substitutes",
-        "squad_badge": "3 Playing + up to 2 Subs",
-        "gender_badge": "🏓 3-Rubber Team Tie",
-        "gender_rule_desc": "Squad members compete in Singles 1, Doubles, and Singles 2 rubbers.",
-        "description": "Best of 3 rubbers (Singles 1, Doubles, Singles 2). Each rubber is best of 3 sets to 11 points.",
+        "formula": "1-2 Players",
+        "squad_notation": "Singles (1) or Doubles (2)",
+        "squad_badge": "Singles / Doubles",
+        "gender_badge": "🏓 Table Tennis Match",
+        "gender_rule_desc": "Admin enters playing athletes on the spot (Singles: 1 player, Doubles: 2 players).",
+        "description": "Best of 3 sets to 11 points (2-point lead required at deuce). First to win 2 sets wins the match.",
         "default_gender": "Open",
     },
     "tug_of_war": {
@@ -225,38 +225,30 @@ RULES_DATA: dict[str, dict[str, Any]] = {
         "category": "Racquet",
         "icon": "🏸",
         "squad": {
-            "playing_count": 4,
+            "playing_count": 2,
             "max_substitutes": 2,
-            "notation": "4 Playing + up to 2 Substitutes",
+            "notation": "1-2 Players (Singles or Doubles)",
             "rules": [
-                "Squad consists of 4 playing members + up to 2 substitutes.",
-                "Players compete in 5 rubbers across scheduled tournament days.",
-                "Substitutions permitted between rubbers."
+                "Singles: 1 player per side. Doubles: 2 players per side.",
+                "Admin enters player names during match setup."
             ]
         },
         "match_format": {
-            "events_to_win": 3,
-            "points_per_set": 15,
-            "max_points_cap": 21,
             "sets_to_win": 2,
-            "events_list": [
-                {"id": "boys_singles", "name": "Boys' Singles", "type": "singles", "day_label": "Day 1"},
-                {"id": "girls_singles", "name": "Girls' Singles", "type": "singles", "day_label": "Day 1"},
-                {"id": "boys_doubles", "name": "Boys' Doubles", "type": "doubles", "day_label": "Day 2"},
-                {"id": "girls_doubles", "name": "Girls' Doubles", "type": "doubles", "day_label": "Day 2"},
-                {"id": "mixed_doubles", "name": "Mixed Doubles", "type": "mixed", "day_label": "Day 3"}
-            ]
+            "max_sets": 3,
+            "points_per_set": 21,
+            "cap_points": 30
         },
         "specific_regulations": [
             {
                 "title": "Match Format",
-                "badge": "🏸 5 RUBBERS",
-                "desc": "Tie consists of 5 sub-events: Boys' Singles, Girls' Singles, Boys' Doubles, Girls' Doubles, Mixed Doubles. First department to win 3 rubbers wins the tie."
+                "badge": "🏸 BEST OF 3 SETS",
+                "desc": "Single match: Best of 3 sets to 21 points (or 15 points by agreement). First to win 2 sets wins the match."
             },
             {
                 "title": "Scoring & Deuce",
-                "badge": "15 PTS (CAP 21)",
-                "desc": "Each set is played to 15 points. At 14-all, side leading by 2 wins; golden point cap at 21."
+                "badge": "21 PTS (DEUCE +2)",
+                "desc": "At 20-all, side leading by 2 wins; golden point cap at 30."
             }
         ]
     },
@@ -354,33 +346,27 @@ RULES_DATA: dict[str, dict[str, Any]] = {
         "icon": "🎯",
         "squad": {
             "playing_count": 2,
-            "max_substitutes": 2,
-            "notation": "2 Playing + up to 2 Substitutes",
+            "max_substitutes": 1,
+            "notation": "1-2 Players (Singles or Doubles)",
             "rules": [
-                "Squad consists of 2 playing members + up to 2 substitutes.",
-                "Competes in 3 rubbers: Singles 1, Doubles, Singles 2."
+                "Singles: 1 player per side. Doubles: 2 players per side.",
+                "Admin enters player names during match setup."
             ]
         },
         "match_format": {
-            "events_to_win": 2,
             "points_target": 29,
-            "max_boards": 8,
-            "events_list": [
-                {"id": "singles_1", "name": "Singles 1", "type": "singles", "day_label": "Day 1"},
-                {"id": "doubles", "name": "Doubles", "type": "doubles", "day_label": "Day 2"},
-                {"id": "singles_2", "name": "Singles 2", "type": "singles", "day_label": "Day 2"}
-            ]
+            "max_boards": 8
         },
         "specific_regulations": [
             {
-                "title": "Format",
-                "badge": "🎯 3 RUBBERS",
-                "desc": "Best of 3 rubbers (Singles 1, Doubles, Singles 2). First department to win 2 rubbers wins the match."
+                "title": "Match Format",
+                "badge": "🎯 29 PTS / 8 BOARDS",
+                "desc": "Single match played up to 29 points or a maximum of 8 boards. First side to 29 points wins."
             },
             {
-                "title": "Board Victory",
-                "badge": "29 PTS / 8 BOARDS",
-                "desc": "Each rubber is played to 29 points or a maximum of 8 boards."
+                "title": "Board Scoring",
+                "badge": "QUEEN +3",
+                "desc": "1 pt per opponent carrom piece left on board + 3 bonus pts for queen if covered."
             }
         ]
     },
@@ -567,34 +553,30 @@ RULES_DATA: dict[str, dict[str, Any]] = {
         "category": "Racquet",
         "icon": "🏓",
         "squad": {
-            "playing_count": 3,
+            "playing_count": 2,
             "max_substitutes": 2,
-            "notation": "3 Playing + up to 2 Substitutes",
+            "notation": "1-2 Players (Singles or Doubles)",
             "rules": [
-                "Squad consists of 3 playing members + up to 2 substitutes.",
-                "Competes in 3 rubbers: Singles 1, Doubles, Singles 2."
+                "Singles: 1 player per side. Doubles: 2 players per side.",
+                "Admin enters player names during match setup."
             ]
         },
         "match_format": {
-            "events_to_win": 2,
-            "points_per_set": 11,
             "sets_to_win": 2,
-            "events_list": [
-                {"id": "singles_1", "name": "Singles 1", "type": "singles", "day_label": "Day 1"},
-                {"id": "doubles", "name": "Doubles", "type": "doubles", "day_label": "Day 2"},
-                {"id": "singles_2", "name": "Singles 2", "type": "singles", "day_label": "Day 2"}
-            ]
+            "max_sets": 3,
+            "points_per_set": 11,
+            "cap_points": 15
         },
         "specific_regulations": [
             {
-                "title": "Format",
-                "badge": "🏓 3 RUBBERS",
-                "desc": "Best of 3 rubbers (Singles 1, Doubles, Singles 2). First department to win 2 rubbers wins."
+                "title": "Match Format",
+                "badge": "🏓 BEST OF 3 SETS",
+                "desc": "Single match: Best of 3 sets to 11 points. First to win 2 sets wins the match."
             },
             {
                 "title": "Set Rules",
                 "badge": "11 POINTS (DEUCE +2)",
-                "desc": "Each set to 11 points. 2 points clear needed at 10-all. Best of 3 sets per rubber."
+                "desc": "Each set to 11 points. 2 points clear needed at 10-all."
             }
         ]
     },

@@ -159,11 +159,15 @@
         <div class="clash-banner">
           <!-- Team A -->
           <div class="team-side team-a-side">
-            <div class="team-dept-code dept-color-{{ active_match.team_a.code }}">
-              {{ active_match.team_a.abbr }}
+            <div class="team-dept-code dept-color-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
+              {{ active_match.team_a.abbr if (active_match.team_a is mapping and active_match.team_a.abbr) else (active_match.team_a | upper) }}
             </div>
-            <div class="team-dept-name">{{ active_match.team_a.name }}</div>
-            {% if active_match.squads and active_match.squads.team_a and active_match.squads.team_a.captain %}
+            <div class="team-dept-name">{{ active_match.team_a.name if (active_match.team_a is mapping and active_match.team_a.name) else (active_match.team_a | upper) }}</div>
+            {% if active_match.score and active_match.score.players_a %}
+              <div class="team-athlete-tag" title="Playing Athlete">
+                <i class="fa-solid fa-user-check" style="color: #2563eb;"></i> {{ active_match.score.players_a }}
+              </div>
+            {% elif active_match.squads and active_match.squads.team_a and active_match.squads.team_a.captain %}
               <div class="team-captain-badge">
                 <i class="fa-solid fa-crown"></i> Capt: {{ active_match.squads.team_a.captain }}
               </div>
@@ -205,20 +209,54 @@
                 </div>
 
               {% elif active_match.sport_type in ['volleyball', 'badminton', 'table_tennis'] %}
-                <!-- SETS & POINTS SCOREBOARD -->
-                <div class="live-score-display">
-                  <div class="score-main-line">
-                    <span class="score-sets">{{ active_match.score.sets_team_a or 0 }}</span>
-                    <span class="score-dash">:</span>
-                    <span class="score-sets">{{ active_match.score.sets_team_b or 0 }}</span>
-                    <span class="sets-label">(Sets)</span>
+                <!-- TACTILE SETS & POINTS SCOREBOARD -->
+                {% set cur_set = (active_match.score.set_scores | default([])) | last %}
+                <div class="live-score-display set-sport-display">
+                  <div class="sets-header-bar">
+                    <span class="sets-label">SETS:</span>
+                    <span class="score-sets-big" id="aud-sets-a">{{ active_match.score.sets_team_a or 0 }}</span>
+                    <span class="score-dash">-</span>
+                    <span class="score-sets-big" id="aud-sets-b">{{ active_match.score.sets_team_b or 0 }}</span>
+                    <span style="font-size: 0.72rem; color: var(--text-dim); margin-left: 0.3rem;">(Best of 3)</span>
                   </div>
-                  {% set cur_set = (active_match.score.set_scores | default([])) | last %}
-                  {% if cur_set %}
-                    <div class="score-sub-line">
-                      <span class="set-points-badge">Set {{ active_match.score.current_set }}: {{ cur_set.team_a }} - {{ cur_set.team_b }}</span>
+                  <div class="cur-set-points-row">
+                    <span class="live-points-val team-a-pts" id="aud-pts-a">
+                      {{ cur_set.team_a if cur_set else 0 }}
+                      {% if active_match.score.server != 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-server-a">🏸</span>{% endif %}
+                    </span>
+                    <span class="points-colon" style="color: var(--text-dim); opacity: 0.4;">:</span>
+                    <span class="live-points-val team-b-pts" id="aud-pts-b">
+                      {% if active_match.score.server == 'team_b' %}<span class="server-shuttle" title="Serving" id="aud-server-b">🏸</span>{% endif %}
+                      {{ cur_set.team_b if cur_set else 0 }}
+                    </span>
+                  </div>
+                  <div class="score-sub-line">
+                    <span class="badge badge-set-pill" id="aud-set-info">Set {{ active_match.score.current_set }} (Target: {{ active_match.score.points_to_win_set }} pts)</span>
+                    {% if active_match.score.in_deuce %}
+                      <span class="badge badge-deuce" id="aud-deuce-badge">🔥 DEUCE (Win by 2)</span>
+                    {% endif %}
+                  </div>
+                  {% if active_match.score.set_scores and active_match.score.set_scores|length > 0 %}
+                    <div class="set-history-chips" id="aud-set-history">
+                      {% for s in active_match.score.set_scores %}
+                        <span class="set-chip">Set {{ s.set }}: {{ s.team_a }}-{{ s.team_b }}{% if s.winner %} ({{ active_match[s.winner].abbr if active_match[s.winner] is mapping else s.winner|upper }}){% endif %}</span>
+                      {% endfor %}
                     </div>
                   {% endif %}
+                </div>
+
+              {% elif active_match.sport_type == 'carrom' %}
+                <!-- CARROM BOARD SCOREBOARD -->
+                <div class="live-score-display carrom-display">
+                  <div class="score-main-line">
+                    <span class="carrom-pts" id="aud-carrom-a" style="color: #2563eb;">{{ active_match.score.score_team_a or 0 }}</span>
+                    <span class="score-dash">-</span>
+                    <span class="carrom-pts" id="aud-carrom-b" style="color: #059669;">{{ active_match.score.score_team_b or 0 }}</span>
+                  </div>
+                  <div class="score-sub-line">
+                    <span class="badge badge-board" id="aud-carrom-board">🎯 Board {{ active_match.score.current_board or 1 }} of 8</span>
+                    <span class="badge badge-target">Target: 29 pts</span>
+                  </div>
                 </div>
 
               {% elif active_match.sport_type == 'tug_of_war' %}
@@ -271,11 +309,15 @@
 
           <!-- Team B -->
           <div class="team-side team-b-side">
-            <div class="team-dept-code dept-color-{{ active_match.team_b.code }}">
-              {{ active_match.team_b.abbr }}
+            <div class="team-dept-code dept-color-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
+              {{ active_match.team_b.abbr if (active_match.team_b is mapping and active_match.team_b.abbr) else (active_match.team_b | upper) }}
             </div>
-            <div class="team-dept-name">{{ active_match.team_b.name }}</div>
-            {% if active_match.squads and active_match.squads.team_b and active_match.squads.team_b.captain %}
+            <div class="team-dept-name">{{ active_match.team_b.name if (active_match.team_b is mapping and active_match.team_b.name) else (active_match.team_b | upper) }}</div>
+            {% if active_match.score and active_match.score.players_b %}
+              <div class="team-athlete-tag" title="Playing Athlete" style="margin-left: auto;">
+                <i class="fa-solid fa-user-check" style="color: #059669;"></i> {{ active_match.score.players_b }}
+              </div>
+            {% elif active_match.squads and active_match.squads.team_b and active_match.squads.team_b.captain %}
               <div class="team-captain-badge">
                 <i class="fa-solid fa-crown"></i> Capt: {{ active_match.squads.team_b.captain }}
               </div>
@@ -368,9 +410,9 @@
             <div class="squads-grid">
               <!-- Team A Roster -->
               <div class="squad-column team-a-column">
-                <div class="squad-team-header dept-border-{{ active_match.team_a.code }}">
-                  <span class="dept-badge dept-badge-{{ active_match.team_a.code }}">
-                    {{ active_match.team_a.abbr }}
+                <div class="squad-team-header dept-border-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_a.code if (active_match.team_a is mapping and active_match.team_a.code) else (active_match.team_a or 'amsc') }}">
+                    {{ active_match.team_a.abbr if (active_match.team_a is mapping and active_match.team_a.abbr) else (active_match.team_a | upper) }}
                   </span>
                   <span class="squad-count">
                     {{ active_match.squads.team_a.playing | length }} Playing
@@ -404,9 +446,9 @@
 
               <!-- Team B Roster -->
               <div class="squad-column team-b-column">
-                <div class="squad-team-header dept-border-{{ active_match.team_b.code }}">
-                  <span class="dept-badge dept-badge-{{ active_match.team_b.code }}">
-                    {{ active_match.team_b.abbr }}
+                <div class="squad-team-header dept-border-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
+                  <span class="dept-badge dept-badge-{{ active_match.team_b.code if (active_match.team_b is mapping and active_match.team_b.code) else (active_match.team_b or 'ppe') }}">
+                    {{ active_match.team_b.abbr if (active_match.team_b is mapping and active_match.team_b.abbr) else (active_match.team_b | upper) }}
                   </span>
                   <span class="squad-count">
                     {{ active_match.squads.team_b.playing | length }} Playing
@@ -610,7 +652,7 @@
             <select id="form-category" class="input-select">
               <option value="Boys" selected>👦 Boys</option>
               <option value="Girls">👧 Girls</option>
-              <option value="Mixed">👫 Mixed Rubber</option>
+              <option value="Mixed">👫 Mixed Match</option>
               <option value="Open">⚡ Open</option>
             </select>
           </div>
